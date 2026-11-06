@@ -3,7 +3,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { QUESTIONS } = require("./public/questions.js");
+const { QUESTIONS, IMPACT, impactFor } = require("./public/questions.js");
 
 const PORT = process.env.PORT || 3000;
 const QUESTION_MS = (Number(process.env.QUESTION_SECONDS) || 15) * 1000;
@@ -122,7 +122,10 @@ function computeStats() {
     pctTopFloor: pct((p) => p.answers.floor === "dernier"),
     pctTooHot: pct((p) => p.tempNo >= 28),
     degreesSaved: Math.round(engaged.reduce((s, p) => s + p.gain, 0)),
-    kwhSaved: Math.round(engaged.reduce((s, p) => s + (p.answers.clim === "oui" ? 1.5 : 1.0), 0)),
+    kwhSaved: Math.round(engaged.reduce((s, p) => s + (IMPACT.kwhPerDay[p.answers.clim || "non"] ?? 1), 0)),
+    eurosSeason: engaged.reduce((s, p) => s + impactFor(p.answers.clim || "non").eur, 0),
+    co2Season: engaged.reduce((s, p) => s + impactFor(p.answers.clim || "non").co2, 0),
+    climAvoided: engaged.filter((p) => p.answers.clim === "envie").length,
     gestureCounts,
     hottest: count ? Math.max(...list.map((p) => p.tempNo)) : null,
     coolest: count ? Math.min(...list.map((p) => p.tempNo)) : null,
@@ -177,7 +180,7 @@ const server = http.createServer(async (req, res) => {
       pl.gain = num(b.gain, 0, 20) || 0;
       pl.engaged = pl.gestures.length > 0;
       const s = computeStats();
-      return sendJson(res, 200, { ok: true, degreesSaved: s.degreesSaved, kwhSaved: s.kwhSaved });
+      return sendJson(res, 200, { ok: true, degreesSaved: s.degreesSaved, kwhSaved: s.kwhSaved, eurosSeason: s.eurosSeason, co2Season: s.co2Season });
     }
 
     // --- Écran ---

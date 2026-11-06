@@ -30,5 +30,17 @@ const QUESTIONS = [
     { v: "non", e: "🚫", label: "Non" },
   ]},
 ];
+// Hypothèses d'impact (estimations de démo)
+const IMPACT = {
+  kwhPerDay: { oui: 3, envie: 5, non: 1 }, // kWh de clim évités / jour chaud si on suit le plan
+  hotDays: 40,          // jours de forte chaleur par été
+  eurPerKwh: 0.20,      // prix de l'électricité (€/kWh)
+  gCo2PerKwh: 60,       // contenu carbone électricité France (g CO2/kWh)
+  climPurchase: 1500,   // achat + pose d'une clim évités (€)
+};
+function impactFor(clim) {
+  const kwh = (IMPACT.kwhPerDay[clim] ?? 1) * IMPACT.hotDays;
+  return { kwh, eur: Math.round(kwh * IMPACT.eurPerKwh), co2: Math.round(kwh * IMPACT.gCo2PerKwh / 1000) };
+}
 const DEFAULTS = { city: "dijon", floor: "milieu", orientation: "sud", shutters: "rideaux", clim: "non" };
-if (typeof module !== "undefined") module.exports = { QUESTIONS, DEFAULTS };
+if (typeof module !== "undefined") module.exports = { QUESTIONS, DEFAULTS, IMPACT, impactFor };

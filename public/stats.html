@@ -9,7 +9,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: radial-gradient(circle at 20% 0%, #163e5a, var(--bg) 60%); color: var(--ink); min-height: 100vh; padding: 3vh 3vw; }
   .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3vh; }
-  h1 { font-size: 3.2vw; line-height: 1.1; }
+  h1 { font-size: 2.6vw; line-height: 1.1; }
   h1 span { color: var(--hot); }
   .sub { color: var(--muted); font-size: 1.4vw; margin-top: .6vh; }
   .grid { display: grid; grid-template-columns: 1fr 1fr 1fr 22vw; grid-template-rows: auto auto; gap: 1.6vw; }
@@ -35,6 +35,24 @@
   .fact { background: rgba(255,255,255,.05); border-radius: 1vw; padding: 1.4vw; }
   .fact b { font-size: 3vw; display: block; }
   .fact span { color: var(--muted); font-size: 1.15vw; }
+  .impacts { display: flex; gap: 2.4vw; margin-left: auto; }
+  .impacts div { text-align: right; }
+  .impacts b { display: block; font-size: 2.3vw; color: #fff; white-space: nowrap; }
+  .impacts span { font-size: 1vw; color: var(--muted); }
+  .france-btn { flex-shrink: 0; background: linear-gradient(90deg, #2b5ce6, #fff 50%, #e63946); color: #0b2233; border: 0; font-weight: 800; font-size: 1.4vw; padding: 1.3vh 2.4vw; border-radius: 99px; cursor: pointer; box-shadow: 0 6px 30px rgba(0,0,0,.35); }
+  .france { position: fixed; inset: 0; background: radial-gradient(circle at 50% 30%, #163e5a, #071823 70%); display: none; place-items: center; z-index: 10; cursor: pointer; }
+  .france.on { display: grid; animation: frin .6s ease; }
+  @keyframes frin { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: none; } }
+  .fr-in { width: 86vw; text-align: center; }
+  .fr-kicker { font-size: 2.8vw; font-weight: 700; margin-bottom: 6vh; } .fr-kicker b { color: var(--cool); }
+  .fr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2vw; }
+  .fr-grid div { background: var(--card); border-radius: 1.6vw; padding: 4vh 1.5vw; opacity: 0; animation: up .6s ease forwards; }
+  .fr-grid div:nth-child(2) { animation-delay: .5s; } .fr-grid div:nth-child(3) { animation-delay: 1s; } .fr-grid div:nth-child(4) { animation-delay: 1.6s; }
+  @keyframes up { from { opacity: 0; transform: translateY(3vh); } to { opacity: 1; transform: none; } }
+  .fr-grid b { display: block; font-size: 4.2vw; white-space: nowrap; font-weight: 800; color: var(--ok); line-height: 1.1; }
+  .fr-grid span { display: block; font-size: 1.4vw; color: var(--muted); margin-top: 1.4vh; line-height: 1.3; }
+  .fr-grid .hl { background: linear-gradient(135deg, #1d5a3f, #12324a); } .fr-grid .hl b { color: #fff; }
+  .fr-note { margin-top: 6vh; color: var(--muted); font-size: 1.1vw; }
   .bump { animation: bump .4s; }
   @keyframes bump { 50% { transform: scale(1.08); } }
   .admin { position: fixed; bottom: 10px; right: 10px; opacity: .4; }
@@ -47,6 +65,7 @@
       <h1>Quelle température fera-t-il <span>chez vous</span> demain ?</h1>
       <div class="sub">Résultats de la salle · <b id="answered" style="color:#fff">0</b> réponses sur <b id="connected" style="color:#fff">0</b> connectés</div>
     </div>
+    <button class="france-btn" onclick="toggleFrance()">🇫🇷 Et à l'échelle de la France ?</button>
   </div>
 
   <div class="grid">
@@ -62,7 +81,12 @@
       <div class="label">🔥 Défi fraîcheur : la salle a gagné</div>
       <div style="display:flex; align-items:baseline; gap:2vw">
         <div class="val ok" id="deg">0°C</div>
-        <div style="font-size:1.6vw; color:var(--muted)">cumulés · ≈ <b id="kwh" style="color:#fff">0</b> kWh de clim évités / jour · <b id="engaged" style="color:#fff">0</b> engagés</div>
+        <div style="font-size:1.5vw; color:var(--muted); white-space:nowrap">cumulés · <b id="engaged" style="color:#fff">0</b> engagés</div>
+        <div class="impacts">
+          <div><b id="eur">0 €</b><span>économisés / été</span></div>
+          <div><b id="co2">0 kg</b><span>CO₂ évités / été</span></div>
+          <div><b id="kwh">0</b><span>kWh évités / jour chaud</span></div>
+        </div>
       </div>
       <div class="gauge"><div id="gauge"></div></div>
       <div style="font-size:1.1vw; color:var(--muted)">Objectif salle : <span id="goal">200</span>°C</div>
@@ -78,15 +102,28 @@
 
   <div class="admin"><button onclick="newSession()">Nouvelle session</button></div>
 
+  <div class="france" id="france" onclick="toggleFrance()">
+    <div class="fr-in">
+      <div class="fr-kicker">🇫🇷 Si <b id="frFoyers">10 millions</b> de foyers faisaient comme cette salle…</div>
+      <div class="fr-grid">
+        <div><b id="frGwh">--</b><span>GWh d'électricité évités chaque été</span></div>
+        <div><b id="frEur">--</b><span>d'économies pour les ménages</span></div>
+        <div><b id="frCo2">--</b><span>de CO₂ évitées</span></div>
+        <div class="hl"><b id="frReact">--</b><span>réacteurs nucléaires de moins à faire tourner aux pics de chaleur</span></div>
+      </div>
+      <div class="fr-note">Projection à partir des <span id="frBase">0</span> engagements de la salle · estimations de démonstration</div>
+    </div>
+  </div>
+
 <script src="/qrcode.js"></script>
+<script src="/questions.js"></script>
 <script>
 const joinUrl = location.origin + "/jouer";
 const qr = qrcode(0, "M"); qr.addData(joinUrl); qr.make();
 document.getElementById("qr").src = qr.createDataURL(6, 1);
 
 const params = new URLSearchParams(location.search);
-const GOAL = Number(params.get("objectif")) || 200;
-document.getElementById("goal").textContent = GOAL;
+const GOAL_PARAM = Number(params.get("objectif")) || 0;
 
 function set(id, v) {
   const el = document.getElementById(id);
@@ -97,6 +134,7 @@ function esc(t) { const d = document.createElement("div"); d.textContent = t; re
 async function refresh() {
   try {
     const s = await (await fetch("/api/stats", { cache: "no-store" })).json();
+    lastStats = s; if (document.getElementById("france").classList.contains("on")) renderFrance();
     set("answered", s.count);
     set("connected", s.connected);
     set("avgNo", s.count ? s.avgNoAction + "°" : "--°");
@@ -105,11 +143,15 @@ async function refresh() {
     document.getElementById("hotName").textContent = s.coolest !== null ? "le plus frais : " + s.coolest + "°" : "\u00a0";
     set("deg", s.degreesSaved + "°C");
     set("kwh", s.kwhSaved);
+    set("eur", s.eurosSeason.toLocaleString("fr-FR") + " €");
+    set("co2", s.co2Season.toLocaleString("fr-FR") + " kg");
     set("engaged", s.engagedCount);
     set("pTooHot", s.pctTooHot + "%");
     set("pNoShutters", s.pctNoShutters + "%");
     set("pTop", s.pctTopFloor + "%");
     set("pClim", s.pctClim + "%");
+    const GOAL = GOAL_PARAM || Math.max(50, Math.ceil(s.connected * 6 / 50) * 50);
+    document.getElementById("goal").textContent = GOAL;
     document.getElementById("gauge").style.width = Math.min(100, s.degreesSaved / GOAL * 100) + "%";
     const LABELS = { volets: "🪟 Fermer les volets le matin", occulter: "🧵 Occulter les fenêtres", fermer: "🚪 Garder fermé en journée",
       appareils: "🔌 Limiter four & appareils", ventil: "🌙 Ventiler la nuit", brasseur: "🌀 Ventilateur de plafond" };
@@ -121,6 +163,38 @@ async function refresh() {
     if (ol.innerHTML !== html) ol.innerHTML = html;
   } catch (e) {}
 }
+// --- Projection France ---
+const FOYERS = Number(params.get("foyers")) || 10_000_000;   // ~1 foyer français sur 3
+const PEAK_HOURS = 8;                                       // la clim évitée se concentre sur ~8 h chaudes
+const REACTOR_GW = 0.9;
+let lastStats = null;
+function fmt(n, d = 0) { return n.toLocaleString("fr-FR", { maximumFractionDigits: d, minimumFractionDigits: d }); }
+function renderFrance() {
+  const s = lastStats; if (!s) return;
+  const n = s.engagedCount || 0;
+  document.getElementById("frBase").textContent = n;
+  document.getElementById("frFoyers").textContent = fmt(FOYERS / 1e6) + " millions";
+  if (!n) return;
+  const kwhDay = s.kwhSaved / n, eur = s.eurosSeason / n, co2 = s.co2Season / n;   // moyennes par foyer
+  const gwh = kwhDay * IMPACT.hotDays * FOYERS / 1e6;
+  const meur = eur * FOYERS / 1e6;
+  const kt = co2 * FOYERS / 1e6;            // kg → kt
+  const gw = kwhDay / PEAK_HOURS * FOYERS / 1e6;
+  document.getElementById("frGwh").textContent = fmt(gwh);
+  document.getElementById("frEur").textContent = meur >= 1000 ? fmt(meur / 1000, 1) + " Md€" : fmt(meur) + " M€";
+  const t = kt * 1000; document.getElementById("frCo2").textContent = fmt(t >= 10000 ? Math.round(t / 1000) * 1000 : Math.round(t / 10) * 10) + " t";
+  document.getElementById("frReact").textContent = "≈ " + fmt(Math.max(1, Math.round(gw / REACTOR_GW)));
+}
+function toggleFrance() {
+  const el = document.getElementById("france");
+  el.classList.toggle("on");
+  if (el.classList.contains("on")) {
+    renderFrance();
+    el.querySelectorAll(".fr-grid div").forEach(d => { d.style.animation = "none"; void d.offsetWidth; d.style.animation = ""; });
+  }
+}
+document.addEventListener("keydown", e => { if (e.key === "f" || e.key === "F") toggleFrance(); if (e.key === "Escape") document.getElementById("france").classList.remove("on"); });
+
 async function newSession() {
   if (!confirm("Lancer une nouvelle session ? Les résultats seront effacés.")) return;
   await fetch("/api/reset", { method: "POST" });

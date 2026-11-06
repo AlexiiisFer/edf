@@ -45,6 +45,10 @@
   label.chk { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-top: 1px solid var(--line); font-size: 15px; } label.chk:first-of-type { border-top: 0; }
   label.chk input { width: 22px; height: 22px; accent-color: var(--ok); flex-shrink: 0; }
   .tip { background: #fff7e8; border-radius: 14px; padding: 14px; font-size: 14px; line-height: 1.4; margin-bottom: 14px; }
+  .impact { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .impact div { background: #e9f8f1; border-radius: 14px; padding: 12px 8px; text-align: center; }
+  .impact b { display: block; font-size: 24px; color: var(--ok); }
+  .impact small { font-size: 11px; color: var(--muted); line-height: 1.25; display: block; margin-top: 2px; }
   .big { font-size: 54px; font-weight: 800; color: var(--ok); text-align: center; margin: 10px 0; }
   .err { color: var(--hot); font-size: 14px; min-height: 18px; margin-top: 8px; }
   .pulse { width: 84px; height: 84px; margin: 30px auto 24px; border-radius: 50%; background: linear-gradient(135deg, var(--hot), #f5a623); color: #fff; font-size: 44px; display: grid; place-items: center; animation: pulse 1.6s infinite; }
@@ -88,6 +92,12 @@
       <div id="chart"></div>
       <div class="legend"><span><i style="background:var(--hot)"></i>Sans rien faire</span><span><i style="background:var(--cool)"></i>Avec le plan</span><span><i style="background:#b8c4cc"></i>Dehors</span></div>
     </div>
+    <div class="impact">
+      <div><b id="iEur">--</b><small>€ économisés<br>par été</small></div>
+      <div><b id="iCo2">--</b><small>kg de CO₂<br>évités par été</small></div>
+      <div><b id="iKwh">--</b><small>kWh<br>évités par été</small></div>
+    </div>
+    <div id="iClim"></div>
     <div class="card"><div class="card-title">Votre plan pour demain</div><div id="plan"></div></div>
     <div id="tips"></div>
     <div class="card">
@@ -103,7 +113,7 @@
       <h1>Merci ! 🙌</h1>
       <p class="lead">Ensemble, la salle a déjà gagné</p>
       <div class="big" id="roomDeg">0°C</div>
-      <p class="muted">cumulés, soit environ <b id="roomKwh">0</b> kWh de clim évités par jour de canicule.</p>
+      <p class="muted">cumulés, soit environ <b id="roomEur">0</b> € économisés et <b id="roomCo2">0</b> kg de CO₂ évités par été.</p>
       <p class="muted" style="margin-top:22px">👀 Regardez le grand écran !</p>
     </div>
   </section>
@@ -242,6 +252,12 @@ function buildResult() {
   document.getElementById("tPlan").textContent = result.tPlan + "°";
   document.getElementById("tGain").textContent = result.gain + "°C";
   drawChart(result);
+  const imp = impactFor(A("clim"));
+  document.getElementById("iEur").textContent = imp.eur + (A("clim") === "envie" ? "" : "");
+  document.getElementById("iCo2").textContent = imp.co2;
+  document.getElementById("iKwh").textContent = imp.kwh;
+  document.getElementById("iClim").innerHTML = A("clim") === "envie"
+    ? `<div class="tip">💶 Et surtout <b>~${IMPACT.climPurchase.toLocaleString("fr-FR")} € d'achat de clim évité</b> si le plan vous suffit.</div>` : "";
   document.getElementById("plan").innerHTML = result.gestures.map(g => `<div class="step"><div class="h">${g.h}</div><div class="t">${g.txt}</div>${g.gain ? `<div class="d">-${g.gain}°</div>` : ""}</div>`).join("");
   let tips = "";
   if (A("clim") === "oui") tips += `<div class="tip">❄️ <b>Votre clim :</b> réglez-la sur 26°C et lancez-la vers 13h, quand le solaire produit le plus, plutôt qu'à 19h au pic de consommation.</div>`;
@@ -258,7 +274,7 @@ async function engage() {
     const r = await fetch("/api/engage", { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: me, gestures: boxes.map(b => b.value), gain: boxes.reduce((s, b) => s + Number(b.dataset.gain), 0) }) });
     const d = await r.json();
-    if (d.ok) { document.getElementById("roomDeg").textContent = d.degreesSaved + "°C"; document.getElementById("roomKwh").textContent = d.kwhSaved; }
+    if (d.ok) { document.getElementById("roomDeg").textContent = d.degreesSaved + "°C"; document.getElementById("roomEur").textContent = d.eurosSeason.toLocaleString("fr-FR"); document.getElementById("roomCo2").textContent = d.co2Season.toLocaleString("fr-FR"); }
   } catch (e) {}
   engaged = true; view = ""; show("thanks");
 }
