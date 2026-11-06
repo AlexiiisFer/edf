@@ -18,20 +18,17 @@
   .btn.ghost { background: transparent; color: var(--muted); border: 1px solid rgba(255,255,255,.2); font-size: 1.1vw; padding: 1.2vh 1.4vw; font-weight: 500; }
 
   /* Lobby */
-  #v-lobby { grid-template-columns: 32vw 1fr; gap: 3vw; }
-  .left { display: flex; flex-direction: column; justify-content: center; gap: 3vh; }
-  .qrbox { background: #fff; border-radius: 1.4vw; padding: 1.4vw; }
-  .qrbox img { width: 100%; display: block; image-rendering: pixelated; }
-  .url { color: var(--muted); font-size: 1vw; text-align: center; word-break: break-all; }
-  .panel { background: var(--card); border-radius: 1.6vw; padding: 2.6vw; display: flex; flex-direction: column; min-height: 0; }
-  .count { font-size: 1.8vw; color: var(--muted); } .count b { font-size: 6vw; color: #fff; margin-right: .8vw; vertical-align: middle; }
-  .players { flex: 1; display: flex; flex-wrap: wrap; align-content: flex-start; gap: .9vw; overflow: hidden; margin-top: 2vh; }
-  .chip { width: 4.2vw; height: 4.2vw; display: grid; place-items: center; border-radius: 50%; font-size: 2.2vw; animation: pop .45s cubic-bezier(.2,1.6,.4,1); }
+  #v-lobby { grid-template-rows: 1fr auto; gap: 2vh; }
+  .qrzone { display: flex; justify-content: center; align-items: center; min-height: 0; }
+  .qrbox { background: #fff; border-radius: 2vh; padding: 2vh; height: 100%; aspect-ratio: 1; }
+  .qrbox img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  .bar { display: flex; align-items: center; gap: 2vw; background: var(--card); border-radius: 1.4vw; padding: 1.6vh 2vw; }
+  .count { font-size: 1.6vw; color: var(--muted); white-space: nowrap; } .count b { font-size: 3.4vw; color: #fff; margin-right: .6vw; vertical-align: middle; }
+  .players { flex: 1; display: flex; gap: .6vw; overflow: hidden; height: 3.4vw; align-items: center; }
+  .chip { flex-shrink: 0; width: 3vw; height: 3vw; display: grid; place-items: center; border-radius: 50%; font-size: 1.6vw; animation: pop .45s cubic-bezier(.2,1.6,.4,1); }
   .chip:nth-child(4n+1) { background: rgba(255,106,61,.2); } .chip:nth-child(4n+2) { background: rgba(60,180,255,.2); }
   .chip:nth-child(4n+3) { background: rgba(47,211,154,.2); } .chip:nth-child(4n) { background: rgba(245,166,35,.2); }
   @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
-  .empty { color: var(--muted); font-size: 1.8vw; margin: auto; }
-  .actions { display: flex; gap: 1vw; align-items: center; margin-top: 2vh; }
 
   /* Question */
   #v-question { grid-template-rows: auto auto 1fr auto; gap: 3vh; }
@@ -62,19 +59,14 @@
 
 <!-- LOBBY -->
 <section class="view active" id="v-lobby">
-  <div class="left">
-    <div class="brand"><div class="logo">☀</div><b>Météo de mon logement</b></div>
-    <h1>Quelle température fera-t-il <span>chez vous</span> demain ?</h1>
+  <div class="qrzone">
     <div class="qrbox"><img id="qr" alt="QR code pour rejoindre"></div>
-    <div class="url">📱 Scannez pour rejoindre · <span id="url"></span></div>
   </div>
-  <div class="panel">
-    <div class="count"><b id="count">0</b>personnes connectées</div>
-    <div class="players" id="players"><div class="empty">En attente des participants…</div></div>
-    <div class="actions">
-      <button class="btn" onclick="api('start')">▶ Lancer la session</button>
-      <button class="btn ghost" onclick="api('reset')">Réinitialiser</button>
-    </div>
+  <div class="bar">
+    <div class="count"><b id="count">0</b>connectés</div>
+    <div class="players" id="players"></div>
+    <button class="btn ghost" onclick="api('reset')">Réinitialiser</button>
+    <button class="btn" onclick="api('start')">▶ Lancer</button>
   </div>
 </section>
 
@@ -112,7 +104,6 @@
 const joinUrl = location.origin + "/jouer";
 const qr = qrcode(0, "M"); qr.addData(joinUrl); qr.make();
 document.getElementById("qr").src = qr.createDataURL(10, 2);
-document.getElementById("url").textContent = joinUrl.replace(/^https?:\/\//, "");
 
 const ICONS = ["☀️", "🌡️", "🏠", "🪟", "🌿", "💧", "🌙", "🍃", "❄️", "🌤️"];
 let view = "lobby", lastQ = -2, localEnd = 0, duration = 15000, chips = 0, lastSession = null;
@@ -131,8 +122,8 @@ function render(d) {
   if (d.phase === "lobby") {
     document.getElementById("count").textContent = d.connected;
     const box = document.getElementById("players");
-    if (!d.connected) { box.innerHTML = '<div class="empty">En attente des participants…</div>'; chips = 0; }
-    else { box.querySelector(".empty")?.remove(); while (chips < d.connected) { const el = document.createElement("div"); el.className = "chip"; el.textContent = ICONS[chips % ICONS.length]; box.appendChild(el); chips++; } }
+    if (!d.connected) { box.innerHTML = ""; chips = 0; }
+    else { while (chips < d.connected) { const el = document.createElement("div"); el.className = "chip"; el.textContent = ICONS[chips % ICONS.length]; box.prepend(el); chips++; } }
     show("lobby");
   } else if (d.phase === "question") {
     localEnd = Date.now() + d.remaining; duration = d.duration;
