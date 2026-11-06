@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Météo de mon logement — Écran salle</title>
+<title>Météo de mon logement — Statistiques</title>
 <style>
   :root { --bg: #0b2233; --card: #12324a; --ink: #fff; --muted: #9fb6c6; --hot: #ff6a3d; --cool: #3cb4ff; --ok: #2fd39a; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -17,7 +17,14 @@
   .label { color: var(--muted); font-size: 1.2vw; text-transform: uppercase; letter-spacing: .08em; }
   .val { font-size: 5.5vw; font-weight: 800; line-height: 1.05; margin-top: 1vh; transition: color .3s; }
   .hot { color: var(--hot); } .cool { color: var(--cool); } .ok { color: var(--ok); }
-  .qr { grid-row: span 2; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .podium { grid-row: span 2; display: flex; flex-direction: column; }
+  .podium ol { list-style: none; margin-top: 1.5vh; flex: 1; }
+  .podium li { display: flex; justify-content: space-between; font-size: 1.25vw; padding: 1.1vh 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .podium li b { color: var(--ok); }
+  .podium li.none { color: var(--muted); font-size: 1.2vw; border: 0; }
+  .miniqr { display: flex; gap: 1vw; align-items: center; margin-top: 1.5vh; color: var(--muted); font-size: 1vw; }
+  .miniqr img { width: 6vw; background: #fff; padding: .4vw; border-radius: .5vw; image-rendering: pixelated; }
+  .oldqr { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .qr img { image-rendering: pixelated; width: 100%; max-width: 19vw; background: #fff; padding: 1vw; border-radius: 1vw; }
   .qr .url { font-size: 1.1vw; color: var(--muted); margin-top: 1.2vh; word-break: break-all; }
   .qr b { font-size: 1.8vw; margin-bottom: 1.5vh; display: block; }
@@ -38,18 +45,18 @@
   <div class="top">
     <div>
       <h1>Quelle température fera-t-il <span>chez vous</span> demain ?</h1>
-      <div class="sub">Scannez le QR code · 30 secondes · résultats en direct</div>
+      <div class="sub">Résultats de la salle en direct · <b id="answered" style="color:#fff">0</b> réponses sur <b id="connected" style="color:#fff">0</b> connectés</div>
     </div>
   </div>
 
   <div class="grid">
-    <div class="card"><div class="label">Logements analysés</div><div class="val" id="count">0</div></div>
+    <div class="card"><div class="label">🥵 Le plus chaud</div><div class="val hot" id="hotTemp" style="font-size:4.5vw">--°</div><div id="hotName" style="font-size:1.4vw;color:var(--muted);margin-top:.6vh">&nbsp;</div></div>
     <div class="card"><div class="label">Sans rien faire, à 17h</div><div class="val hot" id="avgNo">--°</div></div>
     <div class="card"><div class="label">Avec le plan, à 17h</div><div class="val cool" id="avgPlan">--°</div></div>
-    <div class="card qr">
-      <b>📱 Scannez-moi</b>
-      <img id="qr" alt="QR code">
-      <div class="url" id="url"></div>
+    <div class="card podium">
+      <div class="label">✅ Gestes choisis par la salle</div>
+      <ol id="champions"><li class="none">Les premiers engagements arrivent…</li></ol>
+      <div class="miniqr"><img id="qr" alt="QR"><span>Pas encore rejoint ?<br>Scannez !</span></div>
     </div>
     <div class="card wide">
       <div class="label">🔥 Défi fraîcheur : la salle a gagné</div>
@@ -69,9 +76,62 @@
     <div class="fact"><b class="cool" id="pClim">0%</b><span>ont une climatisation</span></div>
   </div>
 
-  <div class="admin" id="admin" style="display:none"><button onclick="resetAll()">Réinitialiser</button></div>
+  <div class="admin"><button onclick="location.href='/'">← Lobby</button> <button onclick="endSession()">Terminer la session</button></div>
 
 <script src="/qrcode.js"></script>
+<script src="/qrcode.js"></script>
+<script>
+const joinUrl = location.origin + "/jouer";
+const qr = qrcode(0, "M"); qr.addData(joinUrl); qr.make();
+document.getElementById("qr").src = qr.createDataURL(6, 1);
+
+const params = new URLSearchParams(location.search);
+const GOAL = Number(params.get("objectif")) || 200;
+document.getElementById("goal").textContent = GOAL;
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+
+function set(id, v) {
+  const el = document.getElementById(id);
+  if (el.textContent !== String(v)) { el.textContent = v; el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
+}
+function esc(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+
+async function refresh() {
+  try {
+    const s = await (await fetch("/api/stats", { cache: "no-store" })).json();
+    set("answered", s.count);
+    set("connected", s.connected);
+    set("avgNo", s.count ? s.avgNoAction + "°" : "--°");
+    set("avgPlan", s.count ? s.avgWithPlan + "°" : "--°");
+    set("hotTemp", s.hottest ? s.hottest.temp + "°" : "--°");
+    document.getElementById("hotName").textContent = s.coolest !== null ? "le plus frais : " + s.coolest + "°" : "\u00a0";
+    set("deg", s.degreesSaved + "°C");
+    set("kwh", s.kwhSaved);
+    set("engaged", s.engagedCount);
+    set("pTooHot", s.pctTooHot + "%");
+    set("pNoShutters", s.pctNoShutters + "%");
+    set("pTop", s.pctTopFloor + "%");
+    set("pClim", s.pctClim + "%");
+    document.getElementById("gauge").style.width = Math.min(100, s.degreesSaved / GOAL * 100) + "%";
+    const LABELS = { volets: "🪟 Fermer les volets le matin", occulter: "🧵 Occulter les fenêtres", fermer: "🚪 Garder fermé en journée",
+      appareils: "🔌 Limiter four & appareils", ventil: "🌙 Ventiler la nuit", brasseur: "🌀 Ventilateur de plafond" };
+    const g = Object.entries(s.gestureCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+    const html = g.length
+      ? g.map(([k, n]) => `<li><span>${LABELS[k] || esc(k)}</span><b>${n}</b></li>`).join("")
+      : '<li class="none">Les premiers engagements arrivent…</li>';
+    const ol = document.getElementById("champions");
+    if (ol.innerHTML !== html) ol.innerHTML = html;
+  } catch (e) {}
+}
+async function endSession() {
+  let token = store.get("ml_admin");
+  if (!token) { location.href = "/"; return; }
+  const r = await fetch("/api/admin/end?token=" + encodeURIComponent(token), { method: "POST" });
+  if (r.status === 403) location.href = "/";
+}
+refresh();
+setInterval(refresh, 2000);
+</script>
 <script>
 const phoneUrl = location.origin + "/";
 document.getElementById("url").textContent = phoneUrl.replace(/^https?:\/\//, "");

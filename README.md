@@ -1,20 +1,17 @@
-# Météo de mon logement — démo interactive
+# Météo de mon logement — session interactive
 
-- `/` : parcours sur le téléphone (5 questions → température prévue chez soi + plan + défi)
-- `/ecran` : tableau de bord à projeter (QR code + résultats de la salle en direct)
-- `/ecran?admin=MON_TOKEN` : affiche le bouton « Réinitialiser » (à utiliser juste avant le passage)
-- `/ecran?objectif=300` : change l'objectif de la jauge (200°C par défaut)
+| Page | Rôle |
+|---|---|
+| `/` | **Lobby** à projeter : QR code + personnes qui se connectent en direct + bouton « Lancer la session » |
+| `/jouer` | Page ouverte par le QR code : connexion auto, attente, puis 5 questions → température prévue chez soi + plan + défi |
+| `/stats` | **Statistiques** de la salle en direct (moyennes, défi fraîcheur, gestes choisis, %) |
 
-## Lancer en local
-```bash
-node server.js   # http://localhost:3000
-```
+## Déroulé
+1. Ouvrir `/` sur l'ordi du vidéoprojecteur → les gens scannent, les connexions apparaissent.
+2. « Lancer la session » (mot de passe = `ADMIN_TOKEN`, demandé une seule fois) → tous les téléphones démarrent, l'écran passe sur `/stats`.
+3. « Nouvelle session » sur le lobby remet tout à zéro.
 
-## Déployer sur Coolify
-1. Pousser ce dossier sur un dépôt Git (GitHub/GitLab).
-2. Coolify → New Resource → Application → choisir le dépôt → Build Pack : **Dockerfile**.
-3. Port exposé : **3000**.
-4. Variable d'environnement : `ADMIN_TOKEN=un-mot-de-passe`.
-5. Ajouter un domaine en HTTPS, déployer.
+Astuce : `/?admin=MOTDEPASSE` enregistre le mot de passe d'avance. `/stats?objectif=300` change l'objectif de la jauge.
 
-Les données sont en mémoire : un redémarrage remet tout à zéro (voulu pour une démo).
+## Coolify
+Build pack Dockerfile, port 3000, variable `ADMIN_TOKEN`. Données en mémoire (remises à zéro au redémarrage).

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Météo de mon logement</title>
+<meta name="theme-color" content="#0b3d5c">
+<style>
+  :root {
+    --bg: #f4f7fa; --card: #fff; --ink: #11222e; --muted: #5d6f7c;
+    --blue: #0b3d5c; --cool: #1f8fd6; --hot: #e8572a; --ok: #1a9b6c; --line: #e1e8ee;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); min-height: 100dvh; }
+  .app { max-width: 480px; margin: 0 auto; padding: 20px 18px 40px; }
+  header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .logo { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--hot), #f5a623); display: grid; place-items: center; color: #fff; font-size: 20px; }
+  header b { font-size: 16px; }
+  header small { display: block; color: var(--muted); font-size: 12px; }
+  .progress { height: 5px; background: var(--line); border-radius: 9px; overflow: hidden; margin-bottom: 22px; }
+  .progress div { height: 100%; background: var(--cool); width: 0; transition: width .3s; }
+  .screen { display: none; animation: in .25s ease; }
+  .screen.active { display: block; }
+  @keyframes in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  h1 { font-size: 27px; line-height: 1.15; margin-bottom: 12px; }
+  h2 { font-size: 22px; line-height: 1.2; margin-bottom: 18px; }
+  p.lead { color: var(--muted); font-size: 16px; line-height: 1.45; margin-bottom: 22px; }
+  .opts { display: grid; gap: 10px; }
+  .opt { background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 16px; font-size: 17px; text-align: left; display: flex; align-items: center; gap: 12px; cursor: pointer; color: var(--ink); width: 100%; }
+  .opt:active { transform: scale(.98); }
+  .opt.sel { border-color: var(--cool); background: #eef7fd; }
+  .opt span.e { font-size: 24px; }
+  .btn { width: 100%; padding: 17px; border-radius: 14px; border: 0; background: var(--blue); color: #fff; font-size: 17px; font-weight: 600; cursor: pointer; margin-top: 18px; }
+  .btn.alt { background: var(--ok); }
+  .btn:disabled { opacity: .5; }
+  .card { background: var(--card); border-radius: 16px; padding: 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .temps { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .temp { border-radius: 16px; padding: 14px; color: #fff; }
+  .temp.no { background: linear-gradient(135deg, var(--hot), #f08a3c); }
+  .temp.plan { background: linear-gradient(135deg, var(--cool), #39b1e8); }
+  .temp small { font-size: 12px; opacity: .9; display: block; }
+  .temp b { font-size: 36px; display: block; line-height: 1.1; }
+  .gain { text-align: center; font-size: 15px; color: var(--muted); margin-bottom: 14px; }
+  .gain b { color: var(--ok); font-size: 18px; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .legend i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+  .step { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); align-items: flex-start; }
+  .step:first-of-type { border-top: 0; }
+  .step .h { font-weight: 700; color: var(--blue); min-width: 52px; font-size: 14px; padding-top: 2px; }
+  .step .t { flex: 1; font-size: 15px; line-height: 1.35; }
+  .step .d { font-size: 12px; color: var(--ok); font-weight: 700; }
+  label.chk { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-top: 1px solid var(--line); font-size: 15px; }
+  label.chk:first-of-type { border-top: 0; }
+  label.chk input { width: 22px; height: 22px; accent-color: var(--ok); }
+  .tip { background: #fff7e8; border-radius: 14px; padding: 14px; font-size: 14px; line-height: 1.4; margin-bottom: 14px; }
+  .big { font-size: 54px; font-weight: 800; color: var(--ok); text-align: center; margin: 10px 0; }
+  .center { text-align: center; }
+  .input { width: 100%; padding: 17px; font-size: 18px; border-radius: 14px; border: 2px solid var(--line); background: #fff; color: var(--ink); outline: none; }
+  .input:focus { border-color: var(--cool); }
+  .err { color: var(--hot); font-size: 14px; min-height: 18px; margin-top: 8px; }
+  .pulse { width: 84px; height: 84px; margin: 30px auto 24px; border-radius: 50%; background: linear-gradient(135deg, var(--hot), #f5a623); color: #fff; font-size: 44px; display: grid; place-items: center; animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(232,87,42,.45); } 100% { box-shadow: 0 0 0 28px rgba(232,87,42,0); } }
+  .muted { color: var(--muted); font-size: 14px; }
+  .card-title { font-weight: 700; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">☀</div>
+    <div><b>Météo de mon logement</b><small>La météo… mais chez vous</small></div>
+  </header>
+  <div class="progress"><div id="bar"></div></div>
+
+  <!-- Connexion -->
+  <section class="screen active" data-step="0">
+    <div class="center">
+      <div class="pulse">☀</div>
+      <h2 id="joinMsg">Connexion à la salle…</h2>
+      <div id="joinErr" class="err"></div>
+      <button class="btn" id="retryBtn" style="display:none" onclick="join()">Réessayer</button>
+    </div>
+  </section>
+
+  <!-- Attente -->
+  <section class="screen" data-step="-1" id="wait">
+    <div class="center">
+      <div class="pulse">☀</div>
+      <h2>Vous êtes dans la salle ! 🎉</h2>
+      <p class="lead">On va prévoir la température <b style="color:var(--hot)">chez vous</b> demain, et comment la faire baisser. Regardez le grand écran, ça va démarrer…</p>
+      <p class="muted"><b id="nb">1</b> personnes connectées</p>
+    </div>
+  </section>
+
+  <!-- Fin -->
+  <section class="screen" data-step="-2">
+    <div class="center"><h2>Session terminée</h2><p class="lead">Merci d'avoir participé !</p></div>
+  </section>
+
+  <section class="screen" data-step="1" data-key="city">
+    <h2>📍 Où habitez-vous ?</h2>
+    <div class="opts">
+      <button class="opt" data-v="dijon"><span class="e">🍷</span>Dijon</button>
+      <button class="opt" data-v="lyon"><span class="e">🦁</span>Lyon</button>
+      <button class="opt" data-v="paris"><span class="e">🗼</span>Paris</button>
+      <button class="opt" data-v="marseille"><span class="e">⛵</span>Marseille / Sud</button>
+      <button class="opt" data-v="nord"><span class="e">🌧️</span>Nord / Ouest</button>
+    </div>
+  </section>
+
+  <section class="screen" data-step="2" data-key="floor">
+    <h2>🏢 Votre logement est…</h2>
+    <div class="opts">
+      <button class="opt" data-v="maison"><span class="e">🏡</span>Une maison</button>
+      <button class="opt" data-v="rdc"><span class="e">⬇️</span>Appart. rez-de-chaussée</button>
+      <button class="opt" data-v="milieu"><span class="e">↕️</span>Appart. étage intermédiaire</button>
+      <button class="opt" data-v="dernier"><span class="e">⬆️</span>Appart. dernier étage</button>
+    </div>
+  </section>
+
+  <section class="screen" data-step="3" data-key="orientation">
+    <h2>🧭 Vos fenêtres principales donnent plutôt…</h2>
+    <div class="opts">
+      <button class="opt" data-v="sud"><span class="e">☀️</span>Au sud</button>
+      <button class="opt" data-v="ouest"><span class="e">🌇</span>À l'ouest</button>
+      <button class="opt" data-v="est"><span class="e">🌅</span>À l'est</button>
+      <button class="opt" data-v="nord"><span class="e">🌥️</span>Au nord</button>
+      <button class="opt" data-v="sud"><span class="e">🤷</span>Je ne sais pas</button>
+    </div>
+  </section>
+
+  <section class="screen" data-step="4" data-key="shutters">
+    <h2>🪟 Vous avez des volets ou des stores extérieurs ?</h2>
+    <div class="opts">
+      <button class="opt" data-v="exterieur"><span class="e">✅</span>Oui, volets / stores extérieurs</button>
+      <button class="opt" data-v="rideaux"><span class="e">🧵</span>Seulement des rideaux</button>
+      <button class="opt" data-v="aucun"><span class="e">❌</span>Rien du tout</button>
+    </div>
+  </section>
+
+  <section class="screen" data-step="5" data-key="clim">
+    <h2>❄️ Vous avez une climatisation ?</h2>
+    <div class="opts">
+      <button class="opt" data-v="oui"><span class="e">❄️</span>Oui</button>
+      <button class="opt" data-v="envie"><span class="e">🤔</span>Non, mais j'y pense</button>
+      <button class="opt" data-v="non"><span class="e">🚫</span>Non</button>
+    </div>
+  </section>
+
+  <!-- Résultat -->
+  <section class="screen" data-step="6" id="result">
+    <h2>Demain chez vous 🌡️</h2>
+    <div class="temps">
+      <div class="temp no"><small>Sans rien faire</small><b id="tNo">--°</b><small>à 17h</small></div>
+      <div class="temp plan"><small>Avec votre plan</small><b id="tPlan">--°</b><small>à 17h</small></div>
+    </div>
+    <div class="gain">Vous gagnez <b id="tGain">-</b> sans travaux</div>
+    <div class="card">
+      <div id="chart"></div>
+      <div class="legend"><span><i style="background:var(--hot)"></i>Sans rien faire</span><span><i style="background:var(--cool)"></i>Avec le plan</span><span><i style="background:#b8c4cc"></i>Dehors</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Votre plan pour demain</div>
+      <div id="plan"></div>
+    </div>
+    <div id="climTip"></div>
+    <div id="workTip"></div>
+    <button class="btn alt" onclick="next()">Je relève le défi fraîcheur 💪</button>
+  </section>
+
+  <!-- Engagement -->
+  <section class="screen" data-step="7">
+    <h2>Défi fraîcheur : je m'engage à…</h2>
+    <p class="lead">Cochez ce que vous ferez au prochain épisode de chaleur. Le résultat de la salle s'affiche en direct à l'écran.</p>
+    <div class="card" id="engageList"></div>
+    <button class="btn alt" id="engageBtn" onclick="engage()">Je m'engage ✅</button>
+  </section>
+
+  <!-- Merci -->
+  <section class="screen" data-step="8">
+    <div class="center">
+      <h1>Merci ! 🙌</h1>
+      <p class="lead">Ensemble, la salle a déjà gagné</p>
+      <div class="big" id="roomDeg">0°C</div>
+      <p class="muted">cumulés, soit environ <b id="roomKwh">0</b> kWh de clim évités par jour de canicule.</p>
+      <p class="muted" style="margin-top:22px">👀 Regardez le grand écran !</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const answers = {};
+let current = 0;
+const TOTAL = 8;
+let result = null, participantId = null, sessionId = null, pollTimer = null;
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+
+async function join() {
+  const err = document.getElementById("joinErr");
+  err.textContent = ""; document.getElementById("retryBtn").style.display = "none";
+  try {
+    const r = await fetch("/api/join", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || "Erreur");
+    participantId = d.id; sessionId = d.sessionId;
+    store.set("ml_id", d.id); store.set("ml_session", d.sessionId);
+    afterJoin(d.phase);
+  } catch (e) {
+    err.textContent = e.message || "Connexion impossible";
+    document.getElementById("retryBtn").style.display = "block";
+  }
+}
+
+function afterJoin(phase) {
+  if (phase === "running") { current = 1; show(1); }
+  else { show(-1); }
+  startPolling();
+}
+
+function startPolling() {
+  clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    try {
+      const d = await (await fetch("/api/state?id=" + encodeURIComponent(participantId), { cache: "no-store" })).json();
+      document.getElementById("nb").textContent = d.connected;
+      if (!d.known || d.sessionId !== sessionId) {   // l'animateur a relancé une nouvelle session
+        clearInterval(pollTimer); participantId = null; current = 0; show(0); join(); return;
+      }
+      if (d.phase === "running" && current === 0) { current = 1; show(1); }
+      if (d.phase === "ended" && current < 6) { clearInterval(pollTimer); show(-2); }
+    } catch (e) {}
+  }, 1500);
+}
+
+// Connexion auto au scan (ou reprise après rechargement)
+(async () => {
+  const id = store.get("ml_id"), sid = store.get("ml_session");
+  if (id) {
+    try {
+      const d = await (await fetch("/api/state?id=" + encodeURIComponent(id), { cache: "no-store" })).json();
+      if (d.known && d.sessionId === sid) { participantId = id; sessionId = sid; afterJoin(d.phase); return; }
+    } catch (e) {}
+  }
+  join();
+})();
+
+const OUT_MAX = { dijon: 34, lyon: 35, paris: 33, marseille: 35, nord: 30 };
+
+function show(i) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", +s.dataset.step === i));
+  document.getElementById("bar").style.width = (Math.max(0, i) / TOTAL * 100) + "%";
+  window.scrollTo(0, 0);
+}
+function next() { current++; if (current === 6) buildResult(); if (current === 7) buildEngage(); show(current); }
+
+document.querySelectorAll(".screen[data-key] .opt").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const sec = btn.closest(".screen");
+    sec.querySelectorAll(".opt").forEach(o => o.classList.remove("sel"));
+    btn.classList.add("sel");
+    answers[sec.dataset.key] = btn.dataset.v;
+    setTimeout(next, 220);
+  });
+});
+
+// --- Modèle thermique simplifié (démo) ---
+function compute() {
+  const out = OUT_MAX[answers.city] || 33;
+  let t = out - 6;
+  t += { maison: 0, rdc: -1.5, milieu: 0.5, dernier: 2.5 }[answers.floor] || 0;
+  t += { sud: 2, ouest: 2.5, est: 1, nord: -0.5 }[answers.orientation] || 0;
+  t += { exterieur: 0, rideaux: 1.5, aucun: 2.5 }[answers.shutters] || 0;
+  t = Math.round(t);
+
+  const gestures = [];
+  if (answers.shutters === "exterieur")
+    gestures.push({ id: "volets", h: "9h", txt: `Fermez les volets côté ${answers.orientation === "nord" ? "soleil" : answers.orientation} avant que le soleil tape`, gain: 3 });
+  else
+    gestures.push({ id: "occulter", h: "9h", txt: "Fermez rideaux épais ou tendez un drap clair à l'extérieur des fenêtres exposées", gain: answers.shutters === "rideaux" ? 1.5 : 2 });
+  gestures.push({ id: "fermer", h: "11h", txt: "Gardez fenêtres fermées : dehors il fait plus chaud que dedans", gain: 1 });
+  gestures.push({ id: "appareils", h: "14h", txt: "Évitez four, sèche-linge et halogènes aux heures chaudes", gain: 1 });
+  gestures.push({ id: "ventil", h: "22h30", txt: "Ouvrez tout en grand et créez un courant d'air jusqu'au matin", gain: answers.floor === "dernier" ? 2.5 : 2 });
+  gestures.push({ id: "brasseur", h: "Journée", txt: "Un ventilateur de plafond : -3°C ressentis pour ~10× moins qu'une clim", gain: 0 });
+
+  const realGain = gestures.reduce((s, g) => s + g.gain, 0);
+  const plan = Math.max(23, Math.round(t - realGain));
+  return { out, tNo: t, tPlan: plan, gain: t - plan, gestures };
+}
+
+function curve(peak, amp) {
+  // pic à 17h, minimum à 5h
+  return Array.from({ length: 25 }, (_, h) => peak - amp / 2 * (1 - Math.cos(2 * Math.PI * (h - 17) / 24)));
+}
+
+function drawChart(r) {
+  const W = 320, H = 170, pad = { l: 28, r: 8, t: 10, b: 22 };
+  const series = [
+    { d: curve(r.out, 14), c: "#b8c4cc", w: 2, dash: "4 4" },
+    { d: curve(r.tNo, 4), c: "#e8572a", w: 3 },
+    { d: curve(r.tPlan, 6), c: "#1f8fd6", w: 3 },
+  ];
+  const all = series.flatMap(s => s.d);
+  const min = Math.floor(Math.min(...all) - 1), max = Math.ceil(Math.max(...all) + 1);
+  const x = h => pad.l + h / 24 * (W - pad.l - pad.r);
+  const y = v => pad.t + (max - v) / (max - min) * (H - pad.t - pad.b);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Courbe de température">`;
+  for (let v = Math.ceil(min / 5) * 5; v <= max; v += 5)
+    svg += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y(v)}" y2="${y(v)}" stroke="#eef2f5"/><text x="2" y="${y(v) + 4}" font-size="10" fill="#8a9aa6">${v}°</text>`;
+  [0, 6, 12, 18, 24].forEach(h => svg += `<text x="${x(h)}" y="${H - 6}" font-size="10" fill="#8a9aa6" text-anchor="middle">${h}h</text>`);
+  const y28 = y(28);
+  if (28 > min && 28 < max) svg += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y28}" y2="${y28}" stroke="#e8572a" stroke-opacity=".3" stroke-dasharray="2 3"/><text x="${pad.l + 4}" y="${y28 - 3}" font-size="9" fill="#e8572a">seuil d'inconfort 28°</text>`;
+  series.forEach(s => {
+    svg += `<path d="${s.d.map((v, h) => (h ? "L" : "M") + x(h).toFixed(1) + " " + y(v).toFixed(1)).join(" ")}" fill="none" stroke="${s.c}" stroke-width="${s.w}" ${s.dash ? `stroke-dasharray="${s.dash}"` : ""} stroke-linecap="round"/>`;
+  });
+  svg += "</svg>";
+  document.getElementById("chart").innerHTML = svg;
+}
+
+async function buildResult() {
+  result = compute();
+  document.getElementById("tNo").textContent = result.tNo + "°";
+  document.getElementById("tPlan").textContent = result.tPlan + "°";
+  document.getElementById("tGain").textContent = result.gain + "°C";
+  drawChart(result);
+  document.getElementById("plan").innerHTML = result.gestures.map(g =>
+    `<div class="step"><div class="h">${g.h}</div><div class="t">${g.txt}</div>${g.gain ? `<div class="d">-${g.gain}°</div>` : ""}</div>`).join("");
+  document.getElementById("climTip").innerHTML =
+    answers.clim === "oui" ? `<div class="tip">❄️ <b>Votre clim :</b> réglez-la sur 26°C et lancez-la vers 13h, quand le solaire produit le plus, plutôt qu'à 19h au pic de consommation. Environ 30 % d'électricité en moins.</div>`
+    : answers.clim === "envie" ? `<div class="tip">🤔 <b>Avant d'acheter une clim :</b> avec votre plan, vous passez à ${result.tPlan}°C. Un brasseur d'air (~80 €) pourrait suffire.</div>` : "";
+  document.getElementById("workTip").innerHTML =
+    answers.shutters !== "exterieur" ? `<div class="tip">🔧 <b>Petit investissement :</b> des stores extérieurs vous feraient gagner encore ~3°C. Aides CEE possibles pour réduire le reste à charge.</div>`
+    : answers.floor === "dernier" || answers.floor === "maison" ? `<div class="tip">🔧 <b>Petit investissement :</b> isoler les combles, c'est jusqu'à 30 % de la chaleur qui entre par le toit en moins.</div>` : "";
+  try {
+    const r = await fetch("/api/submit", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: participantId, ...answers, clim: answers.clim === "oui", tempNo: result.tNo, tempPlan: result.tPlan }) });
+  } catch (e) { /* démo hors-ligne : on continue */ }
+}
+
+function buildEngage() {
+  const list = result.gestures.map(g => ({ id: g.id, txt: g.txt, gain: g.gain || 1 }));
+  document.getElementById("engageList").innerHTML = list.map(g =>
+    `<label class="chk"><input type="checkbox" value="${g.id}" data-gain="${g.gain}" checked> ${g.txt}</label>`).join("");
+}
+
+async function engage() {
+  const boxes = [...document.querySelectorAll("#engageList input:checked")];
+  const gestures = boxes.map(b => b.value);
+  const gain = boxes.reduce((s, b) => s + Number(b.dataset.gain), 0);
+  document.getElementById("engageBtn").disabled = true;
+  try {
+    const r = await fetch("/api/engage", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: participantId, gestures, gain }) });
+    const data = await r.json();
+    if (data.ok) {
+      document.getElementById("roomDeg").textContent = data.degreesSaved + "°C";
+      document.getElementById("roomKwh").textContent = data.kwhSaved;
+    }
+  } catch (e) {}
+  current = 8; show(8);
+}
+</script>
+</body>
+</html>
