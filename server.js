@@ -53,6 +53,8 @@ const MIME = {
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".ico": "image/x-icon",
+  ".woff2": "font/woff2",
+  ".txt": "text/plain; charset=utf-8",
 };
 const ROUTES = { "/": "/index.html", "/jouer": "/jouer.html", "/stats": "/stats.html" };
 
@@ -197,7 +199,7 @@ const server = http.createServer(async (req, res) => {
     if (!filePath.startsWith(PUBLIC_DIR)) { res.writeHead(403); return res.end(); }
     fs.readFile(filePath, (err, data) => {
       if (err) { res.writeHead(404); return res.end("Not found"); }
-      res.writeHead(200, { "Content-Type": MIME[path.extname(filePath)] || "application/octet-stream", "Cache-Control": "no-cache" });
+      res.writeHead(200, { "Content-Type": MIME[path.extname(filePath)] || "application/octet-stream", "Cache-Control": filePath.endsWith(".woff2") ? "public, max-age=604800" : "no-cache" });
       res.end(data);
     });
   } catch (e) {

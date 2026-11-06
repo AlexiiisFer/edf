@@ -4,98 +4,126 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Météo de mon logement</title>
+<link rel="preload" href="/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/theme.css">
 <style>
-  :root { --bg: #0b2233; --card: #12324a; --ink: #fff; --muted: #9fb6c6; --hot: #ff6a3d; --cool: #3cb4ff; --ok: #2fd39a; --gold: #f5a623; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: radial-gradient(circle at 20% 0%, #163e5a, var(--bg) 60%); color: var(--ink); height: 100vh; padding: 3vh 3vw; overflow: hidden; }
-  .view { display: none; height: 94vh; } .view.active { display: grid; animation: fade .4s ease; }
-  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-  .brand { display: flex; align-items: center; gap: 1vw; }
-  .logo { width: 3.4vw; height: 3.4vw; border-radius: .8vw; background: linear-gradient(135deg, var(--hot), var(--gold)); display: grid; place-items: center; font-size: 2vw; }
-  .brand b { font-size: 1.7vw; }
-  h1 { font-size: 3vw; line-height: 1.1; } h1 span { color: var(--hot); }
-  .btn { padding: 1.8vh 3vw; font-size: 1.8vw; font-weight: 800; border: 0; border-radius: 1vw; cursor: pointer; background: var(--ok); color: #05261a; }
-  .btn.ghost { background: transparent; color: var(--muted); border: 1px solid rgba(255,255,255,.2); font-size: 1.1vw; padding: 1.2vh 1.4vw; font-weight: 500; }
+  body { background: var(--nuit); color: var(--craie); height: 100vh; overflow: hidden; }
+  .view { display: none; height: 100vh; padding: 5vh 5vw; }
+  .view.active { display: grid; }
+  .brand { display: flex; align-items: center; gap: .6em; font-size: 1.5vw; font-weight: 600; color: var(--brume); }
+  .btn { border: 0; cursor: pointer; border-radius: 99px; font-weight: 700; }
+  .btn-go { background: var(--soleil); color: var(--nuit); font-size: 1.7vw; padding: 1.4vh 2.6vw; }
+  .btn-go:hover { background: #ffd56e; }
+  .btn-quiet { background: none; color: var(--brume); font-size: 1.05vw; padding: 1vh 1.2vw; border: 1px solid var(--ombre-2); }
+  .btn-quiet:hover { color: var(--craie); border-color: var(--brume); }
 
-  /* Lobby */
-  #v-lobby { grid-template-rows: 1fr auto; gap: 2vh; }
-  .qrzone { display: flex; justify-content: center; align-items: center; min-height: 0; }
-  .qrbox { background: #fff; border-radius: 2vh; padding: 2vh; height: 100%; aspect-ratio: 1; }
-  .qrbox img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-  .bar { display: flex; align-items: center; gap: 2vw; background: var(--card); border-radius: 1.4vw; padding: 1.6vh 2vw; }
-  .count { font-size: 1.6vw; color: var(--muted); white-space: nowrap; } .count b { font-size: 3.4vw; color: #fff; margin-right: .6vw; vertical-align: middle; }
-  .players { flex: 1; display: flex; gap: .6vw; overflow: hidden; height: 3.4vw; align-items: center; }
-  .chip { flex-shrink: 0; width: 3vw; height: 3vw; display: grid; place-items: center; border-radius: 50%; font-size: 1.6vw; animation: pop .45s cubic-bezier(.2,1.6,.4,1); }
-  .chip:nth-child(4n+1) { background: rgba(255,106,61,.2); } .chip:nth-child(4n+2) { background: rgba(60,180,255,.2); }
-  .chip:nth-child(4n+3) { background: rgba(47,211,154,.2); } .chip:nth-child(4n) { background: rgba(245,166,35,.2); }
+  /* ---------- Lobby ---------- */
+  #v-lobby { grid-template-columns: 1fr auto; grid-template-rows: auto 1fr auto; column-gap: 6vw; }
+  #v-lobby .brand { grid-column: 1 / -1; }
+  .pitch { align-self: center; max-width: 44vw; }
+  .pitch h1 { font-size: 5.4vw; line-height: .98; font-weight: 750; font-variation-settings: "opsz" 96, "wdth" 94; letter-spacing: -0.02em; }
+  .pitch p { margin-top: 3.5vh; font-size: 1.7vw; line-height: 1.45; color: var(--brume); max-width: 34vw; }
+  .steps { margin-top: 5vh; display: grid; gap: 1.6vh; list-style: none; counter-reset: s; }
+  .steps li { counter-increment: s; display: flex; align-items: baseline; gap: 1.2vw; font-size: 1.5vw; }
+  .steps li::before { content: counter(s); font-weight: 750; color: var(--soleil); width: 1.2em; font-variant-numeric: tabular-nums; }
+  .qr { align-self: center; justify-self: end; text-align: center; }
+  .qr-card { background: #fff; border-radius: 2.4vh; padding: 2.6vh; width: 54vh; height: 54vh; }
+  .qr-card img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  .qr-url { margin-top: 2.4vh; font-size: 1.1vw; color: var(--brume); }
+  .lobby-bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 2vw; border-top: 1px solid var(--ombre-2); padding-top: 3vh; }
+  .room { font-size: 1.6vw; color: var(--brume); white-space: nowrap; }
+  .room b { font-size: 3.2vw; color: var(--craie); margin-right: .25em; vertical-align: -0.12em; }
+  .dots { flex: 1; display: flex; flex-wrap: wrap; gap: .5vw; max-height: 2.6vw; overflow: hidden; align-items: center; }
+  .dot { width: 1.1vw; height: 1.1vw; border-radius: 50%; background: var(--soleil); animation: pop .5s cubic-bezier(.2, 1.7, .4, 1); }
+  .dot:nth-child(3n+2) { background: var(--fraicheur); } .dot:nth-child(3n) { background: var(--chaleur); }
   @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
 
-  /* Question */
-  #v-question { grid-template-rows: auto auto 1fr auto; gap: 3vh; }
-  .qtop { display: flex; justify-content: space-between; align-items: center; }
-  .qnum { font-size: 1.6vw; color: var(--muted); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-  .ring { position: relative; width: 9vw; height: 9vw; }
-  .ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
-  .ring .sec { position: absolute; inset: 0; display: grid; place-items: center; font-size: 3.4vw; font-weight: 800; }
-  .qtitle { font-size: 4.2vw; line-height: 1.1; text-align: center; }
-  .qopts { display: grid; grid-template-columns: repeat(auto-fit, minmax(25vw, 1fr)); gap: 1.6vw; align-content: center; }
-  .qopt { background: var(--card); border-radius: 1.4vw; padding: 3vh 2vw; font-size: 2.2vw; font-weight: 700; display: flex; align-items: center; gap: 1.4vw; }
-  .qopt .e { font-size: 3.4vw; }
-  .qbottom { display: flex; justify-content: space-between; align-items: center; }
-  .answered { font-size: 1.8vw; color: var(--muted); } .answered b { color: #fff; font-size: 2.6vw; }
-  .prog { flex: 1; margin: 0 2vw; height: 1.4vh; background: rgba(255,255,255,.08); border-radius: 9vh; overflow: hidden; }
-  .prog div { height: 100%; background: var(--ok); width: 0; transition: width .4s; }
+  /* ---------- Question ---------- */
+  #v-question { grid-template-columns: 1fr 8vw; grid-template-rows: auto 1fr auto; column-gap: 5vw; }
+  .q-count { font-size: 1.5vw; color: var(--brume); font-weight: 600; }
+  .q-count b { color: var(--soleil); }
+  .q-main { align-self: center; }
+  .q-title { font-size: 4.6vw; line-height: 1.02; font-weight: 750; font-variation-settings: "opsz" 96, "wdth" 94; letter-spacing: -0.015em; max-width: 70vw; }
+  .q-opts { margin-top: 6vh; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.4vw; max-width: 72vw; }
+  .q-opt { display: flex; align-items: center; gap: 1.4vw; padding: 2.6vh 2vw; background: var(--ombre); border-radius: 1.2vw; font-size: 2vw; font-weight: 600; }
+  .q-opt .e { font-size: 2.6vw; }
+  .q-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: 2vw; }
+  .answers { font-size: 1.6vw; color: var(--brume); white-space: nowrap; } .answers b { color: var(--craie); font-size: 2.4vw; }
+  .track { flex: 1; height: .9vh; border-radius: 99px; background: var(--ombre); overflow: hidden; }
+  .track div { height: 100%; width: 0; background: var(--fraicheur); border-radius: 99px; transition: width .5s ease; }
 
-  /* Résultat individuel */
-  #v-result { place-items: center; text-align: center; align-content: center; gap: 3vh; }
-  #v-result .phone { font-size: 9vw; animation: wiggle 1.2s infinite; }
-  @keyframes wiggle { 0%,100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
-  #v-result h1 { font-size: 4vw; }
-  #v-result p { font-size: 2vw; color: var(--muted); }
-  .bigcount { font-size: 2.4vw; } .bigcount b { color: var(--ok); font-size: 4vw; }
+  /* Le chrono-thermomètre */
+  .thermo { grid-row: 1 / 3; grid-column: 2; align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 2vh; }
+  .thermo .sec { font-size: 4vw; font-weight: 750; line-height: 1; }
+  .tube { flex: 1; width: 2.6vw; border-radius: 99px; background: var(--ombre); position: relative; overflow: hidden; }
+  .mercury { position: absolute; left: 0; right: 0; bottom: 0; height: 100%; border-radius: 99px; background: linear-gradient(0deg, var(--chaleur), var(--soleil) 55%, var(--fraicheur)); background-size: 100% 100vh; background-position: bottom; }
+  .bulb { width: 5.2vw; height: 5.2vw; border-radius: 50%; background: var(--chaleur); margin-top: -2.6vh; transition: background .3s; }
+  .thermo.low .sec { color: var(--chaleur); }
+
+  /* ---------- Résultat individuel ---------- */
+  #v-result { place-content: center; justify-items: start; max-width: 70vw; margin: 0 auto; }
+  #v-result h1 { font-size: 5vw; line-height: 1; font-weight: 750; font-variation-settings: "opsz" 96, "wdth" 94; letter-spacing: -0.02em; }
+  #v-result p { margin-top: 3vh; font-size: 1.9vw; color: var(--brume); line-height: 1.4; max-width: 50vw; }
+  .band { margin-top: 6vh; width: 60vw; height: 1.2vh; border-radius: 99px; background: var(--chaleur-band); }
+  .result-foot { margin-top: 4vh; display: flex; align-items: center; gap: 3vw; font-size: 1.6vw; color: var(--brume); }
+  .result-foot b { color: var(--craie); font-size: 2.6vw; }
 </style>
 </head>
 <body>
 
 <!-- LOBBY -->
 <section class="view active" id="v-lobby">
-  <div class="qrzone">
-    <div class="qrbox"><img id="qr" alt="QR code pour rejoindre"></div>
+  <div class="brand"><span class="sun"></span>Météo de mon logement</div>
+  <div class="pitch">
+    <h1>Quelle température fera&#8209;t&#8209;il chez vous demain&nbsp;?</h1>
+    <p>La météo annonce la chaleur dehors. Nous prévoyons celle de votre logement, et comment la faire baisser.</p>
+    <ol class="steps">
+      <li>Scannez le QR code</li>
+      <li>Répondez à 5 questions sur votre logement</li>
+      <li>Découvrez votre prévision et votre plan</li>
+    </ol>
   </div>
-  <div class="bar">
-    <div class="count"><b id="count">0</b>connectés</div>
-    <div class="players" id="players"></div>
-    <button class="btn ghost" onclick="api('reset')">Réinitialiser</button>
-    <button class="btn" onclick="api('start')">▶ Lancer</button>
+  <div class="qr">
+    <div class="qr-card"><img id="qr" alt="QR code pour rejoindre la session"></div>
+    <div class="qr-url" id="url"></div>
+  </div>
+  <div class="lobby-bar">
+    <div class="room"><b class="num" id="count">0</b>dans la salle</div>
+    <div class="dots" id="players" aria-hidden="true"></div>
+    <button class="btn btn-quiet" onclick="api('reset')">Remettre à zéro</button>
+    <button class="btn btn-go" onclick="api('start')">Commencer</button>
   </div>
 </section>
 
 <!-- QUESTION -->
 <section class="view" id="v-question">
-  <div class="qtop">
-    <div class="qnum" id="qNum">Question 1 / 5</div>
-    <div class="ring">
-      <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="9"/>
-        <circle id="ringFg" cx="50" cy="50" r="44" fill="none" stroke="#2fd39a" stroke-width="9" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg>
-      <div class="sec" id="qSec">15</div>
-    </div>
+  <div class="q-count" id="qNum">Question <b>1</b> sur 5</div>
+  <div class="q-main">
+    <div class="q-title" id="qTitle"></div>
+    <div class="q-opts" id="qOpts"></div>
   </div>
-  <div class="qtitle" id="qTitle"></div>
-  <div class="qopts" id="qOpts"></div>
-  <div class="qbottom">
-    <div class="answered"><b id="qAns">0</b> / <span id="qTot">0</span> ont répondu</div>
-    <div class="prog"><div id="qProg"></div></div>
-    <button class="btn ghost" onclick="api('next')">Question suivante ⏭</button>
+  <div class="thermo" id="thermo" aria-label="Temps restant">
+    <div class="sec num" id="qSec">15</div>
+    <div class="tube"><div class="mercury" id="mercury"></div></div>
+    <div class="bulb"></div>
+  </div>
+  <div class="q-foot">
+    <div class="answers"><b class="num" id="qAns">0</b> réponses sur <span id="qTot">0</span></div>
+    <div class="track"><div id="qProg"></div></div>
+    <button class="btn btn-quiet" onclick="api('next')">Question suivante</button>
   </div>
 </section>
 
 <!-- RÉSULTATS INDIVIDUELS -->
 <section class="view" id="v-result">
-  <div class="phone">📱</div>
-  <h1>Découvrez la température prévue <span style="color:var(--hot)">chez vous</span> demain</h1>
-  <p>…et relevez le défi fraîcheur sur votre téléphone</p>
-  <div class="bigcount"><b id="rEng">0</b> engagés sur <span id="rTot">0</span> · statistiques dans <b id="rSec" style="color:#fff">30</b> s</div>
-  <button class="btn ghost" onclick="api('next')">Voir les statistiques maintenant ⏭</button>
+  <h1>Regardez votre téléphone.</h1>
+  <p>Chacun découvre la température prévue chez lui demain, son plan heure par heure, et peut relever le défi fraîcheur.</p>
+  <div class="band"></div>
+  <div class="result-foot">
+    <span><b class="num" id="rEng">0</b> engagés sur <span id="rTot">0</span></span>
+    <span>Résultats de la salle dans <b class="num" id="rSec">30</b> s</span>
+    <button class="btn btn-quiet" onclick="api('next')">Afficher maintenant</button>
+  </div>
 </section>
 
 <script src="/qrcode.js"></script>
@@ -104,35 +132,35 @@
 const joinUrl = location.origin + "/jouer";
 const qr = qrcode(0, "M"); qr.addData(joinUrl); qr.make();
 document.getElementById("qr").src = qr.createDataURL(10, 2);
+document.getElementById("url").textContent = joinUrl.replace(/^https?:\/\//, "");
 
-const ICONS = ["☀️", "🌡️", "🏠", "🪟", "🌿", "💧", "🌙", "🍃", "❄️", "🌤️"];
-let view = "lobby", lastQ = -2, localEnd = 0, duration = 15000, chips = 0, lastSession = null;
+let view = "lobby", lastQ = -2, localEnd = 0, duration = 15000, dots = 0, lastSession = null;
 
 function show(v) {
   if (view === v) return; view = v;
   document.querySelectorAll(".view").forEach(s => s.classList.toggle("active", s.id === "v-" + v));
 }
 async function api(action) {
-  if (action === "reset" && !confirm("Remettre la session à zéro ?")) return;
+  if (action === "reset" && !confirm("Remettre la session à zéro ? Les participants devront rescanner.")) return;
   try { render(await (await fetch("/api/" + action, { method: "POST" })).json()); } catch (e) {}
 }
 
 function render(d) {
-  if (d.sessionId !== lastSession) { lastSession = d.sessionId; chips = 0; document.getElementById("players").innerHTML = ""; }
+  if (d.sessionId !== lastSession) { lastSession = d.sessionId; dots = 0; document.getElementById("players").innerHTML = ""; }
   if (d.phase === "lobby") {
     document.getElementById("count").textContent = d.connected;
     const box = document.getElementById("players");
-    if (!d.connected) { box.innerHTML = ""; chips = 0; }
-    else { while (chips < d.connected) { const el = document.createElement("div"); el.className = "chip"; el.textContent = ICONS[chips % ICONS.length]; box.prepend(el); chips++; } }
+    if (!d.connected) { box.innerHTML = ""; dots = 0; }
+    while (dots < d.connected) { const el = document.createElement("span"); el.className = "dot"; box.prepend(el); dots++; }
     show("lobby");
   } else if (d.phase === "question") {
     localEnd = Date.now() + d.remaining; duration = d.duration;
     if (d.q !== lastQ) {
       lastQ = d.q;
       const q = QUESTIONS[d.q];
-      document.getElementById("qNum").textContent = `Question ${d.q + 1} / ${d.total}`;
+      document.getElementById("qNum").innerHTML = `Question <b>${d.q + 1}</b> sur ${d.total}`;
       document.getElementById("qTitle").textContent = q.title;
-      document.getElementById("qOpts").innerHTML = q.options.map(o => `<div class="qopt"><span class="e">${o.e}</span>${o.label}</div>`).join("");
+      document.getElementById("qOpts").innerHTML = q.options.map(o => `<div class="q-opt"><span class="e">${o.e}</span>${o.label}</div>`).join("");
     }
     document.getElementById("qAns").textContent = d.answeredQ;
     document.getElementById("qTot").textContent = d.connected;
@@ -148,14 +176,13 @@ function render(d) {
   }
 }
 
-// Chrono fluide
+// Chrono : le mercure descend
 setInterval(() => {
   const left = Math.max(0, localEnd - Date.now());
   if (view === "question") {
     document.getElementById("qSec").textContent = Math.ceil(left / 1000);
-    const ring = document.getElementById("ringFg");
-    ring.style.strokeDashoffset = 276.5 * (1 - left / duration);
-    ring.style.stroke = left < 5000 ? "#ff6a3d" : "#2fd39a";
+    document.getElementById("mercury").style.height = (left / duration * 100) + "%";
+    document.getElementById("thermo").classList.toggle("low", left < 5000);
   } else if (view === "result") {
     document.getElementById("rSec").textContent = Math.ceil(left / 1000);
   }

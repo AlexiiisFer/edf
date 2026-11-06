@@ -3,117 +3,130 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Météo de mon logement — Statistiques</title>
+<title>Météo de mon logement — Résultats de la salle</title>
+<link rel="preload" href="/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/theme.css">
 <style>
-  :root { --bg: #0b2233; --card: #12324a; --ink: #fff; --muted: #9fb6c6; --hot: #ff6a3d; --cool: #3cb4ff; --ok: #2fd39a; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: radial-gradient(circle at 20% 0%, #163e5a, var(--bg) 60%); color: var(--ink); min-height: 100vh; padding: 3vh 3vw; }
-  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3vh; }
-  h1 { font-size: 2.6vw; line-height: 1.1; }
-  h1 span { color: var(--hot); }
-  .sub { color: var(--muted); font-size: 1.4vw; margin-top: .6vh; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr 22vw; grid-template-rows: auto auto; gap: 1.6vw; }
-  .card { background: var(--card); border-radius: 1.4vw; padding: 2vw; }
-  .label { color: var(--muted); font-size: 1.2vw; text-transform: uppercase; letter-spacing: .08em; }
-  .val { font-size: 5.5vw; font-weight: 800; line-height: 1.05; margin-top: 1vh; transition: color .3s; }
-  .hot { color: var(--hot); } .cool { color: var(--cool); } .ok { color: var(--ok); }
-  .podium { grid-row: span 2; display: flex; flex-direction: column; }
-  .podium ol { list-style: none; margin-top: 1.5vh; flex: 1; }
-  .podium li { display: flex; justify-content: space-between; font-size: 1.25vw; padding: 1.1vh 0; border-bottom: 1px solid rgba(255,255,255,.08); }
-  .podium li b { color: var(--ok); }
-  .podium li.none { color: var(--muted); font-size: 1.2vw; border: 0; }
-  .miniqr { display: flex; gap: 1vw; align-items: center; margin-top: 1.5vh; color: var(--muted); font-size: 1vw; }
-  .miniqr img { width: 6vw; background: #fff; padding: .4vw; border-radius: .5vw; image-rendering: pixelated; }
-  .oldqr { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .qr img { image-rendering: pixelated; width: 100%; max-width: 19vw; background: #fff; padding: 1vw; border-radius: 1vw; }
-  .qr .url { font-size: 1.1vw; color: var(--muted); margin-top: 1.2vh; word-break: break-all; }
-  .qr b { font-size: 1.8vw; margin-bottom: 1.5vh; display: block; }
-  .wide { grid-column: span 3; }
-  .gauge { height: 4vh; background: rgba(255,255,255,.08); border-radius: 9vh; overflow: hidden; margin: 2vh 0 1vh; }
-  .gauge div { height: 100%; width: 0; background: linear-gradient(90deg, var(--cool), var(--ok)); border-radius: 9vh; transition: width .8s cubic-bezier(.2,.8,.2,1); }
-  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.6vw; margin-top: 1.6vw; }
-  .fact { background: rgba(255,255,255,.05); border-radius: 1vw; padding: 1.4vw; }
-  .fact b { font-size: 3vw; display: block; }
-  .fact span { color: var(--muted); font-size: 1.15vw; }
-  .impacts { display: flex; gap: 2.4vw; margin-left: auto; }
-  .impacts div { text-align: right; }
-  .impacts b { display: block; font-size: 2.3vw; color: #fff; white-space: nowrap; }
-  .impacts span { font-size: 1vw; color: var(--muted); }
-  .france-btn { flex-shrink: 0; background: linear-gradient(90deg, #2b5ce6, #fff 50%, #e63946); color: #0b2233; border: 0; font-weight: 800; font-size: 1.4vw; padding: 1.3vh 2.4vw; border-radius: 99px; cursor: pointer; box-shadow: 0 6px 30px rgba(0,0,0,.35); }
-  .france { position: fixed; inset: 0; background: radial-gradient(circle at 50% 30%, #163e5a, #071823 70%); display: none; place-items: center; z-index: 10; cursor: pointer; }
-  .france.on { display: grid; animation: frin .6s ease; }
-  @keyframes frin { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: none; } }
-  .fr-in { width: 86vw; text-align: center; }
-  .fr-kicker { font-size: 2.8vw; font-weight: 700; margin-bottom: 6vh; } .fr-kicker b { color: var(--cool); }
-  .fr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2vw; }
-  .fr-grid div { background: var(--card); border-radius: 1.6vw; padding: 4vh 1.5vw; opacity: 0; animation: up .6s ease forwards; }
-  .fr-grid div:nth-child(2) { animation-delay: .5s; } .fr-grid div:nth-child(3) { animation-delay: 1s; } .fr-grid div:nth-child(4) { animation-delay: 1.6s; }
-  @keyframes up { from { opacity: 0; transform: translateY(3vh); } to { opacity: 1; transform: none; } }
-  .fr-grid b { display: block; font-size: 4.2vw; white-space: nowrap; font-weight: 800; color: var(--ok); line-height: 1.1; }
-  .fr-grid span { display: block; font-size: 1.4vw; color: var(--muted); margin-top: 1.4vh; line-height: 1.3; }
-  .fr-grid .hl { background: linear-gradient(135deg, #1d5a3f, #12324a); } .fr-grid .hl b { color: #fff; }
-  .fr-note { margin-top: 6vh; color: var(--muted); font-size: 1.1vw; }
-  .bump { animation: bump .4s; }
-  @keyframes bump { 50% { transform: scale(1.08); } }
-  .admin { position: fixed; bottom: 10px; right: 10px; opacity: .4; }
-  .admin button { background: none; border: 1px solid var(--muted); color: var(--muted); padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+  body { background: var(--nuit); color: var(--craie); height: 100vh; overflow: hidden; }
+  .page { height: 100vh; padding: 4.5vh 5vw; display: grid; grid-template-rows: auto auto 1fr auto; gap: 4.5vh; }
+  .top { display: flex; justify-content: space-between; align-items: center; }
+  .brand { display: flex; align-items: center; gap: .6em; font-size: 1.4vw; font-weight: 600; color: var(--brume); }
+  .brand span.n { color: var(--craie); }
+  .btn { border: 0; cursor: pointer; border-radius: 99px; font-weight: 700; }
+  .btn-go { background: var(--soleil); color: var(--nuit); font-size: 1.4vw; padding: 1.3vh 2.2vw; }
+  .btn-go:hover { background: #ffd56e; }
+  .btn-quiet { background: none; color: var(--brume); font-size: 1vw; padding: .9vh 1.1vw; border: 1px solid var(--ombre-2); }
+
+  /* Le moment fort : la salle passe du chaud au frais */
+  .hero h1 { font-size: 2.3vw; font-weight: 600; color: var(--brume); margin-bottom: 2.4vh; }
+  .swing { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 3vw; }
+  .temp b { display: block; font-size: 9.5vw; font-weight: 780; line-height: .85; }
+  .temp span { display: block; margin-top: 1.6vh; font-size: 1.4vw; color: var(--brume); }
+  .temp.hot b { color: var(--chaleur); } .temp.cool b { color: var(--fraicheur); } .temp.cool { text-align: right; }
+  .arrow { position: relative; height: 1.4vh; border-radius: 99px; background: var(--chaleur-band); }
+  .arrow::after { content: ""; position: absolute; right: -1.6vh; top: 50%; transform: translateY(-50%); border: 1.8vh solid transparent; border-left: 2.4vh solid var(--fraicheur); border-right: 0; }
+  .arrow .delta { position: absolute; left: 50%; top: -6.4vh; transform: translateX(-50%); font-size: 2.2vw; font-weight: 750; white-space: nowrap; }
+  .arrow .range { position: absolute; left: 50%; top: 3vh; transform: translateX(-50%); font-size: 1.15vw; color: var(--brume); white-space: nowrap; }
+
+  .body { display: grid; grid-template-columns: 1fr 1fr; gap: 5vw; min-height: 0; }
+  h2 { font-size: 1.5vw; font-weight: 650; margin-bottom: 2.2vh; }
+  h2 small { font-weight: 450; color: var(--brume); margin-left: .5em; }
+
+  .defi .big { font-size: 5.2vw; font-weight: 780; line-height: 1; color: var(--soleil); }
+  .defi .big small { font-variation-settings: "opsz" 24; font-size: 1.5vw; font-weight: 500; color: var(--brume); margin-left: .6vw; letter-spacing: 0; }
+  .gauge { margin: 2.4vh 0 1vh; height: 1.1vh; border-radius: 99px; background: var(--ombre); overflow: hidden; }
+  .gauge div { height: 100%; width: 0; background: var(--soleil); border-radius: 99px; transition: width 1s cubic-bezier(.2, .8, .2, 1); }
+  .goal { font-size: 1vw; color: var(--brume); }
+  .gains { margin-top: 3.4vh; display: flex; gap: 3.4vw; }
+  .gains b { display: block; font-size: 2.6vw; font-weight: 750; }
+  .gains span { font-size: 1.05vw; color: var(--brume); }
+
+  .bars { list-style: none; display: grid; gap: 1.5vh; }
+  .bars li { display: grid; grid-template-columns: 15vw 1fr 3vw; align-items: center; gap: 1.2vw; font-size: 1.25vw; }
+  .bars .b { height: 2.2vh; border-radius: 99px; background: var(--ombre); overflow: hidden; }
+  .bars .b div { height: 100%; background: var(--fraicheur); border-radius: 99px; transition: width .8s ease; }
+  .bars .n { text-align: right; font-weight: 700; }
+  .bars .none { color: var(--brume); display: block; }
+
+  .facts { display: flex; gap: 4vw; align-items: flex-end; border-top: 1px solid var(--ombre-2); padding-top: 3vh; }
+  .fact { font-size: 1.2vw; color: var(--brume); max-width: 15vw; line-height: 1.3; }
+  .fact b { display: block; font-size: 2.6vw; color: var(--craie); font-weight: 750; line-height: 1.05; }
+  .join { margin-left: auto; display: flex; align-items: center; gap: 1vw; font-size: 1vw; color: var(--brume); }
+  .join img { width: 7vh; height: 7vh; background: #fff; padding: .5vh; border-radius: .8vh; image-rendering: pixelated; }
+  .bump { animation: bump .45s ease; } @keyframes bump { 40% { transform: scale(1.06); } }
+
+  /* Projection France */
+  .france { position: fixed; inset: 0; background: var(--nuit); display: none; z-index: 10; cursor: pointer; padding: 8vh 7vw; }
+  .france.on { display: grid; grid-template-rows: auto 1fr auto; }
+  .fr-head { font-size: 3.4vw; font-weight: 750; line-height: 1.05; letter-spacing: -0.02em; max-width: 70vw; font-variation-settings: "opsz" 96, "wdth" 94; }
+  .fr-head em { font-style: normal; color: var(--soleil); }
+  .fr-list { align-self: center; display: grid; grid-template-columns: repeat(4, 1fr); gap: 3vw; }
+  .fr-item { border-top: .8vh solid var(--ombre-2); padding-top: 3vh; opacity: 0; transform: translateY(3vh); }
+  .france.on .fr-item { animation: up .7s cubic-bezier(.2, .8, .2, 1) forwards; }
+  .france.on .fr-item:nth-child(2) { animation-delay: .6s; } .france.on .fr-item:nth-child(3) { animation-delay: 1.2s; } .france.on .fr-item:nth-child(4) { animation-delay: 2s; }
+  @keyframes up { to { opacity: 1; transform: none; } }
+  .fr-item b { display: block; font-size: 5vw; font-weight: 780; line-height: 1; white-space: nowrap; }
+  .fr-item span { display: block; margin-top: 2vh; font-size: 1.45vw; color: var(--brume); line-height: 1.3; }
+  .fr-item.key { border-top-color: var(--soleil); } .fr-item.key b { color: var(--soleil); }
+  .fr-note { font-size: 1.05vw; color: var(--brume); }
 </style>
 </head>
 <body>
+<div class="page">
   <div class="top">
-    <div>
-      <h1>Quelle température fera-t-il <span>chez vous</span> demain ?</h1>
-      <div class="sub">Résultats de la salle · <b id="answered" style="color:#fff">0</b> réponses sur <b id="connected" style="color:#fff">0</b> connectés</div>
+    <div class="brand"><span class="sun"></span><span class="n">Météo de mon logement</span><span style="margin-left:1.2vw"><span class="n" id="answered">0</span> logements analysés</span></div>
+    <div style="display:flex; gap:1vw; align-items:center">
+      <button class="btn btn-quiet" onclick="newSession()">Nouvelle session</button>
+      <button class="btn btn-go" onclick="toggleFrance()">Et à l'échelle de la France&nbsp;?</button>
     </div>
-    <button class="france-btn" onclick="toggleFrance()">🇫🇷 Et à l'échelle de la France ?</button>
   </div>
 
-  <div class="grid">
-    <div class="card"><div class="label">🥵 Le plus chaud</div><div class="val hot" id="hotTemp" style="font-size:4.5vw">--°</div><div id="hotName" style="font-size:1.4vw;color:var(--muted);margin-top:.6vh">&nbsp;</div></div>
-    <div class="card"><div class="label">Sans rien faire, à 17h</div><div class="val hot" id="avgNo">--°</div></div>
-    <div class="card"><div class="label">Avec le plan, à 17h</div><div class="val cool" id="avgPlan">--°</div></div>
-    <div class="card podium">
-      <div class="label">✅ Gestes choisis par la salle</div>
-      <ol id="champions"><li class="none">Les premiers engagements arrivent…</li></ol>
-      <div class="miniqr"><img id="qr" alt="QR"><span>Pas encore rejoint ?<br>Scannez !</span></div>
+  <section class="hero">
+    <h1>Demain à 17h, dans les logements de la salle</h1>
+    <div class="swing">
+      <div class="temp hot"><b class="num" id="avgNo">--°</b><span>en moyenne sans rien faire</span></div>
+      <div class="arrow"><div class="delta" id="delta"></div><div class="range" id="range"></div></div>
+      <div class="temp cool"><b class="num" id="avgPlan">--°</b><span>en suivant le plan</span></div>
     </div>
-    <div class="card wide">
-      <div class="label">🔥 Défi fraîcheur : la salle a gagné</div>
-      <div style="display:flex; align-items:baseline; gap:2vw">
-        <div class="val ok" id="deg">0°C</div>
-        <div style="font-size:1.5vw; color:var(--muted); white-space:nowrap">cumulés · <b id="engaged" style="color:#fff">0</b> engagés</div>
-        <div class="impacts">
-          <div><b id="eur">0 €</b><span>économisés / été</span></div>
-          <div><b id="co2">0 kg</b><span>CO₂ évités / été</span></div>
-          <div><b id="kwh">0</b><span>kWh évités / jour chaud</span></div>
-        </div>
-      </div>
+  </section>
+
+  <section class="body">
+    <div class="defi">
+      <h2>Défi fraîcheur <small><span id="engaged">0</span> engagés</small></h2>
+      <div class="big num"><span id="deg">0</span>°<small>gagnés à eux tous</small></div>
       <div class="gauge"><div id="gauge"></div></div>
-      <div style="font-size:1.1vw; color:var(--muted)">Objectif salle : <span id="goal">200</span>°C</div>
-    </div>
-  </div>
-
-  <div class="facts">
-    <div class="fact"><b class="hot" id="pTooHot">0%</b><span>auront plus de 28°C chez eux sans rien faire</span></div>
-    <div class="fact"><b id="pNoShutters">0%</b><span>n'ont ni volets ni stores extérieurs</span></div>
-    <div class="fact"><b id="pTop">0%</b><span>vivent au dernier étage</span></div>
-    <div class="fact"><b class="cool" id="pClim">0%</b><span>ont une climatisation</span></div>
-  </div>
-
-  <div class="admin"><button onclick="newSession()">Nouvelle session</button></div>
-
-  <div class="france" id="france" onclick="toggleFrance()">
-    <div class="fr-in">
-      <div class="fr-kicker">🇫🇷 Si <b id="frFoyers">10 millions</b> de foyers faisaient comme cette salle…</div>
-      <div class="fr-grid">
-        <div><b id="frGwh">--</b><span>GWh d'électricité évités chaque été</span></div>
-        <div><b id="frEur">--</b><span>d'économies pour les ménages</span></div>
-        <div><b id="frCo2">--</b><span>de CO₂ évitées</span></div>
-        <div class="hl"><b id="frReact">--</b><span>réacteurs nucléaires de moins à faire tourner aux pics de chaleur</span></div>
+      <div class="goal">Objectif de la salle : <span id="goal">200</span>°</div>
+      <div class="gains">
+        <div><b class="num" id="eur">0 €</b><span>économisés par été</span></div>
+        <div><b class="num" id="co2">0 kg</b><span>de CO₂ évités par été</span></div>
+        <div><b class="num" id="kwh">0</b><span>kWh évités par jour chaud</span></div>
       </div>
-      <div class="fr-note">Projection à partir des <span id="frBase">0</span> engagements de la salle · estimations de démonstration</div>
     </div>
+    <div>
+      <h2>Les gestes que la salle s'engage à faire</h2>
+      <ul class="bars" id="bars"><li class="none">Les engagements arrivent…</li></ul>
+    </div>
+  </section>
+
+  <section class="facts">
+    <div class="fact"><b class="num" id="pTooHot">0%</b>dépasseront 28° chez eux sans rien faire</div>
+    <div class="fact"><b class="num" id="pNoShutters">0%</b>n'ont ni volets ni stores extérieurs</div>
+    <div class="fact"><b class="num" id="pTop">0%</b>vivent au dernier étage</div>
+    <div class="fact"><b class="num" id="pClim">0%</b>ont une climatisation</div>
+    <div class="join"><span>Pas encore participé&nbsp;?<br>Scannez ici</span><img id="qr" alt="QR code"></div>
+  </section>
+</div>
+
+<div class="france" id="france" onclick="toggleFrance()">
+  <div class="fr-head">Si <em id="frFoyers">10 millions</em> de foyers faisaient comme cette salle, chaque été en France :</div>
+  <div class="fr-list">
+    <div class="fr-item"><b class="num" id="frGwh">--</b><span>GWh d'électricité en moins</span></div>
+    <div class="fr-item"><b class="num" id="frEur">--</b><span>économisés par les ménages</span></div>
+    <div class="fr-item"><b class="num" id="frCo2">--</b><span>de CO₂ évitées</span></div>
+    <div class="fr-item key"><b class="num" id="frReact">--</b><span>réacteurs nucléaires de moins à solliciter aux pics de chaleur</span></div>
   </div>
+  <div class="fr-note">Projection à partir des <span id="frBase">0</span> engagements de la salle. Estimations de démonstration : 40 jours chauds, 0,20 €/kWh, 60 g CO₂/kWh.</div>
+</div>
 
 <script src="/qrcode.js"></script>
 <script src="/questions.js"></script>
@@ -124,76 +137,78 @@ document.getElementById("qr").src = qr.createDataURL(6, 1);
 
 const params = new URLSearchParams(location.search);
 const GOAL_PARAM = Number(params.get("objectif")) || 0;
+const LABELS = { volets: "Fermer les volets le matin", occulter: "Occulter les fenêtres", fermer: "Garder fermé en journée",
+  appareils: "Limiter four et appareils", ventil: "Ventiler la nuit", brasseur: "Ventilateur de plafond" };
 
+function fmt(n, d = 0) { return n.toLocaleString("fr-FR", { maximumFractionDigits: d, minimumFractionDigits: d }); }
+function deg(v) { return fmt(v, Number.isInteger(v) ? 0 : 1) + "°"; }
 function set(id, v) {
   const el = document.getElementById(id);
   if (el.textContent !== String(v)) { el.textContent = v; el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
 }
-function esc(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
 
+let lastStats = null;
 async function refresh() {
   try {
     const s = await (await fetch("/api/stats", { cache: "no-store" })).json();
-    lastStats = s; if (document.getElementById("france").classList.contains("on")) renderFrance();
+    lastStats = s;
     set("answered", s.count);
-    set("connected", s.connected);
-    set("avgNo", s.count ? s.avgNoAction + "°" : "--°");
-    set("avgPlan", s.count ? s.avgWithPlan + "°" : "--°");
-    set("hotTemp", s.hottest !== null ? s.hottest + "°" : "--°");
-    document.getElementById("hotName").textContent = s.coolest !== null ? "le plus frais : " + s.coolest + "°" : "\u00a0";
-    set("deg", s.degreesSaved + "°C");
-    set("kwh", s.kwhSaved);
-    set("eur", s.eurosSeason.toLocaleString("fr-FR") + " €");
-    set("co2", s.co2Season.toLocaleString("fr-FR") + " kg");
+    set("avgNo", s.count ? deg(s.avgNoAction) : "--°");
+    set("avgPlan", s.count ? deg(s.avgWithPlan) : "--°");
+    document.getElementById("delta").textContent = s.count ? "−" + fmt(s.avgNoAction - s.avgWithPlan, 1) + "°, sans travaux" : "";
+    document.getElementById("range").textContent = s.count ? `de ${s.coolest}° à ${s.hottest}° selon les logements` : "";
+    set("deg", fmt(s.degreesSaved));
     set("engaged", s.engagedCount);
+    set("eur", fmt(s.eurosSeason) + " €");
+    set("co2", fmt(s.co2Season) + " kg");
+    set("kwh", fmt(s.kwhSaved));
     set("pTooHot", s.pctTooHot + "%");
     set("pNoShutters", s.pctNoShutters + "%");
     set("pTop", s.pctTopFloor + "%");
     set("pClim", s.pctClim + "%");
     const GOAL = GOAL_PARAM || Math.max(50, Math.ceil(s.connected * 6 / 50) * 50);
-    document.getElementById("goal").textContent = GOAL;
+    document.getElementById("goal").textContent = fmt(GOAL);
     document.getElementById("gauge").style.width = Math.min(100, s.degreesSaved / GOAL * 100) + "%";
-    const LABELS = { volets: "🪟 Fermer les volets le matin", occulter: "🧵 Occulter les fenêtres", fermer: "🚪 Garder fermé en journée",
-      appareils: "🔌 Limiter four & appareils", ventil: "🌙 Ventiler la nuit", brasseur: "🌀 Ventilateur de plafond" };
     const g = Object.entries(s.gestureCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
-    const html = g.length
-      ? g.map(([k, n]) => `<li><span>${LABELS[k] || esc(k)}</span><b>${n}</b></li>`).join("")
-      : '<li class="none">Les premiers engagements arrivent…</li>';
-    const ol = document.getElementById("champions");
-    if (ol.innerHTML !== html) ol.innerHTML = html;
+    const max = g.length ? g[0][1] : 1;
+    const ul = document.getElementById("bars");
+    ul.innerHTML = g.length
+      ? g.map(([k, n]) => `<li><span>${LABELS[k] || k}</span><div class="b"><div style="width:${n / max * 100}%"></div></div><span class="n num">${n}</span></li>`).join("")
+      : '<li class="none">Les engagements arrivent…</li>';
+    if (document.getElementById("france").classList.contains("on")) renderFrance();
   } catch (e) {}
 }
+
 // --- Projection France ---
 const FOYERS = Number(params.get("foyers")) || 10_000_000;   // ~1 foyer français sur 3
 const PEAK_HOURS = 8;                                       // la clim évitée se concentre sur ~8 h chaudes
 const REACTOR_GW = 0.9;
-let lastStats = null;
-function fmt(n, d = 0) { return n.toLocaleString("fr-FR", { maximumFractionDigits: d, minimumFractionDigits: d }); }
 function renderFrance() {
   const s = lastStats; if (!s) return;
   const n = s.engagedCount || 0;
   document.getElementById("frBase").textContent = n;
   document.getElementById("frFoyers").textContent = fmt(FOYERS / 1e6) + " millions";
   if (!n) return;
-  const kwhDay = s.kwhSaved / n, eur = s.eurosSeason / n, co2 = s.co2Season / n;   // moyennes par foyer
+  const kwhDay = s.kwhSaved / n, eur = s.eurosSeason / n, co2 = s.co2Season / n;
   const gwh = kwhDay * IMPACT.hotDays * FOYERS / 1e6;
   const meur = eur * FOYERS / 1e6;
-  const kt = co2 * FOYERS / 1e6;            // kg → kt
+  const t = co2 * FOYERS / 1000;
   const gw = kwhDay / PEAK_HOURS * FOYERS / 1e6;
-  document.getElementById("frGwh").textContent = fmt(gwh);
-  document.getElementById("frEur").textContent = meur >= 1000 ? fmt(meur / 1000, 1) + " Md€" : fmt(meur) + " M€";
-  const t = kt * 1000; document.getElementById("frCo2").textContent = fmt(t >= 10000 ? Math.round(t / 1000) * 1000 : Math.round(t / 10) * 10) + " t";
-  document.getElementById("frReact").textContent = "≈ " + fmt(Math.max(1, Math.round(gw / REACTOR_GW)));
+  document.getElementById("frGwh").textContent = fmt(Math.round(gwh / 10) * 10);
+  document.getElementById("frEur").textContent = meur >= 1000 ? fmt(meur / 1000, 1) + " Md€" : fmt(Math.round(meur)) + " M€";
+  document.getElementById("frCo2").textContent = fmt(t >= 10000 ? Math.round(t / 1000) * 1000 : Math.round(t / 10) * 10) + " t";
+  document.getElementById("frReact").textContent = fmt(Math.max(1, Math.round(gw / REACTOR_GW)));
 }
 function toggleFrance() {
   const el = document.getElementById("france");
-  el.classList.toggle("on");
-  if (el.classList.contains("on")) {
-    renderFrance();
-    el.querySelectorAll(".fr-grid div").forEach(d => { d.style.animation = "none"; void d.offsetWidth; d.style.animation = ""; });
-  }
+  const on = !el.classList.contains("on");
+  if (on) renderFrance();
+  el.classList.toggle("on", on);
 }
-document.addEventListener("keydown", e => { if (e.key === "f" || e.key === "F") toggleFrance(); if (e.key === "Escape") document.getElementById("france").classList.remove("on"); });
+document.addEventListener("keydown", e => {
+  if (e.key === "f" || e.key === "F") toggleFrance();
+  if (e.key === "Escape") document.getElementById("france").classList.remove("on");
+});
 
 async function newSession() {
   if (!confirm("Lancer une nouvelle session ? Les résultats seront effacés.")) return;
