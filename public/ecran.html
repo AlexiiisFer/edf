@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Météo de mon logement — Écran salle</title>
+<style>
+  :root { --bg: #0b2233; --card: #12324a; --ink: #fff; --muted: #9fb6c6; --hot: #ff6a3d; --cool: #3cb4ff; --ok: #2fd39a; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: radial-gradient(circle at 20% 0%, #163e5a, var(--bg) 60%); color: var(--ink); min-height: 100vh; padding: 3vh 3vw; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3vh; }
+  h1 { font-size: 3.2vw; line-height: 1.1; }
+  h1 span { color: var(--hot); }
+  .sub { color: var(--muted); font-size: 1.4vw; margin-top: .6vh; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr 22vw; grid-template-rows: auto auto; gap: 1.6vw; }
+  .card { background: var(--card); border-radius: 1.4vw; padding: 2vw; }
+  .label { color: var(--muted); font-size: 1.2vw; text-transform: uppercase; letter-spacing: .08em; }
+  .val { font-size: 5.5vw; font-weight: 800; line-height: 1.05; margin-top: 1vh; transition: color .3s; }
+  .hot { color: var(--hot); } .cool { color: var(--cool); } .ok { color: var(--ok); }
+  .qr { grid-row: span 2; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .qr img { image-rendering: pixelated; width: 100%; max-width: 19vw; background: #fff; padding: 1vw; border-radius: 1vw; }
+  .qr .url { font-size: 1.1vw; color: var(--muted); margin-top: 1.2vh; word-break: break-all; }
+  .qr b { font-size: 1.8vw; margin-bottom: 1.5vh; display: block; }
+  .wide { grid-column: span 3; }
+  .gauge { height: 4vh; background: rgba(255,255,255,.08); border-radius: 9vh; overflow: hidden; margin: 2vh 0 1vh; }
+  .gauge div { height: 100%; width: 0; background: linear-gradient(90deg, var(--cool), var(--ok)); border-radius: 9vh; transition: width .8s cubic-bezier(.2,.8,.2,1); }
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.6vw; margin-top: 1.6vw; }
+  .fact { background: rgba(255,255,255,.05); border-radius: 1vw; padding: 1.4vw; }
+  .fact b { font-size: 3vw; display: block; }
+  .fact span { color: var(--muted); font-size: 1.15vw; }
+  .bump { animation: bump .4s; }
+  @keyframes bump { 50% { transform: scale(1.08); } }
+  .admin { position: fixed; bottom: 10px; right: 10px; opacity: .4; }
+  .admin button { background: none; border: 1px solid var(--muted); color: var(--muted); padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div>
+      <h1>Quelle température fera-t-il <span>chez vous</span> demain ?</h1>
+      <div class="sub">Scannez le QR code · 30 secondes · résultats en direct</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="label">Logements analysés</div><div class="val" id="count">0</div></div>
+    <div class="card"><div class="label">Sans rien faire, à 17h</div><div class="val hot" id="avgNo">--°</div></div>
+    <div class="card"><div class="label">Avec le plan, à 17h</div><div class="val cool" id="avgPlan">--°</div></div>
+    <div class="card qr">
+      <b>📱 Scannez-moi</b>
+      <img id="qr" alt="QR code">
+      <div class="url" id="url"></div>
+    </div>
+    <div class="card wide">
+      <div class="label">🔥 Défi fraîcheur : la salle a gagné</div>
+      <div style="display:flex; align-items:baseline; gap:2vw">
+        <div class="val ok" id="deg">0°C</div>
+        <div style="font-size:1.6vw; color:var(--muted)">cumulés · ≈ <b id="kwh" style="color:#fff">0</b> kWh de clim évités / jour · <b id="engaged" style="color:#fff">0</b> engagés</div>
+      </div>
+      <div class="gauge"><div id="gauge"></div></div>
+      <div style="font-size:1.1vw; color:var(--muted)">Objectif salle : <span id="goal">200</span>°C</div>
+    </div>
+  </div>
+
+  <div class="facts">
+    <div class="fact"><b class="hot" id="pTooHot">0%</b><span>auront plus de 28°C chez eux sans rien faire</span></div>
+    <div class="fact"><b id="pNoShutters">0%</b><span>n'ont ni volets ni stores extérieurs</span></div>
+    <div class="fact"><b id="pTop">0%</b><span>vivent au dernier étage</span></div>
+    <div class="fact"><b class="cool" id="pClim">0%</b><span>ont une climatisation</span></div>
+  </div>
+
+  <div class="admin" id="admin" style="display:none"><button onclick="resetAll()">Réinitialiser</button></div>
+
+<script src="/qrcode.js"></script>
+<script>
+const phoneUrl = location.origin + "/";
+document.getElementById("url").textContent = phoneUrl.replace(/^https?:\/\//, "");
+const qr = qrcode(0, "M"); qr.addData(phoneUrl); qr.make();
+document.getElementById("qr").src = qr.createDataURL(10, 2);
+
+const params = new URLSearchParams(location.search);
+const token = params.get("admin");
+if (token) document.getElementById("admin").style.display = "block";
+const GOAL = Number(params.get("objectif")) || 200;
+document.getElementById("goal").textContent = GOAL;
+
+let last = {};
+function set(id, v) {
+  const el = document.getElementById(id);
+  if (el.textContent !== String(v)) { el.textContent = v; el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
+}
+async function refresh() {
+  try {
+    const s = await (await fetch("/api/stats", { cache: "no-store" })).json();
+    set("count", s.count);
+    set("avgNo", s.count ? s.avgNoAction + "°" : "--°");
+    set("avgPlan", s.count ? s.avgWithPlan + "°" : "--°");
+    set("deg", s.degreesSaved + "°C");
+    set("kwh", s.kwhSaved);
+    set("engaged", s.engagedCount);
+    set("pTooHot", s.pctTooHot + "%");
+    set("pNoShutters", s.pctNoShutters + "%");
+    set("pTop", s.pctTopFloor + "%");
+    set("pClim", s.pctClim + "%");
+    document.getElementById("gauge").style.width = Math.min(100, s.degreesSaved / GOAL * 100) + "%";
+  } catch (e) {}
+}
+async function resetAll() {
+  if (!confirm("Effacer toutes les réponses ?")) return;
+  await fetch("/api/reset?token=" + encodeURIComponent(token), { method: "POST" });
+  refresh();
+}
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>
