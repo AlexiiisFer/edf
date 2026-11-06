@@ -3,140 +3,175 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Météo de mon logement — Lobby</title>
+<title>Météo de mon logement</title>
 <style>
-  :root { --bg: #0b2233; --card: #12324a; --ink: #fff; --muted: #9fb6c6; --hot: #ff6a3d; --cool: #3cb4ff; --ok: #2fd39a; }
+  :root { --bg: #0b2233; --card: #12324a; --ink: #fff; --muted: #9fb6c6; --hot: #ff6a3d; --cool: #3cb4ff; --ok: #2fd39a; --gold: #f5a623; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: radial-gradient(circle at 20% 0%, #163e5a, var(--bg) 60%); color: var(--ink); min-height: 100vh; padding: 3vh 3vw; overflow: hidden; }
-  .wrap { display: grid; grid-template-columns: 30vw 1fr; gap: 3vw; height: 94vh; }
-  .left { display: flex; flex-direction: column; justify-content: center; }
-  .brand { display: flex; align-items: center; gap: 1vw; margin-bottom: 3vh; }
-  .logo { width: 3.4vw; height: 3.4vw; border-radius: .8vw; background: linear-gradient(135deg, var(--hot), #f5a623); display: grid; place-items: center; font-size: 2vw; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: radial-gradient(circle at 20% 0%, #163e5a, var(--bg) 60%); color: var(--ink); height: 100vh; padding: 3vh 3vw; overflow: hidden; }
+  .view { display: none; height: 94vh; } .view.active { display: grid; animation: fade .4s ease; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .brand { display: flex; align-items: center; gap: 1vw; }
+  .logo { width: 3.4vw; height: 3.4vw; border-radius: .8vw; background: linear-gradient(135deg, var(--hot), var(--gold)); display: grid; place-items: center; font-size: 2vw; }
   .brand b { font-size: 1.7vw; }
-  h1 { font-size: 2.8vw; line-height: 1.1; margin-bottom: 3vh; }
-  h1 span { color: var(--hot); }
+  h1 { font-size: 3vw; line-height: 1.1; } h1 span { color: var(--hot); }
+  .btn { padding: 1.8vh 3vw; font-size: 1.8vw; font-weight: 800; border: 0; border-radius: 1vw; cursor: pointer; background: var(--ok); color: #05261a; }
+  .btn.ghost { background: transparent; color: var(--muted); border: 1px solid rgba(255,255,255,.2); font-size: 1.1vw; padding: 1.2vh 1.4vw; font-weight: 500; }
+
+  /* Lobby */
+  #v-lobby { grid-template-columns: 32vw 1fr; gap: 3vw; }
+  .left { display: flex; flex-direction: column; justify-content: center; gap: 3vh; }
   .qrbox { background: #fff; border-radius: 1.4vw; padding: 1.4vw; }
   .qrbox img { width: 100%; display: block; image-rendering: pixelated; }
-  .url { color: var(--muted); font-size: 1vw; margin-top: 1.5vh; word-break: break-all; text-align: center; }
-  .right { background: var(--card); border-radius: 1.6vw; padding: 2.4vw; display: flex; flex-direction: column; min-height: 0; }
-  .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2vh; }
-  .count { font-size: 1.6vw; color: var(--muted); }
-  .count b { font-size: 4.5vw; color: #fff; margin-right: .6vw; vertical-align: middle; }
-  .players { flex: 1; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 1vw; overflow: hidden; }
-  .chip { width: 4.2vw; height: 4.2vw; display: grid; place-items: center; border-radius: 50%; font-size: 2.2vw; animation: pop .45s cubic-bezier(.2,1.6,.4,1); white-space: nowrap; }
+  .url { color: var(--muted); font-size: 1vw; text-align: center; word-break: break-all; }
+  .panel { background: var(--card); border-radius: 1.6vw; padding: 2.6vw; display: flex; flex-direction: column; min-height: 0; }
+  .count { font-size: 1.8vw; color: var(--muted); } .count b { font-size: 6vw; color: #fff; margin-right: .8vw; vertical-align: middle; }
+  .players { flex: 1; display: flex; flex-wrap: wrap; align-content: flex-start; gap: .9vw; overflow: hidden; margin-top: 2vh; }
+  .chip { width: 4.2vw; height: 4.2vw; display: grid; place-items: center; border-radius: 50%; font-size: 2.2vw; animation: pop .45s cubic-bezier(.2,1.6,.4,1); }
   .chip:nth-child(4n+1) { background: rgba(255,106,61,.2); } .chip:nth-child(4n+2) { background: rgba(60,180,255,.2); }
   .chip:nth-child(4n+3) { background: rgba(47,211,154,.2); } .chip:nth-child(4n) { background: rgba(245,166,35,.2); }
-  @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-  .empty { color: var(--muted); font-size: 1.6vw; margin: auto; text-align: center; }
-  .empty .dots::after { content: ""; animation: dots 1.5s steps(4) infinite; }
-  @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+  @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+  .empty { color: var(--muted); font-size: 1.8vw; margin: auto; }
   .actions { display: flex; gap: 1vw; align-items: center; margin-top: 2vh; }
-  .btn { padding: 1.6vh 2.6vw; font-size: 1.6vw; font-weight: 700; border: 0; border-radius: 1vw; cursor: pointer; background: var(--ok); color: #05261a; }
-  .btn.ghost { background: transparent; color: var(--muted); border: 1px solid rgba(255,255,255,.2); font-size: 1.1vw; padding: 1.2vh 1.4vw; font-weight: 500; }
-  .btn:disabled { opacity: .5; }
-  .admin { display: none; gap: .6vw; align-items: center; margin-left: auto; }
-  .admin input { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); color: #fff; padding: 1.1vh 1vw; border-radius: .6vw; font-size: 1.1vw; width: 14vw; }
-  .msg { color: var(--hot); font-size: 1.1vw; }
+
+  /* Question */
+  #v-question { grid-template-rows: auto auto 1fr auto; gap: 3vh; }
+  .qtop { display: flex; justify-content: space-between; align-items: center; }
+  .qnum { font-size: 1.6vw; color: var(--muted); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+  .ring { position: relative; width: 9vw; height: 9vw; }
+  .ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+  .ring .sec { position: absolute; inset: 0; display: grid; place-items: center; font-size: 3.4vw; font-weight: 800; }
+  .qtitle { font-size: 4.2vw; line-height: 1.1; text-align: center; }
+  .qopts { display: grid; grid-template-columns: repeat(auto-fit, minmax(25vw, 1fr)); gap: 1.6vw; align-content: center; }
+  .qopt { background: var(--card); border-radius: 1.4vw; padding: 3vh 2vw; font-size: 2.2vw; font-weight: 700; display: flex; align-items: center; gap: 1.4vw; }
+  .qopt .e { font-size: 3.4vw; }
+  .qbottom { display: flex; justify-content: space-between; align-items: center; }
+  .answered { font-size: 1.8vw; color: var(--muted); } .answered b { color: #fff; font-size: 2.6vw; }
+  .prog { flex: 1; margin: 0 2vw; height: 1.4vh; background: rgba(255,255,255,.08); border-radius: 9vh; overflow: hidden; }
+  .prog div { height: 100%; background: var(--ok); width: 0; transition: width .4s; }
+
+  /* Résultat individuel */
+  #v-result { place-items: center; text-align: center; align-content: center; gap: 3vh; }
+  #v-result .phone { font-size: 9vw; animation: wiggle 1.2s infinite; }
+  @keyframes wiggle { 0%,100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
+  #v-result h1 { font-size: 4vw; }
+  #v-result p { font-size: 2vw; color: var(--muted); }
+  .bigcount { font-size: 2.4vw; } .bigcount b { color: var(--ok); font-size: 4vw; }
 </style>
 </head>
 <body>
-<div class="wrap">
+
+<!-- LOBBY -->
+<section class="view active" id="v-lobby">
   <div class="left">
     <div class="brand"><div class="logo">☀</div><b>Météo de mon logement</b></div>
     <h1>Quelle température fera-t-il <span>chez vous</span> demain ?</h1>
     <div class="qrbox"><img id="qr" alt="QR code pour rejoindre"></div>
     <div class="url">📱 Scannez pour rejoindre · <span id="url"></span></div>
   </div>
-
-  <div class="right">
-    <div class="head">
-      <div class="count"><b id="count">0</b>personnes connectées</div>
-      <div class="count" id="phaseLbl"></div>
-    </div>
-    <div class="players" id="players"><div class="empty">En attente des participants<span class="dots"></span></div></div>
+  <div class="panel">
+    <div class="count"><b id="count">0</b>personnes connectées</div>
+    <div class="players" id="players"><div class="empty">En attente des participants…</div></div>
     <div class="actions">
-      <button class="btn" id="startBtn" onclick="start()">▶ Lancer la session</button>
-      <button class="btn ghost" onclick="location.href='/stats'">Voir les statistiques</button>
-      <button class="btn ghost" onclick="reset()">Nouvelle session</button>
-      <div class="admin" id="admin">
-        <input id="token" type="password" placeholder="Mot de passe animateur">
-        <button class="btn ghost" onclick="saveToken()">OK</button>
-      </div>
-      <span class="msg" id="msg"></span>
+      <button class="btn" onclick="api('start')">▶ Lancer la session</button>
+      <button class="btn ghost" onclick="api('reset')">Réinitialiser</button>
     </div>
   </div>
-</div>
+</section>
+
+<!-- QUESTION -->
+<section class="view" id="v-question">
+  <div class="qtop">
+    <div class="qnum" id="qNum">Question 1 / 5</div>
+    <div class="ring">
+      <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="9"/>
+        <circle id="ringFg" cx="50" cy="50" r="44" fill="none" stroke="#2fd39a" stroke-width="9" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg>
+      <div class="sec" id="qSec">15</div>
+    </div>
+  </div>
+  <div class="qtitle" id="qTitle"></div>
+  <div class="qopts" id="qOpts"></div>
+  <div class="qbottom">
+    <div class="answered"><b id="qAns">0</b> / <span id="qTot">0</span> ont répondu</div>
+    <div class="prog"><div id="qProg"></div></div>
+    <button class="btn ghost" onclick="api('next')">Question suivante ⏭</button>
+  </div>
+</section>
+
+<!-- RÉSULTATS INDIVIDUELS -->
+<section class="view" id="v-result">
+  <div class="phone">📱</div>
+  <h1>Découvrez la température prévue <span style="color:var(--hot)">chez vous</span> demain</h1>
+  <p>…et relevez le défi fraîcheur sur votre téléphone</p>
+  <div class="bigcount"><b id="rEng">0</b> engagés sur <span id="rTot">0</span> · statistiques dans <b id="rSec" style="color:#fff">30</b> s</div>
+  <button class="btn ghost" onclick="api('next')">Voir les statistiques maintenant ⏭</button>
+</section>
 
 <script src="/qrcode.js"></script>
+<script src="/questions.js"></script>
 <script>
 const joinUrl = location.origin + "/jouer";
 const qr = qrcode(0, "M"); qr.addData(joinUrl); qr.make();
 document.getElementById("qr").src = qr.createDataURL(10, 2);
 document.getElementById("url").textContent = joinUrl.replace(/^https?:\/\//, "");
 
-// --- Mot de passe animateur ---
-const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
-const urlToken = new URLSearchParams(location.search).get("admin");
-if (urlToken) store.set("ml_admin", urlToken);
-let pending = null;
-
-async function admin(action) {
-  const token = store.get("ml_admin");
-  if (!token) { pending = action; askToken(); return false; }
-  const r = await fetch(`/api/admin/${action}?token=${encodeURIComponent(token)}`, { method: "POST" });
-  if (r.status === 403) { store.set("ml_admin", ""); pending = action; askToken("Mot de passe incorrect"); return false; }
-  document.getElementById("msg").textContent = "";
-  return r.ok;
-}
-function askToken(msg) {
-  document.getElementById("admin").style.display = "flex";
-  document.getElementById("msg").textContent = msg || "";
-  document.getElementById("token").focus();
-}
-async function saveToken() {
-  store.set("ml_admin", document.getElementById("token").value);
-  document.getElementById("admin").style.display = "none";
-  if (pending) { const a = pending; pending = null; a === "start" ? start() : reset(); }
-}
-document.getElementById("token").addEventListener("keydown", e => { if (e.key === "Enter") saveToken(); });
-
-async function start() {
-  if (await admin("start")) location.href = "/stats";
-}
-async function reset() {
-  if (await admin("reset")) { shown.clear(); document.getElementById("players").innerHTML = ""; refresh(); }
-}
-
-// --- Liste des joueurs en direct ---
-const shown = new Map();
 const ICONS = ["☀️", "🌡️", "🏠", "🪟", "🌿", "💧", "🌙", "🍃", "❄️", "🌤️"];
-let lastSession = null;
-async function refresh() {
-  try {
-    const d = await (await fetch("/api/lobby", { cache: "no-store" })).json();
-    if (d.sessionId !== lastSession) { lastSession = d.sessionId; shown.clear(); document.getElementById("players").innerHTML = ""; }
-    const box = document.getElementById("players");
-    document.getElementById("count").textContent = d.players.length;
-    document.getElementById("phaseLbl").textContent = d.phase === "running" ? "🟢 Session en cours" : d.phase === "ended" ? "Session terminée" : "";
-    document.getElementById("startBtn").textContent = d.phase === "running" ? "▶ Aller aux statistiques" : "▶ Lancer la session";
-    if (!d.players.length) {
-      box.innerHTML = '<div class="empty">En attente des participants<span class="dots"></span></div>';
-      return;
-    }
-    box.querySelector(".empty")?.remove();
-    d.players.forEach((p, i) => {
-      const key = i;
-      if (shown.has(key)) return;
-      const el = document.createElement("div");
-      el.className = "chip";
-      el.textContent = ICONS[i % ICONS.length];
-      box.appendChild(el);
-      shown.set(key, el);
-    });
-  } catch (e) {}
+let view = "lobby", lastQ = -2, localEnd = 0, duration = 15000, chips = 0, lastSession = null;
+
+function show(v) {
+  if (view === v) return; view = v;
+  document.querySelectorAll(".view").forEach(s => s.classList.toggle("active", s.id === "v-" + v));
 }
-refresh();
-setInterval(refresh, 1500);
+async function api(action) {
+  if (action === "reset" && !confirm("Remettre la session à zéro ?")) return;
+  try { render(await (await fetch("/api/" + action, { method: "POST" })).json()); } catch (e) {}
+}
+
+function render(d) {
+  if (d.sessionId !== lastSession) { lastSession = d.sessionId; chips = 0; document.getElementById("players").innerHTML = ""; }
+  if (d.phase === "lobby") {
+    document.getElementById("count").textContent = d.connected;
+    const box = document.getElementById("players");
+    if (!d.connected) { box.innerHTML = '<div class="empty">En attente des participants…</div>'; chips = 0; }
+    else { box.querySelector(".empty")?.remove(); while (chips < d.connected) { const el = document.createElement("div"); el.className = "chip"; el.textContent = ICONS[chips % ICONS.length]; box.appendChild(el); chips++; } }
+    show("lobby");
+  } else if (d.phase === "question") {
+    localEnd = Date.now() + d.remaining; duration = d.duration;
+    if (d.q !== lastQ) {
+      lastQ = d.q;
+      const q = QUESTIONS[d.q];
+      document.getElementById("qNum").textContent = `Question ${d.q + 1} / ${d.total}`;
+      document.getElementById("qTitle").textContent = q.title;
+      document.getElementById("qOpts").innerHTML = q.options.map(o => `<div class="qopt"><span class="e">${o.e}</span>${o.label}</div>`).join("");
+    }
+    document.getElementById("qAns").textContent = d.answeredQ;
+    document.getElementById("qTot").textContent = d.connected;
+    document.getElementById("qProg").style.width = (d.connected ? d.answeredQ / d.connected * 100 : 0) + "%";
+    show("question");
+  } else if (d.phase === "result") {
+    localEnd = Date.now() + d.remaining;
+    document.getElementById("rEng").textContent = d.engaged;
+    document.getElementById("rTot").textContent = d.connected;
+    show("result");
+  } else if (d.phase === "stats") {
+    location.href = "/stats";
+  }
+}
+
+// Chrono fluide
+setInterval(() => {
+  const left = Math.max(0, localEnd - Date.now());
+  if (view === "question") {
+    document.getElementById("qSec").textContent = Math.ceil(left / 1000);
+    const ring = document.getElementById("ringFg");
+    ring.style.strokeDashoffset = 276.5 * (1 - left / duration);
+    ring.style.stroke = left < 5000 ? "#ff6a3d" : "#2fd39a";
+  } else if (view === "result") {
+    document.getElementById("rSec").textContent = Math.ceil(left / 1000);
+  }
+}, 100);
+
+async function poll() { try { render(await (await fetch("/api/state", { cache: "no-store" })).json()); } catch (e) {} }
+poll(); setInterval(poll, 1000);
 </script>
 </body>
 </html>

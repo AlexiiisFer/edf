@@ -1,19 +1,50 @@
-// Météo de mon logement — serveur de session live (Node.js, sans dépendance)
+// Météo de mon logement — session live façon quiz (Node.js, sans dépendance)
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { QUESTIONS } = require("./public/questions.js");
 
 const PORT = process.env.PORT || 3000;
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "reset";
+const QUESTION_MS = (Number(process.env.QUESTION_SECONDS) || 15) * 1000;
+const RESULT_MS = (Number(process.env.RESULT_SECONDS) || 30) * 1000;
 const PUBLIC_DIR = path.join(__dirname, "public");
 const MAX_PLAYERS = 500;
 
-// État de la session (en mémoire)
+// phase : lobby → question (q = 0..N-1) → result (chacun voit son résultat) → stats
 let session = newSession();
 function newSession() {
-  return { id: crypto.randomUUID(), phase: "lobby", startedAt: null, players: new Map() };
+  return { id: crypto.randomUUID(), phase: "lobby", q: -1, endsAt: 0, players: new Map() };
 }
+
+function goTo(phase, q = -1) {
+  session.phase = phase;
+  session.q = q;
+  session.endsAt = phase === "question" ? Date.now() + QUESTION_MS : phase === "result" ? Date.now() + RESULT_MS : 0;
+}
+
+function advance() {
+  if (session.phase === "lobby") return goTo("question", 0);
+  if (session.phase === "question") {
+    return session.q + 1 < QUESTIONS.length ? goTo("question", session.q + 1) : goTo("result");
+  }
+  if (session.phase === "result") return goTo("stats");
+}
+
+// Avance automatique : fin du chrono, ou tout le monde a répondu
+function tick() {
+  const now = Date.now();
+  if (session.phase === "question") {
+    const key = QUESTIONS[session.q].key;
+    const players = [...session.players.values()];
+    const allAnswered = players.length > 0 && players.every((p) => p.answers[key] !== undefined);
+    if (now >= session.endsAt) advance();
+    else if (allAnswered && session.endsAt - now > 2500) session.endsAt = now + 2500; // petite pause avant la suite
+  } else if (session.phase === "result" && now >= session.endsAt) {
+    advance();
+  }
+}
+setInterval(tick, 500);
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -23,8 +54,7 @@ const MIME = {
   ".png": "image/png",
   ".ico": "image/x-icon",
 };
-
-const ROUTES = { "/": "/index.html", "/jouer": "/jouer.html", "/stats": "/stats.html", "/ecran": "/stats.html" };
+const ROUTES = { "/": "/index.html", "/jouer": "/jouer.html", "/stats": "/stats.html" };
 
 function sendJson(res, status, data) {
   res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
@@ -50,22 +80,36 @@ function num(v, min, max) {
   return Math.min(max, Math.max(min, n));
 }
 
-function playerList() {
-  return [...session.players.values()]
-    .sort((a, b) => a.joinedAt - b.joinedAt)
-    .map((p) => ({ done: p.answered, engaged: p.engaged }));
+function publicState(id) {
+  tick();
+  const players = [...session.players.values()];
+  const key = session.q >= 0 ? QUESTIONS[session.q].key : null;
+  const me = id ? session.players.get(id) : null;
+  return {
+    sessionId: session.id,
+    phase: session.phase,
+    q: session.q,
+    total: QUESTIONS.length,
+    remaining: session.endsAt ? Math.max(0, session.endsAt - Date.now()) : 0,
+    duration: session.phase === "question" ? QUESTION_MS : RESULT_MS,
+    connected: players.length,
+    answeredQ: key ? players.filter((p) => p.answers[key] !== undefined).length : 0,
+    submitted: players.filter((p) => p.submitted).length,
+    engaged: players.filter((p) => p.engaged).length,
+    known: !!me,
+    myAnswer: me && key ? me.answers[key] ?? null : null,
+  };
 }
 
 function computeStats() {
   const all = [...session.players.values()];
-  const list = all.filter((p) => p.answered);
+  const list = all.filter((p) => p.submitted);
   const count = list.length;
   const avg = (k) => (count ? list.reduce((s, p) => s + p[k], 0) / count : 0);
   const engaged = list.filter((p) => p.engaged);
   const pct = (fn) => (count ? Math.round((list.filter(fn).length / count) * 100) : 0);
   const gestureCounts = {};
   engaged.forEach((p) => p.gestures.forEach((g) => (gestureCounts[g] = (gestureCounts[g] || 0) + 1)));
-  const hottest = list.slice().sort((a, b) => b.tempNo - a.tempNo)[0];
   return {
     phase: session.phase,
     connected: all.length,
@@ -73,20 +117,16 @@ function computeStats() {
     engagedCount: engaged.length,
     avgNoAction: Math.round(avg("tempNo") * 10) / 10,
     avgWithPlan: Math.round(avg("tempPlan") * 10) / 10,
-    pctNoShutters: pct((p) => p.shutters === "aucun"),
-    pctClim: pct((p) => p.clim),
-    pctTopFloor: pct((p) => p.floor === "dernier"),
+    pctNoShutters: pct((p) => p.answers.shutters === "aucun"),
+    pctClim: pct((p) => p.answers.clim === "oui"),
+    pctTopFloor: pct((p) => p.answers.floor === "dernier"),
     pctTooHot: pct((p) => p.tempNo >= 28),
     degreesSaved: Math.round(engaged.reduce((s, p) => s + p.gain, 0)),
-    kwhSaved: Math.round(engaged.reduce((s, p) => s + (p.clim ? 1.5 : 1.0), 0)),
+    kwhSaved: Math.round(engaged.reduce((s, p) => s + (p.answers.clim === "oui" ? 1.5 : 1.0), 0)),
     gestureCounts,
-    hottest: hottest ? { temp: hottest.tempNo } : null,
-    coolest: list.length ? Math.min(...list.map((p) => p.tempNo)) : null,
+    hottest: count ? Math.max(...list.map((p) => p.tempNo)) : null,
+    coolest: count ? Math.min(...list.map((p) => p.tempNo)) : null,
   };
-}
-
-function isAdmin(url) {
-  return url.searchParams.get("token") === ADMIN_TOKEN;
 }
 
 const server = http.createServer(async (req, res) => {
@@ -94,29 +134,28 @@ const server = http.createServer(async (req, res) => {
   const p = url.pathname;
 
   try {
-    // --- API participants ---
+    // --- Téléphones ---
     if (p === "/api/join" && req.method === "POST") {
-      const b = await readBody(req);
-      const name = "";
       if (session.players.size >= MAX_PLAYERS) return sendJson(res, 429, { error: "Session complète" });
-      if (session.phase === "ended") return sendJson(res, 409, { error: "Session terminée" });
       const id = crypto.randomUUID();
-      session.players.set(id, {
-        name, joinedAt: Date.now(), answered: false, engaged: false,
-        city: "", floor: "", orientation: "", shutters: "", clim: false,
-        tempNo: 0, tempPlan: 0, gain: 0, gestures: [],
-      });
-      return sendJson(res, 200, { id, sessionId: session.id, phase: session.phase });
+      session.players.set(id, { joinedAt: Date.now(), answers: {}, submitted: false, engaged: false, tempNo: 0, tempPlan: 0, gain: 0, gestures: [] });
+      return sendJson(res, 200, { id, ...publicState(id) });
     }
 
     if (p === "/api/state" && req.method === "GET") {
-      const id = url.searchParams.get("id") || "";
-      return sendJson(res, 200, {
-        sessionId: session.id,
-        phase: session.phase,
-        known: session.players.has(id),
-        connected: session.players.size,
-      });
+      return sendJson(res, 200, publicState(url.searchParams.get("id") || ""));
+    }
+
+    if (p === "/api/answer" && req.method === "POST") {
+      const b = await readBody(req);
+      const pl = session.players.get(String(b.id || ""));
+      if (!pl) return sendJson(res, 404, { error: "unknown" });
+      tick();
+      const q = QUESTIONS[Number(b.q)];
+      if (session.phase !== "question" || Number(b.q) !== session.q || !q) return sendJson(res, 409, { error: "trop tard" });
+      if (!q.options.some((o) => o.v === b.value)) return sendJson(res, 400, { error: "invalid" });
+      pl.answers[q.key] = b.value;
+      return sendJson(res, 200, { ok: true });
     }
 
     if (p === "/api/submit" && req.method === "POST") {
@@ -126,13 +165,7 @@ const server = http.createServer(async (req, res) => {
       const tempNo = num(b.tempNo, 15, 45);
       const tempPlan = num(b.tempPlan, 15, 45);
       if (tempNo === null || tempPlan === null) return sendJson(res, 400, { error: "invalid" });
-      Object.assign(pl, {
-        city: String(b.city || "").slice(0, 20),
-        floor: String(b.floor || "").slice(0, 20),
-        orientation: String(b.orientation || "").slice(0, 20),
-        shutters: String(b.shutters || "").slice(0, 20),
-        clim: !!b.clim, tempNo, tempPlan, answered: true,
-      });
+      Object.assign(pl, { tempNo, tempPlan, submitted: true });
       return sendJson(res, 200, { ok: true });
     }
 
@@ -147,23 +180,11 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true, degreesSaved: s.degreesSaved, kwhSaved: s.kwhSaved });
     }
 
-    // --- API écran (lecture) ---
-    if (p === "/api/lobby" && req.method === "GET") {
-      return sendJson(res, 200, { sessionId: session.id, phase: session.phase, players: playerList() });
-    }
-    if (p === "/api/stats" && req.method === "GET") {
-      return sendJson(res, 200, computeStats());
-    }
-
-    // --- API animateur (protégée par ADMIN_TOKEN) ---
-    if (p.startsWith("/api/admin/") && req.method === "POST") {
-      if (!isAdmin(url)) return sendJson(res, 403, { error: "Mot de passe incorrect" });
-      if (p === "/api/admin/check") return sendJson(res, 200, { ok: true });
-      if (p === "/api/admin/start") { session.phase = "running"; session.startedAt = Date.now(); return sendJson(res, 200, { ok: true }); }
-      if (p === "/api/admin/end") { session.phase = "ended"; return sendJson(res, 200, { ok: true }); }
-      if (p === "/api/admin/reset") { session = newSession(); return sendJson(res, 200, { ok: true }); }
-      return sendJson(res, 404, { error: "unknown" });
-    }
+    // --- Écran ---
+    if (p === "/api/stats" && req.method === "GET") return sendJson(res, 200, computeStats());
+    if (p === "/api/start" && req.method === "POST") { if (session.phase === "lobby") advance(); return sendJson(res, 200, publicState()); }
+    if (p === "/api/next" && req.method === "POST") { advance(); return sendJson(res, 200, publicState()); }
+    if (p === "/api/reset" && req.method === "POST") { session = newSession(); return sendJson(res, 200, publicState()); }
 
     if (p === "/health") return sendJson(res, 200, { ok: true });
 

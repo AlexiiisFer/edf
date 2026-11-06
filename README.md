@@ -1,17 +1,20 @@
-# Météo de mon logement — session interactive
+# Météo de mon logement — session interactive façon quiz
 
 | Page | Rôle |
 |---|---|
-| `/` | **Lobby** à projeter : QR code + personnes qui se connectent en direct + bouton « Lancer la session » |
-| `/jouer` | Page ouverte par le QR code : connexion auto, attente, puis 5 questions → température prévue chez soi + plan + défi |
-| `/stats` | **Statistiques** de la salle en direct (moyennes, défi fraîcheur, gestes choisis, %) |
+| `/` | **Écran à projeter** : QR code + connexions en direct → questions avec chrono → résultats |
+| `/jouer` | Ouverte par le QR code : connexion auto, réponses aux questions, résultat perso + défi |
+| `/stats` | Statistiques finales de la salle (l'écran y bascule automatiquement) |
 
 ## Déroulé
-1. Ouvrir `/` sur l'ordi du vidéoprojecteur → les gens scannent, les connexions apparaissent.
-2. « Lancer la session » (mot de passe = `ADMIN_TOKEN`, demandé une seule fois) → tous les téléphones démarrent, l'écran passe sur `/stats`.
-3. « Nouvelle session » sur le lobby remet tout à zéro.
+1. Ouvrir `/` sur l'ordi du vidéoprojecteur, les gens scannent.
+2. « ▶ Lancer la session » → 5 questions, chrono par question (passe à la suite quand tout le monde a répondu).
+3. Chacun voit sa température prévue + son plan + le défi sur son téléphone (30 s).
+4. L'écran affiche les statistiques. « Nouvelle session » remet tout à zéro.
 
-Astuce : `/?admin=MOTDEPASSE` enregistre le mot de passe d'avance. `/stats?objectif=300` change l'objectif de la jauge.
+## Réglages (variables d'environnement, optionnelles)
+- `QUESTION_SECONDS` (défaut 15)
+- `RESULT_SECONDS` (défaut 30)
 
 ## Coolify
-Build pack Dockerfile, port 3000, variable `ADMIN_TOKEN`. Données en mémoire (remises à zéro au redémarrage).
+Build pack Dockerfile, port 3000. Données en mémoire (remises à zéro au redémarrage).

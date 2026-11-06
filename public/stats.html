@@ -45,7 +45,7 @@
   <div class="top">
     <div>
       <h1>Quelle température fera-t-il <span>chez vous</span> demain ?</h1>
-      <div class="sub">Résultats de la salle en direct · <b id="answered" style="color:#fff">0</b> réponses sur <b id="connected" style="color:#fff">0</b> connectés</div>
+      <div class="sub">Résultats de la salle · <b id="answered" style="color:#fff">0</b> réponses sur <b id="connected" style="color:#fff">0</b> connectés</div>
     </div>
   </div>
 
@@ -76,9 +76,8 @@
     <div class="fact"><b class="cool" id="pClim">0%</b><span>ont une climatisation</span></div>
   </div>
 
-  <div class="admin"><button onclick="location.href='/'">← Lobby</button> <button onclick="endSession()">Terminer la session</button></div>
+  <div class="admin"><button onclick="newSession()">Nouvelle session</button></div>
 
-<script src="/qrcode.js"></script>
 <script src="/qrcode.js"></script>
 <script>
 const joinUrl = location.origin + "/jouer";
@@ -88,7 +87,6 @@ document.getElementById("qr").src = qr.createDataURL(6, 1);
 const params = new URLSearchParams(location.search);
 const GOAL = Number(params.get("objectif")) || 200;
 document.getElementById("goal").textContent = GOAL;
-const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
 
 function set(id, v) {
   const el = document.getElementById(id);
@@ -103,7 +101,7 @@ async function refresh() {
     set("connected", s.connected);
     set("avgNo", s.count ? s.avgNoAction + "°" : "--°");
     set("avgPlan", s.count ? s.avgWithPlan + "°" : "--°");
-    set("hotTemp", s.hottest ? s.hottest.temp + "°" : "--°");
+    set("hotTemp", s.hottest !== null ? s.hottest + "°" : "--°");
     document.getElementById("hotName").textContent = s.coolest !== null ? "le plus frais : " + s.coolest + "°" : "\u00a0";
     set("deg", s.degreesSaved + "°C");
     set("kwh", s.kwhSaved);
@@ -123,52 +121,10 @@ async function refresh() {
     if (ol.innerHTML !== html) ol.innerHTML = html;
   } catch (e) {}
 }
-async function endSession() {
-  let token = store.get("ml_admin");
-  if (!token) { location.href = "/"; return; }
-  const r = await fetch("/api/admin/end?token=" + encodeURIComponent(token), { method: "POST" });
-  if (r.status === 403) location.href = "/";
-}
-refresh();
-setInterval(refresh, 2000);
-</script>
-<script>
-const phoneUrl = location.origin + "/";
-document.getElementById("url").textContent = phoneUrl.replace(/^https?:\/\//, "");
-const qr = qrcode(0, "M"); qr.addData(phoneUrl); qr.make();
-document.getElementById("qr").src = qr.createDataURL(10, 2);
-
-const params = new URLSearchParams(location.search);
-const token = params.get("admin");
-if (token) document.getElementById("admin").style.display = "block";
-const GOAL = Number(params.get("objectif")) || 200;
-document.getElementById("goal").textContent = GOAL;
-
-let last = {};
-function set(id, v) {
-  const el = document.getElementById(id);
-  if (el.textContent !== String(v)) { el.textContent = v; el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
-}
-async function refresh() {
-  try {
-    const s = await (await fetch("/api/stats", { cache: "no-store" })).json();
-    set("count", s.count);
-    set("avgNo", s.count ? s.avgNoAction + "°" : "--°");
-    set("avgPlan", s.count ? s.avgWithPlan + "°" : "--°");
-    set("deg", s.degreesSaved + "°C");
-    set("kwh", s.kwhSaved);
-    set("engaged", s.engagedCount);
-    set("pTooHot", s.pctTooHot + "%");
-    set("pNoShutters", s.pctNoShutters + "%");
-    set("pTop", s.pctTopFloor + "%");
-    set("pClim", s.pctClim + "%");
-    document.getElementById("gauge").style.width = Math.min(100, s.degreesSaved / GOAL * 100) + "%";
-  } catch (e) {}
-}
-async function resetAll() {
-  if (!confirm("Effacer toutes les réponses ?")) return;
-  await fetch("/api/reset?token=" + encodeURIComponent(token), { method: "POST" });
-  refresh();
+async function newSession() {
+  if (!confirm("Lancer une nouvelle session ? Les résultats seront effacés.")) return;
+  await fetch("/api/reset", { method: "POST" });
+  location.href = "/";
 }
 refresh();
 setInterval(refresh, 2000);
