@@ -5,7 +5,7 @@ Application Node.js >=18, sans dépendance externe. Démarrer avec `npm start`.
 | Page | Rôle |
 |---|---|
 | `/` | Écran projeté : QR code propre à la session (« Remettre à zéro » / « Nouvelle session » en génère un nouveau), puis déroulé en direct (étape, compte à rebours, chiffres de la salle, plans validés) |
-| `/jouer` | 6 questions (région d’abord) → budget et temps (3 profils chacun) + solutions low tech et high tech proposées sur un seul écran → « Valider mon plan » (validation directe, sans récapitulatif) |
+| `/jouer` | Choix « par adresse » (DPE de l’ADEME : seules les questions manquantes sont posées) ou « répondre aux questions » ; 6 questions (région d’abord) → budget et temps (3 profils chacun) + solutions low tech et high tech proposées sur un seul écran → « Valider mon plan » (validation directe, sans récapitulatif) |
 | `/stats` | Bilan de la salle (classes avant / après, mur des participants) et onglet « Quand consommer ? » : clim H24 contre heures creuses |
 
 ## Interface
@@ -30,6 +30,14 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 - `public/questions.js` : version démo, 6 questions (région, type de logement, orientation des fenêtres — Nord, Sud, Est, Ouest, plusieurs choix possibles, la façade la plus exposée compte —, protections extérieures, courant d’air nocturne, climatisation). La région fixe la température extérieure du scénario canicule. Chaque réponse modifie l’écart intérieur/extérieur d’un scénario canicule à 35 °C (ajusté selon la zone) : valeurs pédagogiques, pas une étude thermique.
 - Les solutions proposées dépendent des équipements déclarés (protections existantes ou non, climatiseur mobile, PAC ou aucune clim).
 - Météo automatique : prévision **fictive** de démonstration (pic de canicule de la région jeudi), affichée sur l’écran des solutions.
+
+## Par adresse (DPE)
+
+- Le téléphone cherche l’adresse dans la Base Adresse Nationale (`api-adresse.data.gouv.fr`, appel direct depuis le navigateur).
+- Le serveur interroge la base « DPE logements existants » de l’ADEME (`/api/dpe?ban=…` → `data.ademe.fr`) et renvoie les logements de l’adresse ; l’utilisateur choisit le sien.
+- `public/dpe.js` pré-remplit région (département), logement traversant, absence de protections extérieures et climatisation. Le reste est demandé (type de logement, fenêtres, type de protections).
+- Aucun DPE trouvé, base indisponible ou logement absent de la liste : retour au questionnaire classique.
+- En production, le serveur doit pouvoir joindre `data.ademe.fr` et le navigateur `api-adresse.data.gouv.fr`.
 
 ## Estimations
 

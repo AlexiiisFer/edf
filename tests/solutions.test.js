@@ -102,3 +102,18 @@ test('all questionnaire combinations: no action keeps the class, all actions nev
   }
   check(0, {});
 });
+
+test('DPE prefill: region, through-flow, sun protection and air conditioning', () => {
+  const { answersFromDpe, regionFromDept, dpeLabel } = require('../public/dpe.js');
+  const { isValidAnswer } = require('../public/questions.js');
+  assert.equal(regionFromDept('75'), 'idf');
+  assert.equal(regionFromDept('13'), 'sud');
+  assert.equal(regionFromDept('69'), 'rhone');
+  assert.equal(regionFromDept('67'), 'est');
+  assert.equal(regionFromDept('29'), 'nord');
+  const a = answersFromDpe({ code_departement_ban: '69', logement_traversant: 0, protection_solaire_exterieure: 0, etiquette_dpe: 'C' });
+  assert.deepEqual(a, { region: 'rhone', traversant: 'non', protections: 'aucune', clim: 'aucune' });
+  for (const [k, v] of Object.entries(a)) assert.ok(isValidAnswer(QUESTIONS.find(q => q.key === k), v), k);
+  assert.equal(answersFromDpe({ type_generateur_froid: 'PAC air/air' }).clim, 'pac');
+  assert.equal(dpeLabel({ complement_adresse_logement: '2e étage', surface_habitable_logement: 64.4 }), '2e étage · 64 m²');
+});

@@ -6,6 +6,29 @@ const crypto = require("crypto");
 const { QUESTIONS, SECTIONS, computeProfile, isComplete, isValidAnswer } = require("./public/questions.js");
 
 const { estimatePlan, availableSolutions } = require("./public/solutions.js");
+const { DPE_FIELDS, answersFromDpe, dpeLabel } = require("./public/dpe.js");
+
+// DPE de l'ADEME (base « DPE logements existants depuis juillet 2021 ») par identifiant d'adresse BAN.
+const ADEME_DPE = "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines";
+const dpeCache = new Map();
+async function findDpe(banId) {
+  if (dpeCache.has(banId)) return dpeCache.get(banId);
+  const url = new URL(ADEME_DPE);
+  url.searchParams.set("qs", `identifiant_ban:"${banId}"`);
+  url.searchParams.set("select", DPE_FIELDS.join(","));
+  url.searchParams.set("size", "30");
+  url.searchParams.set("sort", "-date_etablissement_dpe");
+  const r = await fetch(url, { signal: AbortSignal.timeout(8000), headers: { accept: "application/json" } });
+  if (!r.ok) throw new Error("ADEME " + r.status);
+  const rows = (await r.json()).results || [];
+  const list = rows.map((row, i) => ({
+    id: row.numero_dpe || String(i), label: dpeLabel(row), grade: row.etiquette_dpe || null,
+    date: row.date_etablissement_dpe || null, summer: row.indicateur_confort_ete || null, answers: answersFromDpe(row),
+  }));
+  if (dpeCache.size > 500) dpeCache.clear();
+  dpeCache.set(banId, list);
+  return list;
+}
 
 const PORT = process.env.PORT || 3000;
 // Durée laissée à la salle pour le questionnaire (chacun avance à son rythme).
@@ -202,6 +225,13 @@ const server = http.createServer(async (req, res) => {
     if (p === "/api/start" && req.method === "POST") { if (session.phase === "lobby") advance(); return sendJson(res, 200, publicState()); }
     if (p === "/api/next" && req.method === "POST") { advance(); return sendJson(res, 200, publicState()); }
     if (p === "/api/reset" && req.method === "POST") { session = newSession(); return sendJson(res, 200, publicState()); }
+
+    if (p === "/api/dpe" && req.method === "GET") {
+      const ban = String(url.searchParams.get("ban") || "");
+      if (!/^[0-9A-Za-z_]{5,40}$/.test(ban)) return sendJson(res, 400, { error: "Adresse invalide" });
+      try { return sendJson(res, 200, { results: await findDpe(ban) }); }
+      catch (e) { return sendJson(res, 502, { error: "Base DPE indisponible" }); }
+    }
 
     if (p === "/health") return sendJson(res, 200, { ok: true });
 

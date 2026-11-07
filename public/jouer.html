@@ -422,6 +422,14 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 .rep-tips { list-style: none; padding: 0; margin: 0; }
 .rep-tips li { display: flex; flex-direction: column; margin: 0 0 8px; padding: 10px 12px; background: #FFF6F1; border-radius: 12px; font-size: 14px; color: var(--encre); }
 .rep-tips li span { color: var(--gris); font-size: 13px; margin-top: 2px; }
+/* Choix adresse / questions */
+.mode-opt .txt small, .dpe-opt .txt small { display: block; font-weight: 500; font-size: 13px; color: var(--gris); margin-top: 3px; }
+.dpe-opt .grade { width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; font-size: 18px; }
+.addr-field input { font-size: 17px; }
+.addr-list { margin-top: 6px; }
+.addr-opt { padding: 12px 14px; font-size: 15px; }
+.addr-status { color: var(--gris); font-size: 14px; margin: 10px 0 4px; }
+#v-address:has(#dpeList button) #addrToQuestions { display: none; }
 </style>
 </head>
 <body>
@@ -433,6 +441,21 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 <section class="view active" id="v-wait">
   <div class="intro"><h1 id="waitTitle">Connexion…</h1></div>
   <div class="block wait-card"><div class="radar" aria-hidden="true"><i></i><i></i><i></i><b></b></div><p id="waitText">Ça commence bientôt.</p><button class="btn secondary" id="retry" hidden>Réessayer</button></div>
+</section>
+
+<section class="view" id="v-mode">
+  <div class="intro"><h1>Votre logement</h1></div>
+  <button class="opt mode-opt" id="modeAddress"><span class="e" aria-hidden="true">📍</span><span class="txt">Par adresse<small>On retrouve votre DPE : moins de questions</small></span></button>
+  <button class="opt mode-opt" id="modeQuestions"><span class="e" aria-hidden="true">📝</span><span class="txt">Répondre aux questions<small>6 questions rapides</small></span></button>
+</section>
+
+<section class="view" id="v-address">
+  <div class="intro"><h1>Votre adresse</h1></div>
+  <label class="field addr-field"><span class="sr-only">Adresse</span><input id="addrInput" type="text" autocomplete="off" placeholder="Ex. 10 rue de la République, Lyon"></label>
+  <div id="addrSuggest" class="addr-list" role="listbox"></div>
+  <p id="addrStatus" class="addr-status" aria-live="polite"></p>
+  <div id="dpeList" class="addr-list"></div>
+  <button class="btn link" id="addrToQuestions">Répondre aux questions à la place</button>
 </section>
 
 <section class="view" id="v-question">
@@ -460,7 +483,7 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 </section>
 </main>
 <script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script><script>UI.brandWave({ className: 'phone', variant: 'card' });</script>
-<script src="/questions.js"></script><script src="/solutions.js"></script><script>
+<script src="/questions.js"></script><script src="/solutions.js"></script><script src="/dpe.js"></script><script>
 const storage = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k,v) { try { localStorage.setItem(k,v); } catch {} } };
 let budget = 'moyen', time = 'unpeu', me, sessionId, participantNumber, answers = {}, chosen = new Set(), view = 'wait', qi = -1, editing = false, built = false, busy = false, lastGrade = null;
 const badge = (g, cls='') => `<span class="grade grade-${g} ${cls}">${g}</span>`;
@@ -487,6 +510,7 @@ function render(d) {
  if(!d.known || d.sessionId!==sessionId) return join();
  participantNumber=d.participantNumber;answers=Object.assign({}, d.answers || {}, answers);
  if(d.phase==='lobby') {document.getElementById('waitTitle').textContent='Vous êtes dans la salle.';document.getElementById('waitText').textContent=`${d.connected} connecté${d.connected>1?'s':''} · ${QUESTIONS.length} questions`;show('wait');return;}
+ if(!editing && !isComplete(answers) && !modeChosen() && !Object.keys(answers).length) { if(view!=='mode'&&view!=='address') show('mode'); return; }
  if(editing || !isComplete(answers)) { if(qi<0){qi=Math.max(0,QUESTIONS.findIndex(q=>answers[q.key]===undefined));buildQuestion();} if(view!=='question')show('question'); return; }
  if(!built) {built=true;let draft=[];try{draft=JSON.parse(storage.get('ml_plan_'+sessionId)||'[]');}catch{}chosen=new Set(d.plan?.ids || draft);buildChoices();show('choices');}
 }
@@ -522,6 +546,44 @@ function nextQuestion() {
  editing=false;qi=-1;built=true;buildChoices();show('choices');
 }
 document.getElementById('qBack').onclick=()=>{if(qi>0){qi--;buildQuestion();}};
+// Choix : par adresse (DPE de l'ADEME) ou par questions. Si rien n'est trouvé, on repasse aux questions.
+function modeChosen(){ return storage.get('ml_mode_'+sessionId)==='1'; }
+function startQuestions(){ storage.set('ml_mode_'+sessionId,'1'); qi=-1; const first=QUESTIONS.findIndex(q=>answers[q.key]===undefined); if(first<0){built=true;buildChoices();show('choices');return;} qi=first; buildQuestion(); show('question'); }
+document.getElementById('modeQuestions').onclick=startQuestions;
+document.getElementById('addrToQuestions').onclick=startQuestions;
+document.getElementById('modeAddress').onclick=()=>{show('address');setTimeout(()=>document.getElementById('addrInput').focus(),300);};
+let addrTimer=null, addrSeq=0;
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+document.getElementById('addrInput').addEventListener('input',e=>{
+ clearTimeout(addrTimer);const q=e.target.value.trim();document.getElementById('dpeList').innerHTML='';document.getElementById('addrStatus').textContent='';
+ if(q.length<4){document.getElementById('addrSuggest').innerHTML='';return;}
+ addrTimer=setTimeout(async()=>{const seq=++addrSeq;
+  try{const r=await fetch('https://api-adresse.data.gouv.fr/search/?type=housenumber&limit=5&q='+encodeURIComponent(q));const d=await r.json();if(seq!==addrSeq)return;
+   const box=document.getElementById('addrSuggest');
+   box.innerHTML=(d.features||[]).map(f=>`<button class="opt addr-opt" data-id="${esc(f.properties.id)}" data-label="${esc(f.properties.label)}"><span class="txt">${esc(f.properties.label)}</span></button>`).join('')||'<p class="addr-status">Aucune adresse trouvée.</p>';
+   box.querySelectorAll('.addr-opt').forEach(b=>b.onclick=()=>pickAddress(b.dataset.id,b.dataset.label));
+  }catch{document.getElementById('addrStatus').textContent='Recherche d’adresse indisponible.';}
+ },300);
+});
+async function pickAddress(id,label){
+ document.getElementById('addrInput').value=label;document.getElementById('addrSuggest').innerHTML='';
+ const st=document.getElementById('addrStatus'),list=document.getElementById('dpeList');st.textContent='Recherche de votre DPE…';list.innerHTML='';
+ try{const d=await api('dpe?ban='+encodeURIComponent(id));const rows=d.results||[];
+  if(!rows.length){st.innerHTML='Aucun DPE trouvé à cette adresse.';list.innerHTML='<button class="btn primary" id="noDpe">Répondre aux questions</button>';document.getElementById('noDpe').onclick=startQuestions;return;}
+  st.textContent=rows.length>1?`${rows.length} logements trouvés : choisissez le vôtre.`:'Votre logement :';
+  list.innerHTML=rows.map((r,i)=>`<button class="opt dpe-opt" data-i="${i}"><span class="grade grade-${esc(r.grade||'D')}">${esc(r.grade||'?')}</span><span class="txt">${esc(r.label)}<small>DPE du ${r.date?new Date(r.date).toLocaleDateString('fr-FR'):'—'}${r.summer?' · confort d’été '+esc(r.summer):''}</small></span></button>`).join('')
+   +'<button class="btn link" id="notMine">Mon logement n’est pas dans la liste</button>';
+  list.querySelectorAll('.dpe-opt').forEach(b=>b.onclick=()=>useDpe(rows[+b.dataset.i]));
+  document.getElementById('notMine').onclick=startQuestions;
+  UI.enter(list.children,{y:12,stagger:40});
+ }catch(e){st.textContent='Base DPE indisponible pour le moment.';list.innerHTML='<button class="btn primary" id="noDpe">Répondre aux questions</button>';document.getElementById('noDpe').onclick=startQuestions;}
+}
+async function useDpe(row){
+ if(busy)return;busy=true;
+ try{for(const [key,value] of Object.entries(row.answers||{})){if(!QUESTIONS.some(q=>q.key===key))continue;await api('answer',{id:me,key,value});answers[key]=value;}}
+ catch(e){error(e);}finally{busy=false;}
+ startQuestions();
+}
 function editAnswers(){editing=true;qi=0;buildQuestion();show('question');}
 // Budget et temps : 3 profils chacun ; changer de profil coche les solutions recommandées.
 function buildPrefs() {
