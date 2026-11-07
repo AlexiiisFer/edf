@@ -392,6 +392,7 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 .opt { padding: 16px; margin: 12px 0; }
 #qOpts { margin-top: 18px; }
 .app { min-height: auto; }
+.choice.tile .delay { display: block; font-size: 12px; font-weight: 600; color: var(--gris); margin-top: 3px; }
 </style>
 </head>
 <body>
@@ -498,20 +499,27 @@ function buildPrefs() {
   for(const o of list){const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(o.id===cur));b.innerHTML=o.label+(o.hint?`<small>${o.hint}</small>`:'');b.onclick=()=>{set(o.id);chosen=new Set(recommend(answers,budget,time));storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));buildChoices();UI.enter(document.querySelectorAll('#v-choices .tiles .choice'),{y:8,stagger:25});};box.appendChild(b);}};
  seg('segBudget',BUDGETS,budget,v=>budget=v);seg('segTime',TIMES,time,v=>time=v);
 }
+function priceLabel(s) {
+ const n=v=>v.toLocaleString('fr-FR');
+ if(s.quote) return 'Sur étude';
+ if(!s.price&&!s.priceMax) return 'Gratuit';
+ const r=s.priceMax&&s.priceMax!==s.price?`${n(s.price)}–${n(s.priceMax)} €`:`${n(s.price)} €`;
+ return s.unit?`${r}/${s.unit}`:r;
+}
 function buildChoices() {
  buildPrefs();
  // Zone profil : classe, température chez soi et alerte canicule fictive de la région.
  const prof=computeProfile(answers);
  document.getElementById('myProfile').innerHTML=`${badge(prof.grade,'big-grade')}<div style="flex:1"><div class="t num">${prof.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${prof.out} °C dehors</p></div>`;
  for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);
- for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&s.price<=BUDGETS.find(b=>b.id===budget).max).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="cost">${s.price?s.price.toLocaleString('fr-FR')+' €':'Gratuit'}</small><small class="price">${s.detail}</small></label>`).join('');box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
+ for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&costMin(s)<=BUDGETS.find(b=>b.id===budget).max).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="cost">${priceLabel(s)}</small><small class="delay">⏱ ${s.delay}</small><small class="price">${s.detail}</small></label>`).join('');box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
  updatePlan();
 }
 function updatePlan() {
  const auto=document.querySelector('input[value="auto"]');if(auto){auto.disabled=!hasExterior(answers)&&!chosen.has('shade');if(auto.disabled){auto.checked=false;chosen.delete('auto');}}
  const p=currentPlan();
  const pv=document.getElementById('preview');
- pv.innerHTML=`<div class="mid"><div class="delta num"><b>${p.gain>0?'−'+p.gain.toLocaleString('fr-FR'):'0'} °C</b><small>${p.tNo} → ${p.tPlan} °C</small></div><div class="temp-now num">${p.price.toLocaleString('fr-FR')} €</div></div><button class="go" id="saveBtn" onclick="savePlan()">Valider mon plan</button>`;
+ pv.innerHTML=`<div class="mid"><div class="delta num"><b>${p.gain>0?'−'+p.gain.toLocaleString('fr-FR'):'0'} °C</b><small>${p.tNo} → ${p.tPlan} °C</small></div><div class="temp-now num">${p.priceMax>p.price?'dès ':''}${p.price.toLocaleString('fr-FR')} €</div></div><button class="go" id="saveBtn" onclick="savePlan()">Valider mon plan</button>`;
  if(view==='choices'&&lastGrade!==null&&lastGrade!==p.tPlan) UI.bump(pv.querySelector('.delta b'));
  lastGrade=p.tPlan;
 }
