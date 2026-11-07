@@ -126,7 +126,7 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 </style></head><body class="light">
 <div class="sky" aria-hidden="true"><div class="grain"></div></div>
 <main class="page">
-<header><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><div><p class="kicker">Démo · défi confort d’été</p><h1 class="display">Le bilan de la salle</h1></div></div><button class="btn btn-ghost" id="resetBtn">Nouvelle session</button></header>
+<header><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><div><h1 class="display">Le bilan de la salle</h1></div></div><button class="btn btn-ghost" id="resetBtn">Nouvelle session</button></header>
 <div class="bar">
   <div class="tabs" role="group" aria-label="Vue"><span class="thumb" id="thumb" aria-hidden="true"></span><button id="profilesTab" aria-pressed="true">La salle</button><button id="energyTab" aria-pressed="false">Quand consommer ?</button></div>
   <div class="status"><span class="chip live"><b class="num" id="cConnected">0</b> participants</span><span class="chip"><b class="num" id="cProfiles">0</b> profils</span><span class="chip"><b class="num" id="cValidated">0</b> plans validés</span></div>
@@ -177,7 +177,7 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 <script src="/qrcode.js"></script><script src="/questions.js"></script><script src="/solutions.js"></script><script>
 const badge=g=>`<span class="grade grade-${g}">${g}</span>`;
 const STAGES=['Avant','Après'];
-const qr=qrcode(0,'M');qr.addData(location.origin+'/jouer');qr.make();document.getElementById('qr').src=qr.createDataURL(4,1);
+let qrSession=null;function makeQr(id){if(id===qrSession)return;qrSession=id;const q=qrcode(0,'M');q.addData(location.origin+'/jouer?s='+encodeURIComponent(id));q.make();document.getElementById('qr').src=q.createDataURL(4,1);}
 
 document.getElementById('resetBtn').onclick=async()=>{if(!confirm('Effacer les réponses et les plans de la salle ?'))return;try{const r=await fetch('/api/reset',{method:'POST'});if(!r.ok)throw Error();location.href='/';}catch{showError('Réinitialisation impossible. Réessayez.');}};
 function showError(t){const e=document.getElementById('countError');e.textContent=t;e.hidden=!t;}
@@ -219,7 +219,7 @@ function renderWall(profiles){
   UI.pop(fresh.slice(0,60),{stagger:25});
 }
 
-async function refresh(){try{const r=await fetch('/api/stats',{cache:'no-store'});if(!r.ok)throw Error();const s=await r.json();showError('');
+async function refresh(){try{const r=await fetch('/api/stats',{cache:'no-store'});if(!r.ok)throw Error();const s=await r.json();showError('');makeQr(s.sessionId);
 document.getElementById('count').textContent=`${s.connected} participants · ${s.count} profils · ${s.validatedCount} plans validés`;
 const int=([v])=>Math.round(v);
 UI.tween(document.getElementById('cConnected'),s.connected,int,600);UI.tween(document.getElementById('cProfiles'),s.count,int,600);UI.tween(document.getElementById('cValidated'),s.validatedCount,int,600);

@@ -427,11 +427,11 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 <body>
 <div class="hero-bg" aria-hidden="true"></div>
 <main class="app">
-<header><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span>Météo de mon logement<br><small>Démo · défi confort d’été</small></span></header>
+<header><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span>Météo de mon logement</span></header>
 <p id="error" class="error" role="alert"></p>
 
 <section class="view active" id="v-wait">
-  <div class="intro"><p class="stage-label">Démo</p><h1 id="waitTitle">Connexion…</h1></div>
+  <div class="intro"><h1 id="waitTitle">Connexion…</h1></div>
   <div class="block wait-card"><div class="radar" aria-hidden="true"><i></i><i></i><i></i><b></b></div><p id="waitText">Ça commence bientôt.</p><button class="btn secondary" id="retry" hidden>Réessayer</button></div>
 </section>
 
@@ -577,5 +577,5 @@ async function savePlan() {
  const btn=document.getElementById('saveBtn');if(btn)btn.disabled=true;
  try {await api('engage',{id:me,actions:[...chosen]});document.getElementById('error').textContent='';renderReport();show('thanks');}catch(e){error(Error('Enregistrement impossible : '+e.message));if(btn)btn.disabled=false;}
 }
-(async()=>{me=storage.get('ml_id');sessionId=storage.get('ml_session');if(me){try{render(await api('state?id='+encodeURIComponent(me)));}catch{await join();}}else await join();setInterval(async()=>{if(me)try{render(await api('state?id='+encodeURIComponent(me)));}catch{}},1000);})();
+(async()=>{me=storage.get('ml_id');sessionId=storage.get('ml_session');const qs=new URLSearchParams(location.search).get('s');if(qs&&qs!==sessionId){me=null;sessionId=null;}if(me){try{render(await api('state?id='+encodeURIComponent(me)));}catch{await join();}}else await join();setInterval(async()=>{if(me)try{render(await api('state?id='+encodeURIComponent(me)));}catch{}},1000);})();
 </script></body></html>

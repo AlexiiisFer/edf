@@ -4,7 +4,7 @@ Application Node.js >=18, sans dépendance externe. Démarrer avec `npm start`.
 
 | Page | Rôle |
 |---|---|
-| `/` | Écran projeté : QR code, puis déroulé de la démo en direct (étape, compte à rebours, avancement par thème, chiffres de la salle, plans validés) |
+| `/` | Écran projeté : QR code propre à la session (« Remettre à zéro » / « Nouvelle session » en génère un nouveau), puis déroulé en direct (étape, compte à rebours, chiffres de la salle, plans validés) |
 | `/jouer` | 6 questions (région d’abord) → budget et temps (3 profils chacun) + solutions low tech et high tech proposées sur un seul écran → « Valider mon plan » (validation directe, sans récapitulatif) |
 | `/stats` | Bilan de la salle (classes avant / après, mur des participants) et onglet « Quand consommer ? » : clim H24 contre heures creuses |
 

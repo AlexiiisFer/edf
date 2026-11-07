@@ -124,6 +124,7 @@ function computeStats() {
   const gestureCounts = {};
   engaged.forEach((p) => p.gestures.forEach((g) => (gestureCounts[g] = (gestureCounts[g] || 0) + 1)));
   return {
+    sessionId: session.id,
     phase: session.phase,
     connected: all.length,
     count,

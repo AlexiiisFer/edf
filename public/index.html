@@ -112,6 +112,12 @@
   .band { margin-top: 5vh; height: 1vh; border-radius: 99px; background: var(--chaleur-band); transform-origin: left; }
   .result-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: 2.4vw; flex-wrap: wrap; font-size: 1.45vw; color: var(--brume); }
   .result-foot b { color: var(--craie); font-size: 3.4vw; vertical-align: -.12em; }
+  /* Sans les cartes de thèmes : chiffres en direct au centre, chrono en bas */
+  #v-question { grid-template-rows: auto auto 1fr auto; }
+  #v-question .live-feed { align-self: center; }
+  #v-question .fact { min-height: 20vh; padding: 3vh 1.6vw; }
+  #v-question .fact b { font-size: 4.6vw; }
+  #v-question .fact span { font-size: 1.4vw; }
 </style>
 </head>
 <body class="light">
@@ -119,9 +125,8 @@
 
 <!-- LOBBY -->
 <section class="view active" id="v-lobby">
-  <div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Météo de mon logement · défi confort d’été</span></div>
+  <div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Météo de mon logement</span></div>
   <div class="pitch">
-    <span class="kicker">Démo · 2 minutes</span>
     <h1 class="display" id="lobbyTitle">Votre logement est-il prêt pour la canicule&nbsp;?</h1>
     <p>6 questions, votre classe de A à G et vos solutions.</p>
     <ol class="steps">
@@ -144,12 +149,11 @@
 
 <!-- QUESTIONNAIRE -->
 <section class="view" id="v-question">
-  <div class="runbar"><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Démo · Météo de mon logement</span></div><ol class="steps-run" aria-label="Déroulé de la démo"><li data-step="question"><b>1</b>Questionnaire</li><li class="sep" aria-hidden="true"></li><li data-step="result"><b>2</b>Solutions</li><li class="sep" aria-hidden="true"></li><li data-step="stats"><b>3</b>Bilan collectif</li></ol></div>
+  <div class="runbar"><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Météo de mon logement</span></div><ol class="steps-run" aria-label="Déroulé de la démo"><li data-step="question"><b>1</b>Questionnaire</li><li class="sep" aria-hidden="true"></li><li data-step="result"><b>2</b>Solutions</li><li class="sep" aria-hidden="true"></li><li data-step="stats"><b>3</b>Bilan collectif</li></ol></div>
   <div class="q-head">
-    <div><span class="kicker">Démo · étape 1</span><h1 class="display">Répondez sur votre téléphone.</h1></div>
+    <div><h1 class="display">Répondez sur votre téléphone.</h1></div>
     <div class="q-done"><b class="num" id="qDone">0</b><span>terminés sur <span id="qTot">0</span></span></div>
   </div>
-  <div class="sections" id="sections"></div>
   <div class="live-feed"><div class="live-title">En direct de la salle</div><div class="facts" data-feed></div></div>
   <div class="q-foot">
     <div class="chrono" id="chrono" aria-label="Temps restant"><div class="sec num" id="qSec">0:45</div><div class="track"><div id="mercury"></div></div></div>
@@ -160,9 +164,8 @@
 
 <!-- RÉSULTATS INDIVIDUELS -->
 <section class="view" id="v-result">
-  <div class="runbar"><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Démo · Météo de mon logement</span></div><ol class="steps-run" aria-label="Déroulé de la démo"><li data-step="question"><b>1</b>Questionnaire</li><li class="sep" aria-hidden="true"></li><li data-step="result"><b>2</b>Solutions</li><li class="sep" aria-hidden="true"></li><li data-step="stats"><b>3</b>Bilan collectif</li></ol></div>
+  <div class="runbar"><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Météo de mon logement</span></div><ol class="steps-run" aria-label="Déroulé de la démo"><li data-step="question"><b>1</b>Questionnaire</li><li class="sep" aria-hidden="true"></li><li data-step="result"><b>2</b>Solutions</li><li class="sep" aria-hidden="true"></li><li data-step="stats"><b>3</b>Bilan collectif</li></ol></div>
   <div class="result-copy">
-    <span class="kicker">Démo · étape 2</span>
     <h1 class="display">Choisissez vos solutions.</h1>
     <p>Cochez, puis validez votre plan.</p>
   </div>
@@ -182,8 +185,8 @@
 <script src="/solutions.js"></script>
 <script>
 const joinUrl = location.origin + "/jouer";
-const qr = qrcode(0, "M"); qr.addData(joinUrl); qr.make();
-document.getElementById("qr").src = qr.createDataURL(10, 2);
+// QR code propre à chaque session : « Nouvelle session » génère un nouveau QR code.
+function makeQr(sessionId) { const q = qrcode(0, "M"); q.addData(joinUrl + "?s=" + encodeURIComponent(sessionId)); q.make(); document.getElementById("qr").src = q.createDataURL(10, 2); }
 
 // Rayons de soleil autour du QR code
 document.getElementById("halo").innerHTML = Array.from({ length: 24 }, (_, i) => {
@@ -212,7 +215,7 @@ async function api(action) {
 function render(d) {
   document.querySelectorAll(".steps-run li[data-step]").forEach(li => { const order = ["question", "result", "stats"], i = order.indexOf(li.dataset.step), cur = order.indexOf(d.phase); li.classList.toggle("now", i === cur); li.classList.toggle("done", cur > i); });
   if (d.statsIn) statsEnd = Date.now() + d.statsIn;
-  if (d.sessionId !== lastSession) { lastSession = d.sessionId; dots = 0; document.getElementById("players").innerHTML = ""; }
+  if (d.sessionId !== lastSession) { lastSession = d.sessionId; makeQr(d.sessionId); dots = 0; document.getElementById("players").innerHTML = ""; }
   if (d.phase === "lobby") {
     UI.tween(document.getElementById("count"), d.connected, ([v]) => Math.round(v), 500);
     const box = document.getElementById("players");
@@ -223,17 +226,9 @@ function render(d) {
     show("lobby");
   } else if (d.phase === "question") {
     localEnd = Date.now() + d.remaining; duration = d.duration;
-    const box = document.getElementById("sections");
-    if (!box.children.length) box.innerHTML = SECTIONS.map(x => `<article class="sec-card"><span class="e">${x.e}</span><small>Thème ${x.n}</small><h2>${x.title}</h2><div class="meter"><i></i></div><div class="count"><b class="num">0</b> / <span>0</span></div></article>`).join("");
     const first = view !== "question";
     show("question");
-    if (first) { UI.enter("#v-question .q-head > *", { y: 30, stagger: 120 }); UI.enter("#sections .sec-card", { y: 40, stagger: 90, delay: 300 }); }
-    [...box.children].forEach((card, i) => {
-      const n = d.sectionsDone[i] || 0;
-      card.querySelector(".meter i").style.width = (d.connected ? n / d.connected * 100 : 0) + "%";
-      UI.tween(card.querySelector(".count b"), n, ([v]) => Math.round(v), 500);
-      card.querySelector(".count span").textContent = d.connected;
-    });
+    if (first) { UI.enter("#v-question .q-head > *", { y: 30, stagger: 120 }); }
     UI.tween(document.getElementById("qDone"), d.completed, ([v]) => Math.round(v), 600);
     document.getElementById("qTot").textContent = d.connected;
   } else if (d.phase === "result") {
