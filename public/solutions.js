@@ -5,16 +5,15 @@ const hasExterior = a => ['clair', 'sombre', 'toile'].includes(a.protections);
 const hasClim = a => a.clim === 'pac' || a.clim === 'mobile';
 const SOLUTIONS = [
   // Low tech : protéger, ventiler, limiter les apports
-  { id: 'shutters', type: 'low', label: 'Fermer les volets', detail: 'Gratuit, dès le matin.', min: 0, max: 0, cooling: 1.5, saving: .12, life: 20, when: hasExterior },
-  { id: 'shade', type: 'low', label: 'Store extérieur', detail: 'Pour la fenêtre la plus exposée.', min: 200, max: 1000, cooling: 1.5, saving: .12, life: 15, when: a => !hasExterior(a) },
-  { id: 'night', type: 'low', label: 'Aérer la nuit', detail: 'Quand il fait plus frais dehors.', min: 0, max: 0, cooling: 1, saving: .08, life: 20 },
-  { id: 'heat', type: 'low', label: 'Moins d’appareils', detail: 'Veilles coupées, four aux heures fraîches.', min: 0, max: 20, cooling: .5, saving: .04, life: 10 },
-  { id: 'fan', type: 'low', label: 'Ventilateur', detail: 'Rafraîchit le ressenti, pas l’air.', min: 40, max: 150, cooling: 0, saving: .08, kwh: 9.6, life: 8, comfort: true },
+  { id: 'shutters', type: 'low', label: 'Fermer les volets', detail: 'Dès le matin, côté soleil.', min: 0, max: 0, cooling: 1.5, saving: .12, life: 20, when: hasExterior },
+  { id: 'shade', type: 'low', label: 'Store extérieur', detail: 'Fenêtre la plus exposée.', min: 200, max: 1000, cooling: 1.5, saving: .12, life: 15, when: a => !hasExterior(a) },
+  { id: 'night', type: 'low', label: 'Aérer la nuit', detail: 'Quand il fait plus frais.', min: 0, max: 0, cooling: 1, saving: .08, life: 20 },
+  { id: 'heat', type: 'low', label: 'Moins d’appareils', detail: 'Veilles coupées, four le soir.', min: 0, max: 20, cooling: .5, saving: .04, life: 10 },
+  { id: 'fan', type: 'low', label: 'Ventilateur', detail: 'Rafraîchit le ressenti.', min: 40, max: 150, cooling: 0, saving: .08, kwh: 9.6, life: 8, comfort: true },
   // High tech : mesurer, piloter, équiper
-  { id: 'app', type: 'high', label: 'Alertes appli', detail: 'Concept EDF & moi : alerte J-3, suivi Linky.', min: 0, max: 0, cooling: 0, saving: 0, life: 20 },
-  { id: 'sensors', type: 'high', label: 'Capteurs', detail: 'Savoir quand ouvrir ou fermer.', min: 40, max: 150, cooling: 0, saving: 0, kwh: 2, life: 5 },
+  { id: 'sensors', type: 'high', label: 'Capteurs', detail: 'Savoir quand ouvrir.', min: 40, max: 150, cooling: 0, saving: 0, kwh: 2, life: 5 },
   { id: 'auto', type: 'high', label: 'Volets auto', detail: 'Fermeture selon le soleil.', min: 200, max: 600, cooling: .5, saving: .04, kwh: 2, life: 10 },
-  { id: 'control', type: 'high', label: 'Piloter la clim', detail: 'Consigne 26 °C, arrêt en cas d’absence.', min: 80, max: 250, cooling: 0, saving: .15, kwh: 2, life: 5, when: hasClim },
+  { id: 'control', type: 'high', label: 'Piloter la clim', detail: 'Consigne à 26 °C.', min: 80, max: 250, cooling: 0, saving: .15, kwh: 2, life: 5, when: hasClim },
   { id: 'replace', type: 'high', label: 'PAC à la place du mobile', detail: 'Bien plus efficace.', min: 1500, max: 3500, cooling: 0, saving: 0, kwh: 240, upkeep: 60, life: 12, newAc: true, when: a => a.clim === 'mobile' },
   { id: 'ac', type: 'high', label: 'PAC air-air', detail: 'À dimensionner par un pro.', min: 1500, max: 3500, cooling: 0, saving: 0, kwh: 240, upkeep: 60, life: 12, newAc: true, when: a => !hasClim(a) },
 ];

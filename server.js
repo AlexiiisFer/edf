@@ -198,8 +198,9 @@ const server = http.createServer(async (req, res) => {
       if (!Object.keys(pl.answers).length) return sendJson(res, 400, { error: "Répondez au moins à une question avant de valider" });
       const valid = new Set(availableSolutions(pl.answers).map(s => s.id));
       if (!Array.isArray(b.actions) || b.actions.length > 20 || b.actions.some(id => !valid.has(id))) return sendJson(res, 400, { error: "Actions invalides" });
-      const settings = b.settings;
-      if (!settings || !Number.isFinite(settings.tariff) || settings.tariff < .05 || settings.tariff > 1 || !Number.isFinite(settings.baselineKwh) || settings.baselineKwh < 0 || settings.baselineKwh > 10000) return sendJson(res, 400, { error: "Vérifiez le tarif et la consommation" });
+      // Réglages facultatifs (tarif, conso) : valeurs par défaut si absents.
+      const settings = b.settings || {};
+      if (b.settings && (!Number.isFinite(settings.tariff) || settings.tariff < .05 || settings.tariff > 1 || !Number.isFinite(settings.baselineKwh) || settings.baselineKwh < 0 || settings.baselineKwh > 10000)) return sendJson(res, 400, { error: "Réglages invalides" });
       const plan = estimatePlan(pl.answers, b.actions, settings);
       Object.assign(pl, { plan, gestures: plan.ids, gain: plan.gain, engaged: plan.ids.length > 0, submitted: true, tempNo: plan.tNo, tempPlan: plan.tPlan });
       return sendJson(res, 200, { ok: true, plan });

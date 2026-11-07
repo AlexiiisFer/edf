@@ -8,17 +8,15 @@ Avant de commencer : « Nouvelle session », vérifier le QR code, tester le Wi-
 | **0:00 – 0:45** | Accueil, QR code | « Cet été, combien de degrés fera-t-il chez vous ? Pas dehors : *dans* votre logement. Voici une démo de diagnostic confort d’été. Scannez le QR code. » | Laisser scanner, puis cliquer « Commencer » : **la démo s’enchaîne seule en 2 minutes.** |
 | **0:45 – 1:30** | ① Questionnaire : avancement par thème + « En direct de la salle » | « 6 questions : région, logement, fenêtres, protections, courant d’air, clim. » Puis commenter les chiffres qui montent : « Déjà X % sans protection extérieure… Y % sous les toits, le cas le plus exposé. » | Rien à faire. L’étape ② démarre seule (plus tôt si tout le monde a fini). |
 | **1:30 – 2:45** | ② Solutions : chiffres en direct + actions les plus choisies | « Chacun voit sa classe, l’alerte canicule de sa région, et coche ses solutions : gestes simples et équipements sur le même écran. » Commenter la température moyenne, les plans validés et l’action la plus choisie. | Rien à faire : le bilan s’ouvre seul. |
-| **2:45 – 3:45** | ③ Bilan collectif | « Avant / après : la majorité des gains vient du low tech, quasi gratuit. Et voici ce que ça coûte et rapporte sur 10 ans. » | Onglets « Profils » puis « Investissement ». |
-| **3:45 – 5:00** | Onglet « Demain avec EDF & moi » | « Ce n’était qu’une démo de 2 minutes. Demain, c’est automatique dans l’appli EDF & moi : la météo déclenche l’alerte à J-3, le logement est déjà connu, le Linky montre le vrai coût de la clim. Pour EDF : moins de pointe l’été, un service utile au bon moment, un conseil honnête. Merci ! » | Fin, questions. |
+| **2:45 – 4:00** | ③ Bilan de la salle | « Avant / après : rien qu’avec des gestes simples, beaucoup de logements gagnent une classe. On commence par protéger et ventiler, l’équipement vient ensuite. » | Montrer la répartition et le mur des participants. |
+| **4:00 – 5:00** | Bilan de la salle | Conclusion : « Le confort d’été se joue d’abord sur le logement. Merci ! » | Fin, questions. |
 
 ## Messages clés (si une seule phrase doit rester)
 
 1. Le confort d’été se joue d’abord sur le logement : orientation, protections, inertie, ventilation.
-2. Low tech d’abord, équipement ensuite, avec le coût réel sur 10 ans.
-3. L’appli EDF & moi a déjà la météo, le logement et le Linky : le diagnostic peut devenir automatique.
+2. Low tech d’abord, équipement ensuite.
 
 ## Questions probables
 
 - **Est-ce un DPE ?** Non, une simulation pédagogique ; les écarts de température sont des ordres de grandeur.
-- **La météo est-elle réelle ?** Non, c’est une prévision fictive de démonstration ; dans l’appli, elle viendrait de la prévision locale réelle.
-- **L’intégration EDF & moi existe-t-elle ?** C’est une proposition : aucune donnée client n’est utilisée dans cette démo.
+- **La météo est-elle réelle ?** Non, c’est une prévision fictive de démonstration ; en vrai, elle viendrait de la prévision locale.

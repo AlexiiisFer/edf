@@ -6,7 +6,7 @@ Application Node.js >=18, sans dépendance externe. Démarrer avec `npm start`.
 |---|---|
 | `/` | Écran projeté : QR code, puis déroulé de la démo en direct (étape, compte à rebours, avancement par thème, chiffres de la salle, plans validés) |
 | `/jouer` | 6 questions (région d’abord) → solutions low tech et high tech sur un seul écran → bilan → validation |
-| `/stats` | Profils de la salle, investissement/bénéfices, et vision « Demain avec EDF & moi » |
+| `/stats` | Bilan de la salle : classes avant / après et mur des participants |
 
 ## Interface
 
@@ -21,7 +21,7 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 1. Ouvrir `/`, laisser les participants scanner, puis « Commencer ».
 2. Chacun répond aux 6 questions de la démo : 45 secondes au maximum (plus tôt si tout le monde a terminé, ou sur « Passer au bilan »). Un participant en retard peut finir ensuite. Pendant ce temps, l’écran affiche en direct l’avancement et des chiffres de la salle à commenter.
 3. Les statistiques s’affichent automatiquement **2 minutes après « Commencer »**, avec un compte à rebours à l’écran. « Afficher maintenant » permet de les ouvrir plus tôt. Déroulé de 5 minutes : `PRESENTATION.md`.
-4. Les participants choisissent leurs actions, ajustent le tarif et leur consommation actuelle de climatisation, puis valident leur plan. Aucune action n’est cochée par défaut.
+4. Les participants cochent leurs solutions (low tech et high tech sur le même écran), voient leur classe et leur température avant / après, puis valident leur plan. Aucune action n’est cochée par défaut.
 5. Pendant l’affichage des statistiques, les participants peuvent encore continuer ou modifier leur plan.
 6. « Nouvelle session » efface toutes les données. Les données sont en mémoire et disparaissent aussi au redémarrage. Le téléphone retrouve son plan validé après rechargement tant que la session existe.
 
@@ -30,24 +30,20 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 - `public/questions.js` : version démo, 6 questions (région, type de logement, orientation des fenêtres, protections extérieures, courant d’air nocturne, climatisation). La région fixe la température extérieure du scénario canicule. Chaque réponse modifie l’écart intérieur/extérieur d’un scénario canicule à 35 °C (ajusté selon la zone) : valeurs pédagogiques, pas une étude thermique.
 - Les solutions proposées dépendent des équipements déclarés (protections existantes ou non, climatiseur mobile, PAC ou aucune clim).
 - Météo automatique : prévision **fictive** de démonstration (pic de canicule de la région jeudi), affichée sur l’écran des solutions.
-- Intégration avec l’appli EDF & moi : proposition présentée dans l’onglet « Demain avec EDF & moi ». Aucune donnée client n’est utilisée.
 
 ## Estimations
 
-`public/solutions.js` centralise les coûts indicatifs par équipement/zone, la durée de vie, l’entretien et les effets supposés. Ce sont des **hypothèses pédagogiques**, pas des prix fournisseurs vérifiés, des devis ni une étude thermique. Les prix et effets doivent être calibrés avant un usage de conseil réel.
+`public/solutions.js` décrit les solutions et leurs effets supposés sur la température. Ce sont des **hypothèses pédagogiques**, pas une étude thermique. La démo n’affiche ni coûts ni gains financiers (le modèle en garde le calcul interne).
 
 - Note de confort A–G : scénario fictif, jamais un DPE réglementaire. Seuls les choix sélectionnés modifient les résultats ; les profils non validés restent au point de départ.
-- Bilan net à 1, 5 et 10 ans : économies d’électricité moins consommation ajoutée, entretien, achats et renouvellements. Aucun financement, inflation ou aide n’est supposé.
-- Référence sans climatisation : 0 kWh de refroidissement. Une nouvelle PAC ajoute un coût d’usage ; aucun achat hypothétique évité n’est compté comme une économie. Le chauffage hivernal n’est pas modélisé.
-- Référence avec climatisation (PAC ou climatiseur mobile) : valeur de démonstration de 600 kWh/an, modifiable. Remplacer un mobile par une PAC est compté à 240 kWh/an et 60 € d’entretien. Tarif initial : 0,25 €/kWh, modifiable.
-- Pas d’addition directe des économies : réductions multiplicatives plafonnées à 50 %. Un ventilateur améliore le ressenti sans refroidir l’air ; les capteurs seuls ne réduisent pas la température.
-- Le serveur recalcule le plan et les statistiques à partir des réponses enregistrées. Les totaux financiers portent sur les plans validés ; une nouvelle validation remplace le plan précédent.
+- Gains de température plafonnés à 3,5 °C. Un ventilateur améliore le ressenti sans refroidir l’air ; les capteurs seuls ne réduisent pas la température.
+- Le serveur recalcule le plan et les statistiques à partir des réponses enregistrées ; une nouvelle validation remplace le plan précédent.
 
 ## Vérification
 
 `node --test tests/solutions.test.js`
 
-Le parcours a également été vérifié avec Playwright : téléphones simulés répondant aux 6 questions, modification des réponses, météo fictive, enchaînement automatique questionnaire → choix → statistiques, choix, validation et les trois onglets du bilan.
+Le parcours a également été vérifié avec Playwright : téléphones simulés répondant aux 6 questions, modification des réponses, météo fictive, enchaînement automatique questionnaire → choix → statistiques, choix, validation et bilan de la salle, sans défilement sur les tailles d’écran courantes.
 
 ## Logo
 

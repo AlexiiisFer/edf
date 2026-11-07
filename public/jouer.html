@@ -181,7 +181,7 @@ h1 { font-size: clamp(22px, 3.7vh, 30px); margin: 4px 0 8px; }
 .choice.tile input::after { width: 8px; height: 5px; border-width: 0 0 2.5px 2.5px; }
 .live { position: static; margin-top: auto; padding: 10px 10px 10px 14px; }
 .live .go { border: 0; border-radius: 12px; background: var(--soleil); color: var(--encre); font-weight: 760; padding: 11px 14px; cursor: pointer; white-space: nowrap; }
-.live .cost { font-size: 16px; }
+.live .cost { font-size: 16px; white-space: nowrap; }
 .live .mid { display: flex; align-items: center; gap: 10px; }
 #v-choices .tiles-head + .tiles { margin-bottom: 2px; }
 /* Bilan compact */
@@ -208,6 +208,10 @@ details.block summary { font-size: 15px; }
 .sum small { font-size: 11px; }
 .sum b { font-size: 15px; line-height: 1.2; display: block; }
 #comfortText { display: none; }
+.picked { list-style: none; padding: 0; margin: 0; }
+.picked li { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; font-weight: 600; color: var(--encre); }
+.picked li span { font-size: 10px; padding: 2px 7px; }
+#payback { font-weight: 700; color: var(--bon); font-size: 15px; text-align: center; }
 #v-balance .stages { margin: 2px 0 6px; }
 #v-balance .btn.link, #v-thanks .btn.link { padding: 6px; font-size: 14px; }
 @media (max-height: 700px) {
@@ -225,6 +229,7 @@ details.block summary { font-size: 15px; }
   .choice.tile input { top: 7px; left: 7px; }
   .me-strip { padding: 8px 10px; } .me-strip .grade { font-size: 20px; }
   .tiles-head { margin: 2px 0 3px; }
+  .choice.tile .price { display: none !important; }
   .tiles-head span { font-size: 10px; padding: 3px 8px; }
   .me-strip .t { font-size: 17px; }
   .live { padding: 8px 8px 8px 12px; }
@@ -259,9 +264,8 @@ details.block summary { font-size: 15px; }
 
 <section class="view" id="v-balance">
   <div class="intro"><p class="stage-label">Mon bilan</p><h1>Ce que ça change.</h1></div>
-  <div class="block"><div class="stages" id="gradePath"></div><p id="comfortText" class="temps"></p>
-    <div class="sum" id="budget" aria-live="polite"></div><p id="payback" class="muted"></p></div>
-  <details class="block"><summary>Mes hypothèses</summary><label class="field">Prix de l’électricité (€/kWh)<input id="tariff" type="number" inputmode="decimal" min="0.05" max="1" step="0.01" value="0.25"></label><label class="field" id="baselineField">Conso actuelle de la clim (kWh/an)<input id="baseline" type="number" inputmode="numeric" min="0" max="10000" step="1" value="600"></label><p class="muted">Estimations indicatives, hors aides. Pas un DPE.</p></details>
+  <div class="block"><div class="stages" id="gradePath"></div><p id="payback" class="muted"></p></div>
+  <div class="block"><h2 style="font-size:16px">Mes choix</h2><ul class="picked" id="picked"></ul></div>
   <p id="saveStatus" role="status"></p>
   <button class="btn primary" id="saveBtn" onclick="savePlan()">Valider mon plan</button>
   <button class="btn link" onclick="show('choices')">Modifier mes choix</button>
@@ -277,12 +281,9 @@ details.block summary { font-size: 15px; }
 <script src="/questions.js"></script><script src="/solutions.js"></script><script>
 const storage = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k,v) { try { localStorage.setItem(k,v); } catch {} } };
 let me, sessionId, participantNumber, answers = {}, chosen = new Set(), view = 'wait', qi = -1, editing = false, built = false, busy = false, lastGrade = null;
-const money = n => new Intl.NumberFormat('fr-FR', { style:'currency', currency:'EUR', maximumFractionDigits:0 }).format(n);
-const range = (a,b) => Math.round(a) === Math.round(b) ? money(a) : `${money(a)} à ${money(b)}`;
 const badge = (g, cls='') => `<span class="grade grade-${g} ${cls}">${g}</span>`;
 const path = (...gs) => `<span class="grade-path">${gs.map(g=>badge(g)).join('<span class="arrow">→</span>')}</span>`;
-function settings() { return { tariff: Number(document.getElementById('tariff').value), baselineKwh: Number(document.getElementById('baseline').value) }; }
-function currentPlan() { return estimatePlan(answers,[...chosen],settings()); }
+function currentPlan() { return estimatePlan(answers,[...chosen]); }
 function fitHero(sec = document.getElementById('v-'+view)) { const intro = sec && sec.querySelector('.intro'); if (intro) document.querySelector('.hero-bg').style.height = Math.round(intro.getBoundingClientRect().bottom + scrollY + 44) + 'px'; }
 addEventListener('resize', () => fitHero());
 function show(v) {
@@ -306,7 +307,7 @@ function render(d) {
  participantNumber=d.participantNumber;answers=Object.assign({}, d.answers || {}, answers);
  if(d.phase==='lobby') {document.getElementById('waitTitle').textContent='Vous êtes dans la salle.';document.getElementById('waitText').textContent=`${d.connected} connecté${d.connected>1?'s':''} · ${QUESTIONS.length} questions`;show('wait');return;}
  if(editing || !isComplete(answers)) { if(qi<0){qi=Math.max(0,QUESTIONS.findIndex(q=>answers[q.key]===undefined));buildQuestion();} if(view!=='question')show('question'); return; }
- if(!built) {built=true;let draft=[];try{draft=JSON.parse(storage.get('ml_plan_'+sessionId)||'[]');}catch{}chosen=new Set(d.plan?.ids || draft);if(d.plan){document.getElementById('tariff').value=d.plan.tariff;document.getElementById('baseline').value=d.plan.baselineKwh;}buildChoices();show('choices');}
+ if(!built) {built=true;let draft=[];try{draft=JSON.parse(storage.get('ml_plan_'+sessionId)||'[]');}catch{}chosen=new Set(d.plan?.ids || draft);buildChoices();show('choices');}
 }
 function buildQuestion() {
  const q=QUESTIONS[qi], sec=SECTIONS.find(x=>x.id===q.section);
@@ -339,29 +340,25 @@ function buildChoices() {
  for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);
  // Météo fictive de démonstration : pic de canicule de la région jeudi (p.out).
  document.getElementById('myProfile').innerHTML=`${badge(p.grade,'big-grade')}<div style="flex:1"><div class="t num">${p.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${p.out} °C dehors</p></div>`;
- for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="price">${s.max?range(s.min,s.max):'Gratuit'}</small></label>`).join('');box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
- document.getElementById('baselineField').hidden=!hasClim(answers);
+ for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="price">${s.detail}</small></label>`).join('');box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
  updatePlan();
 }
 function updatePlan() {
  const auto=document.querySelector('input[value="auto"]');if(auto){auto.disabled=!hasExterior(answers)&&!chosen.has('shade');if(auto.disabled){auto.checked=false;chosen.delete('auto');}}
  const p=currentPlan();
  const pv=document.getElementById('preview');
- pv.innerHTML=`<div class="mid">${path(p.grade,p.planGrade)}<div class="cost num">${p.costMax?range(p.costMin,p.costMax):'0 €'}</div></div><button class="go" onclick="show('balance')">Voir mon bilan</button>`;
+ pv.innerHTML=`<div class="mid">${path(p.grade,p.planGrade)}<div class="cost num">${p.tPlan} °C</div></div><button class="go" onclick="show('balance')">Voir mon bilan</button>`;
  if(view==='choices'&&lastGrade!==null&&lastGrade!==p.planGrade) UI.bump(pv.querySelector('.grade-path .grade:last-child'));
  lastGrade=p.planGrade;
  document.getElementById('gradePath').innerHTML=[['Avant',p.grade,p.tNo],['Après',p.planGrade,p.tPlan]].map(([t,g,c])=>`<div>${badge(g)}<small>${t} · ${c} °C</small></div>`).join('<span class="arrow">→</span>');
- document.getElementById('comfortText').innerHTML=`<span>${p.tNo} °C</span><span aria-hidden="true">→</span><span>${p.tPlan} °C</span>`;
- const net10=p.timeline[2];
- document.getElementById('budget').innerHTML=`<div><small>Investissement</small><b>${p.costMax?range(p.costMin,p.costMax):'0 €'}</b></div><div><small>${p.annualNet>=0?'Économie / an':'Surcoût / an'}</small><b>${money(Math.abs(p.annualNet))}</b></div><div class="wide"><small>Sur 10 ans</small><b>${range(net10.netMin,net10.netMax)}</b></div>`;
- document.getElementById('payback').textContent=!p.ids.length?'Aucun choix pour l’instant.':p.paybackYears?`Rentabilisé en ${p.paybackYears} an${p.paybackYears>1?'s':''} au plus tard.`:p.fan&&!p.gain?'Ventilateur : plus de confort ressenti.':'';
+ document.getElementById('payback').textContent=!p.ids.length?'Aucun choix pour l’instant.':p.gain>0?`${p.gain} °C de moins chez vous.`:p.fan?'Plus de confort ressenti.':'';
+ const picked=SOLUTIONS.filter(s=>p.ids.includes(s.id));
+ document.getElementById('picked').innerHTML=picked.length?picked.map(s=>`<li><span class="${s.type==='low'?'tag-low':'tag-high'}">${s.type==='low'?'Low':'High'}</span>${s.label}</li>`).join(''):'<li class="muted">Rien de coché.</li>';
  document.getElementById('saveStatus').textContent='';
 }
-for(const id of ['tariff','baseline'])document.getElementById(id).addEventListener('input',updatePlan);
 async function savePlan() {
- if(!document.getElementById('tariff').reportValidity() || !document.getElementById('baseline').reportValidity() || !document.getElementById('tariff').value || !document.getElementById('baseline').value)return;
  const btn=document.getElementById('saveBtn');btn.disabled=true;
- try {const d=await api('engage',{id:me,actions:[...chosen],settings:settings()});document.getElementById('savedSummary').innerHTML=`<p>${path(d.plan.grade,d.plan.planGrade)}</p><p>Investissement : <strong>${d.plan.costMax?range(d.plan.costMin,d.plan.costMax):'0 €'}</strong></p>`;show('thanks');}catch(e){document.getElementById('saveStatus').textContent='Erreur : '+e.message;}finally{btn.disabled=false;}
+ try {const d=await api('engage',{id:me,actions:[...chosen]});document.getElementById('savedSummary').innerHTML=`<p>${path(d.plan.grade,d.plan.planGrade)}</p><p><strong>${d.plan.tNo} °C → ${d.plan.tPlan} °C</strong></p>`;show('thanks');}catch(e){document.getElementById('saveStatus').textContent='Erreur : '+e.message;}finally{btn.disabled=false;}
 }
 (async()=>{me=storage.get('ml_id');sessionId=storage.get('ml_session');if(me){try{render(await api('state?id='+encodeURIComponent(me)));}catch{await join();}}else await join();setInterval(async()=>{if(me)try{render(await api('state?id='+encodeURIComponent(me)));}catch{}},1000);})();
 </script></body></html>

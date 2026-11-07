@@ -12,7 +12,7 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 .muted { color: var(--brume); font-size: clamp(12px, .95vw, 17px); line-height: 1.45; }
 .btn-ghost { background: var(--verre); border: 1px solid var(--verre-bord); color: var(--brume); padding: 11px 18px; font-size: 14px; }
 .btn-ghost:hover { color: var(--craie); border-color: var(--brume); }
-.bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.bar { display: flex; align-items: center; justify-content: flex-start; gap: 16px; flex-wrap: wrap; }
 .status { display: flex; gap: 10px; flex-wrap: wrap; }
 .chip { display: inline-flex; align-items: baseline; gap: 6px; padding: 8px 14px; border-radius: 999px; background: var(--verre); border: 1px solid var(--verre-bord); color: var(--brume); font-size: clamp(12px, .95vw, 16px); }
 .chip b { color: var(--craie); font-size: 1.25em; }
@@ -92,7 +92,6 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 <main class="page">
 <header><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><div><p class="kicker">Démo · défi confort d’été</p><h1 class="display">Le bilan de la salle</h1></div></div><button class="btn btn-ghost" id="resetBtn">Nouvelle session</button></header>
 <div class="bar">
-  <div class="tabs" role="group" aria-label="Vue"><span class="thumb" id="thumb" aria-hidden="true"></span><button id="profilesTab" aria-pressed="true">Profils</button><button id="budgetTab" aria-pressed="false">Coûts et gains</button><button id="visionTab" aria-pressed="false">Demain avec EDF & moi</button></div>
   <div class="status"><span class="chip live"><b class="num" id="cConnected">0</b> participants</span><span class="chip"><b class="num" id="cProfiles">0</b> profils</span><span class="chip"><b class="num" id="cValidated">0</b> plans validés</span></div>
 </div>
 <p class="sr-only" id="count" role="status">Connexion au bilan…</p>
@@ -111,48 +110,17 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
   </div>
 </section>
 
-<section id="budgetPanel" class="panel" hidden>
-  <div class="metrics">
-    <div class="metric"><span class="muted">Investissement</span><strong id="investment">—</strong></div>
-    <div class="metric"><span class="muted">Économie par an</span><strong id="annual">—</strong></div>
-    <div class="metric"><span class="muted">Bilan sur 10 ans</span><strong id="netTen">—</strong></div>
-  </div>
-  <div class="metrics">
-    <div class="metric cool"><span class="muted">Énergie économisée / an</span><strong id="energy">—</strong></div>
-    <div class="metric cool"><span class="muted">Profils améliorés</span><strong id="improved">—</strong></div>
-    <div class="metric cool"><span class="muted">Top choix</span><div id="actions"></div></div>
-  </div>
-</section>
 
-<section id="visionPanel" class="panel" hidden>
-  <div class="vision-head"><p class="kicker">Intégration envisagée</p><h2 class="display">Demain, automatique dans l’appli EDF &amp; moi.</h2></div>
-  <div class="pillars">
-    <article class="pillar"><span class="e">🌡️</span><small>01</small><h3>Météo</h3><p>Alerte canicule à J-3, chez <em>vous</em>.</p></article>
-    <article class="pillar"><span class="e">🏠</span><small>02</small><h3>Logement connu</h3><p>Questions pré-remplies, clim repérée par le Linky.</p></article>
-    <article class="pillar"><span class="e">🧭</span><small>03</small><h3>Solutions</h3><p>Gestes gratuits d’abord, équipement si besoin.</p></article>
-  </div>
-  <div class="card why"><h2>Pour EDF</h2><ul><li><b>Moins de pointe l’été</b></li><li><b>Un service utile au bon moment</b></li><li><b>Un conseil honnête</b></li></ul></div>
-</section>
 
-<footer class="foot"><img id="qr" class="qr" alt="QR code pour retrouver sa fiche"><p class="muted">Démo pédagogique, pas un DPE. Météo et coûts indicatifs.</p></footer>
+<footer class="foot"><img id="qr" class="qr" alt="QR code pour retrouver sa fiche"><p class="muted">Démo pédagogique, pas un DPE. Météo fictive.</p></footer>
 </main>
 <div class="tip" id="tip" role="tooltip"></div>
 <script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script>
 <script src="/qrcode.js"></script><script src="/questions.js"></script><script src="/solutions.js"></script><script>
-const money=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
-const range=(a,b)=>Math.round(a)===Math.round(b)?money(a):`${money(a)} à ${money(b)}`;
 const badge=g=>`<span class="grade grade-${g}">${g}</span>`;
 const STAGES=['Avant','Après'];
 const qr=qrcode(0,'M');qr.addData(location.origin+'/jouer');qr.make();document.getElementById('qr').src=qr.createDataURL(4,1);
 
-// Onglets avec curseur glissant
-function placeThumb(){const b=document.querySelector('.tabs button[aria-pressed="true"]'),t=document.getElementById('thumb');t.style.left=b.offsetLeft+'px';t.style.width=b.offsetWidth+'px';}
-function tab(name){window.scrollTo(0,0);for(const t of ['profiles','budget','vision']){document.getElementById(t+'Panel').hidden=t!==name;document.getElementById(t+'Tab').setAttribute('aria-pressed',String(t===name));}placeThumb();
-  if(name==='profiles'){fitWall();UI.enter('#profilesPanel > .card',{y:24,stagger:70});animateDist(true);}
-  if(name==='budget'){UI.enter('#budgetPanel .metric',{y:24,stagger:70});if(UI.on)anime.animate('#actions .bar-fill',{scaleX:[0,1],duration:900,delay:anime.stagger(80,{start:300}),ease:'out(3)'});}
-  if(name==='vision'){UI.words(document.querySelector('.vision-head h2'),{y:40});UI.enter('.vision-head p, .pillar, .why',{y:30,stagger:110,delay:300});}}
-for(const t of ['profiles','budget','vision'])document.getElementById(t+'Tab').onclick=()=>tab(t);
-addEventListener('resize',placeThumb);document.fonts?.ready.then(placeThumb);placeThumb();
 document.getElementById('resetBtn').onclick=async()=>{if(!confirm('Effacer les réponses et les plans de la salle ?'))return;try{const r=await fetch('/api/reset',{method:'POST'});if(!r.ok)throw Error();location.href='/';}catch{showError('Réinitialisation impossible. Réessayez.');}};
 function showError(t){const e=document.getElementById('countError');e.textContent=t;e.hidden=!t;}
 
@@ -200,17 +168,6 @@ UI.tween(document.getElementById('cConnected'),s.connected,int,600);UI.tween(doc
 const first=!distCounts;distCounts=[...'ABCDEFG'].map(g=>[s.gradeCounts[g],s.planGradeCounts[g]]);animateDist(first);
 document.getElementById('distTable').innerHTML=`<tr><th>Classe</th>${STAGES.map(t=>`<th>${t}</th>`).join('')}</tr>`+[...'ABCDEFG'].map((g,i)=>`<tr><th>${g}</th>${distCounts[i].map(n=>`<td>${n}</td>`).join('')}</tr>`).join('');
 renderWall(s.profiles);
-const v=s.validatedCount;
-const setOr=(id,vals,fmt)=>{const el=document.getElementById(id);if(!v){el._twTarget=null;el._twCur=null;el.textContent='—';return;}UI.tween(el,vals,fmt,1100);};
-setOr('investment',[s.investmentMin,s.investmentMax],([a,b])=>range(a,b));
-setOr('annual',[s.eurosSeason],([a])=>money(a));
-setOr('netTen',[s.netTenMin,s.netTenMax],([a,b])=>range(a,b));
-setOr('energy',[Math.round(s.kwhSaved)],([a])=>Math.round(a).toLocaleString('fr-FR')+' kWh');
-document.getElementById('improved').textContent=s.profiles.filter(p=>p.validated&&p.planGrade<p.grade).length+' / '+s.validatedCount;
-const top=Object.entries(s.gestureCounts).sort((a,b)=>b[1]-a[1]).slice(0,4),maxN=Math.max(1,...top.map(t=>t[1]));
-const box=document.getElementById('actions');box.replaceChildren();
-for(const [id,n] of top){const p=document.createElement('p');p.className='muted';const bar=document.createElement('span');bar.className='bar-fill';bar.style.width=Math.round(n/maxN*60)+'px';const lbl=document.createElement('span');lbl.className='lbl';lbl.textContent=SOLUTIONS.find(s=>s.id===id)?.label || id;const b=document.createElement('b');b.textContent=n;p.append(lbl,bar,b);box.appendChild(p);}
-if(!box.children.length)box.textContent='En attente des choix.';
 }catch{showError('Connexion interrompue : les dernières valeurs peuvent être anciennes. Nouvelle tentative automatique…');}}
 UI.enter('header, .bar, #profilesPanel > .card',{y:20,stagger:80});
 refresh();setInterval(refresh,2000);

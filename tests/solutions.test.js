@@ -75,7 +75,7 @@ test('selection deduplicates, excludes incompatible options and requires shade f
   assert.deepEqual(estimatePlan(noAc, ['auto']).ids, []);
   assert.deepEqual(estimatePlan(hot, ['ac']).ids, []);
   assert.deepEqual(estimatePlan(noAc, ['shade', 'auto']).ids, ['shade', 'auto']);
-  assert.equal(estimatePlan(hot, ['sensors', 'app']).gain, 0);
+  assert.equal(estimatePlan(hot, ['sensors']).gain, 0);
 });
 
 test('sampled questionnaire combinations preserve initial class without actions', () => {
