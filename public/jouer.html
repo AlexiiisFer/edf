@@ -95,7 +95,7 @@ p { line-height: 1.5; margin: 10px 0; }
 
 /* Barre d'aperçu */
 .live { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom)); margin-top: 18px; background: rgba(15,35,66,.94); backdrop-filter: blur(10px); color: #fff; padding: 14px 16px; border-radius: 18px; box-shadow: 0 12px 34px rgba(15,35,66,.35); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.live .cost { font-weight: 760; font-size: 18px; }
+.live .temp-now { font-weight: 760; font-size: 18px; }
 .live small { color: var(--brume); font-size: 12px; display: block; }
 .live .grade { padding: 6px 9px; }
 
@@ -181,7 +181,7 @@ h1 { font-size: clamp(22px, 3.7vh, 30px); margin: 4px 0 8px; }
 .choice.tile input::after { width: 8px; height: 5px; border-width: 0 0 2.5px 2.5px; }
 .live { position: static; margin-top: auto; padding: 10px 10px 10px 14px; }
 .live .go { border: 0; border-radius: 12px; background: var(--soleil); color: var(--encre); font-weight: 760; padding: 11px 14px; cursor: pointer; white-space: nowrap; }
-.live .cost { font-size: 16px; white-space: nowrap; }
+.live .temp-now { font-size: 16px; white-space: nowrap; }
 .live .mid { display: flex; align-items: center; gap: 10px; }
 #v-choices .tiles-head + .tiles { margin-bottom: 2px; }
 /* Bilan compact */
@@ -191,7 +191,7 @@ h1 { font-size: clamp(22px, 3.7vh, 30px); margin: 4px 0 8px; }
 .sum { margin-top: 8px; gap: 8px; }
 .sum div { padding: 9px 12px; }
 .sum b { font-size: 17px; }
-#payback { margin: 8px 0 0; font-size: 13px; }
+#effect { margin: 8px 0 0; font-size: 13px; }
 details.block summary { font-size: 15px; }
 #v-balance .btn.primary { margin-top: auto; }
 .thanks-icon { width: 60px; height: 60px; }
@@ -211,7 +211,7 @@ details.block summary { font-size: 15px; }
 .picked { list-style: none; padding: 0; margin: 0; }
 .picked li { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; font-weight: 600; color: var(--encre); }
 .picked li span { font-size: 10px; padding: 2px 7px; }
-#payback { font-weight: 700; color: var(--bon); font-size: 15px; text-align: center; }
+#effect { font-weight: 700; color: var(--bon); font-size: 15px; text-align: center; }
 #v-balance .stages { margin: 2px 0 6px; }
 #v-balance .btn.link, #v-thanks .btn.link { padding: 6px; font-size: 14px; }
 @media (max-height: 700px) {
@@ -264,7 +264,7 @@ details.block summary { font-size: 15px; }
 
 <section class="view" id="v-balance">
   <div class="intro"><p class="stage-label">Mon bilan</p><h1>Ce que ça change.</h1></div>
-  <div class="block"><div class="stages" id="gradePath"></div><p id="payback" class="muted"></p></div>
+  <div class="block"><div class="stages" id="gradePath"></div><p id="effect" class="muted"></p></div>
   <div class="block"><h2 style="font-size:16px">Mes choix</h2><ul class="picked" id="picked"></ul></div>
   <p id="saveStatus" role="status"></p>
   <button class="btn primary" id="saveBtn" onclick="savePlan()">Valider mon plan</button>
@@ -347,11 +347,11 @@ function updatePlan() {
  const auto=document.querySelector('input[value="auto"]');if(auto){auto.disabled=!hasExterior(answers)&&!chosen.has('shade');if(auto.disabled){auto.checked=false;chosen.delete('auto');}}
  const p=currentPlan();
  const pv=document.getElementById('preview');
- pv.innerHTML=`<div class="mid">${path(p.grade,p.planGrade)}<div class="cost num">${p.tPlan} °C</div></div><button class="go" onclick="show('balance')">Voir mon bilan</button>`;
+ pv.innerHTML=`<div class="mid">${path(p.grade,p.planGrade)}<div class="temp-now num">${p.tPlan} °C</div></div><button class="go" onclick="show('balance')">Voir mon bilan</button>`;
  if(view==='choices'&&lastGrade!==null&&lastGrade!==p.planGrade) UI.bump(pv.querySelector('.grade-path .grade:last-child'));
  lastGrade=p.planGrade;
  document.getElementById('gradePath').innerHTML=[['Avant',p.grade,p.tNo],['Après',p.planGrade,p.tPlan]].map(([t,g,c])=>`<div>${badge(g)}<small>${t} · ${c} °C</small></div>`).join('<span class="arrow">→</span>');
- document.getElementById('payback').textContent=!p.ids.length?'Aucun choix pour l’instant.':p.gain>0?`${p.gain} °C de moins chez vous.`:p.fan?'Plus de confort ressenti.':'';
+ document.getElementById('effect').textContent=!p.ids.length?'Aucun choix pour l’instant.':p.gain>0?`${p.gain} °C de moins chez vous.`:p.fan?'Plus de confort ressenti.':'';
  const picked=SOLUTIONS.filter(s=>p.ids.includes(s.id));
  document.getElementById('picked').innerHTML=picked.length?picked.map(s=>`<li><span class="${s.type==='low'?'tag-low':'tag-high'}">${s.type==='low'?'Low':'High'}</span>${s.label}</li>`).join(''):'<li class="muted">Rien de coché.</li>';
  document.getElementById('saveStatus').textContent='';

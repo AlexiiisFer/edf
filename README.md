@@ -33,7 +33,7 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 
 ## Estimations
 
-`public/solutions.js` décrit les solutions et leurs effets supposés sur la température. Ce sont des **hypothèses pédagogiques**, pas une étude thermique. La démo n’affiche ni coûts ni gains financiers (le modèle en garde le calcul interne).
+`public/solutions.js` décrit les solutions et leurs effets supposés sur la température. Ce sont des **hypothèses pédagogiques**, pas une étude thermique. Aucun coût ni gain financier n’est calculé.
 
 - Note de confort A–G : scénario fictif, jamais un DPE réglementaire. Seuls les choix sélectionnés modifient les résultats ; les profils non validés restent au point de départ.
 - Gains de température plafonnés à 3,5 °C. Un ventilateur améliore le ressenti sans refroidir l’air ; les capteurs seuls ne réduisent pas la température.

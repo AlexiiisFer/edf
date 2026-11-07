@@ -131,10 +131,6 @@ function computeStats() {
     pendingCount: all.length - count,
     validatedCount: list.filter(p => p.plan && p.submitted).length,
     lowGradeCounts: Object.fromEntries([..."ABCDEFG"].map(g => [g, list.filter(p => p.plan.lowGrade === g).length])),
-    investmentMin: list.filter(p => p.submitted).reduce((n,p) => n + p.plan.costMin, 0),
-    investmentMax: list.filter(p => p.submitted).reduce((n,p) => n + p.plan.costMax, 0),
-    netTenMin: list.filter(p => p.submitted).reduce((n,p) => n + p.plan.timeline[2].netMin, 0),
-    netTenMax: list.filter(p => p.submitted).reduce((n,p) => n + p.plan.timeline[2].netMax, 0),
     gradeCounts: Object.fromEntries([..."ABCDEFG"].map(g => [g, list.filter(p => p.profile.grade === g).length])),
     planGradeCounts: Object.fromEntries([..."ABCDEFG"].map(g => [g, list.filter(p => p.profile.planGrade === g).length])),
     profiles: all.map(p => {
@@ -149,10 +145,6 @@ function computeStats() {
     pctTopFloor: pct((p) => p.answers.logement === "combles"),
     pctTooHot: pct((p) => p.tempNo >= 28),
     degreesSaved: Math.round(engaged.reduce((s, p) => s + p.plan.gain, 0)),
-    kwhSaved: Math.round(engaged.reduce((s, p) => s + p.plan.kwhSaved, 0)),
-    eurosSeason: engaged.reduce((s, p) => s + p.plan.annualNet, 0),
-    co2Season: engaged.reduce((s, p) => s + p.plan.kwhSaved * .06, 0),
-    climAvoided: 0,
     gestureCounts,
     // Réponses de la salle par question, pour les chiffres en direct de l'écran projeté.
     answerCounts: Object.fromEntries(QUESTIONS.map((q) => [q.key, Object.fromEntries(q.options.map((o) => [o.v, all.filter((p) => p.answers[q.key] === o.v).length]))])),
@@ -198,10 +190,7 @@ const server = http.createServer(async (req, res) => {
       if (!Object.keys(pl.answers).length) return sendJson(res, 400, { error: "Répondez au moins à une question avant de valider" });
       const valid = new Set(availableSolutions(pl.answers).map(s => s.id));
       if (!Array.isArray(b.actions) || b.actions.length > 20 || b.actions.some(id => !valid.has(id))) return sendJson(res, 400, { error: "Actions invalides" });
-      // Réglages facultatifs (tarif, conso) : valeurs par défaut si absents.
-      const settings = b.settings || {};
-      if (b.settings && (!Number.isFinite(settings.tariff) || settings.tariff < .05 || settings.tariff > 1 || !Number.isFinite(settings.baselineKwh) || settings.baselineKwh < 0 || settings.baselineKwh > 10000)) return sendJson(res, 400, { error: "Réglages invalides" });
-      const plan = estimatePlan(pl.answers, b.actions, settings);
+      const plan = estimatePlan(pl.answers, b.actions);
       Object.assign(pl, { plan, gestures: plan.ids, gain: plan.gain, engaged: plan.ids.length > 0, submitted: true, tempNo: plan.tNo, tempPlan: plan.tPlan });
       return sendJson(res, 200, { ok: true, plan });
     }
