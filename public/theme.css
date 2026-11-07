@@ -36,3 +36,26 @@ button { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Échelle de confort pédagogique, distincte d'un DPE. */
+.grade-scale { display:flex; gap:6px; margin:16px 0; }
+.grade { display:inline-flex; align-items:center; justify-content:center; border-radius:8px; padding:8px 10px; font-weight:800; color:#102a35; }
+.grade-A { background:#70c9a0; } .grade-B { background:#a6d988; }
+.grade-C { background:#d4e77f; } .grade-D { background:#ffe078; }
+.grade-E { background:#ffb875; } .grade-F { background:#ff947a; } .grade-G { background:#f77882; }
+.grade.selected { outline:3px solid currentColor; outline-offset:2px; }
+.profile-wall { position:fixed; inset:0; background:var(--nuit); z-index:5; padding:3vh 4vw; display:flex; flex-direction:column; gap:2vh; overflow:auto; }
+.profile-wall[hidden] { display:none; }
+.wall-head { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.wall-head h1 { font-size:clamp(22px,2.8vw,48px); }
+.wall-note { color:var(--brume); font-size:clamp(12px,1.1vw,20px); }
+.wall-distribution { display:flex; gap:1vw; flex-wrap:wrap; }
+.wall-grid { display:grid; grid-template-columns:repeat(10,minmax(0,1fr)); gap:8px; flex:1; align-content:start; }
+.wall-tile { padding:5px 6px; border:1px solid var(--ombre-2); border-radius:12px; text-align:center; background:var(--ombre); }
+.wall-tile small { display:block; color:var(--brume); font-size:12px; margin-bottom:5px; }
+.wall-tile .grade { padding:3px 9px; font-size:18px; }
+.wall-tile p { margin-top:4px; font-size:11px; color:var(--brume); }
+@media(max-width:700px) { .wall-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } .wall-head { flex-wrap:wrap; } }
+
+.solutions { padding-left:20px; margin:12px 0; line-height:1.5; }
+.solutions li + li { margin-top:12px; }

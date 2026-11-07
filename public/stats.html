@@ -76,13 +76,14 @@
   <div class="top">
     <div class="brand"><span class="sun"></span><span class="n">Météo de mon logement</span><span style="margin-left:1.2vw"><span class="n" id="answered">0</span> logements analysés</span></div>
     <div style="display:flex; gap:1vw; align-items:center">
+      <button class="btn btn-quiet" onclick="document.getElementById('profileWall').hidden=false">Profils de la salle</button>
       <button class="btn btn-quiet" onclick="newSession()">Nouvelle session</button>
       <button class="btn btn-go" onclick="toggleFrance()">Et à l'échelle de la France&nbsp;?</button>
     </div>
   </div>
 
   <section class="hero">
-    <h1>Demain à 17h, dans les logements de la salle</h1>
+    <h1>Scénario fictif à 17h, dans les logements de la salle</h1>
     <div class="swing">
       <div class="temp hot"><b class="num" id="avgNo">--°</b><span>en moyenne sans rien faire</span></div>
       <div class="arrow"><div class="delta" id="delta"></div><div class="range" id="range"></div></div>
@@ -117,6 +118,14 @@
   </section>
 </div>
 
+<section class="profile-wall" id="profileWall">
+  <div class="wall-head"><div><p class="wall-note">CANICULE · LE BILAN COLLECTIF</p><h1>Les profils confort d’été de la salle</h1></div><button class="btn btn-go" onclick="document.getElementById('profileWall').hidden=true">Voir les autres statistiques</button></div>
+  <p class="wall-note" id="profileCount">En attente des participants…</p>
+  <div class="wall-distribution" id="gradeDistribution"></div>
+  <p class="wall-note">Chaque case : un participant · classe initiale → avec le plan · A : moins exposé, G : plus exposé</p>
+  <div class="wall-grid" id="profileGrid"></div>
+  <p class="wall-note">Simulation pédagogique, pas un DPE réglementaire. Scénario fictif : A ≤24, B ≤26, C ≤28, D ≤30, E ≤32, F ≤34, G >34 °C. Les profils incomplets utilisent des réponses types. Aucun nom affiché.</p>
+</section>
 <div class="france" id="france" onclick="toggleFrance()">
   <div class="fr-head">Si <em id="frFoyers">10 millions</em> de foyers faisaient comme cette salle, chaque été en France :</div>
   <div class="fr-list">
@@ -152,6 +161,9 @@ async function refresh() {
   try {
     const s = await (await fetch("/api/stats", { cache: "no-store" })).json();
     lastStats = s;
+    document.getElementById("profileCount").textContent = `${s.count} profils sur ${s.connected} participants · ${s.pendingCount} en attente de réponses`;
+    document.getElementById("gradeDistribution").innerHTML = [..."ABCDEFG"].map(g => `<span class="grade grade-${g}">${g} · ${s.gradeCounts[g]} → ${s.planGradeCounts[g]}</span>`).join("");
+    document.getElementById("profileGrid").innerHTML = s.profiles.map(p => `<article class="wall-tile"><small>Participant ${p.number}</small>${p.grade ? `<span class="grade grade-${p.grade}">${p.grade}</span> → <span class="grade grade-${p.planGrade}">${p.planGrade}</span><p>${p.complete ? "5 / 5 réponses" : "Profil incomplet"}</p>` : '<p>En attente</p>'}</article>`).join("");
     set("answered", s.count);
     set("avgNo", s.count ? deg(s.avgNoAction) : "--°");
     set("avgPlan", s.count ? deg(s.avgWithPlan) : "--°");

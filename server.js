@@ -3,7 +3,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { QUESTIONS, IMPACT, impactFor } = require("./public/questions.js");
+const { QUESTIONS, IMPACT, impactFor, computeProfile } = require("./public/questions.js");
 
 const PORT = process.env.PORT || 3000;
 const QUESTION_MS = (Number(process.env.QUESTION_SECONDS) || 15) * 1000;
@@ -99,13 +99,19 @@ function publicState(id) {
     submitted: players.filter((p) => p.submitted).length,
     engaged: players.filter((p) => p.engaged).length,
     known: !!me,
+    participantNumber: me ? me.number : null,
+    answers: me ? me.answers : undefined,
+    profile: me && (session.phase === "result" || session.phase === "stats") ? computeProfile(me.answers) : null,
     myAnswer: me && key ? me.answers[key] ?? null : null,
   };
 }
 
 function computeStats() {
   const all = [...session.players.values()];
-  const list = all.filter((p) => p.submitted);
+  const list = all.filter(p => Object.keys(p.answers).length > 0).map(p => {
+    const profile = computeProfile(p.answers);
+    return { ...p, tempNo: profile.tNo, tempPlan: profile.tPlan, profile };
+  });
   const count = list.length;
   const avg = (k) => (count ? list.reduce((s, p) => s + p[k], 0) / count : 0);
   const engaged = list.filter((p) => p.engaged);
@@ -117,6 +123,13 @@ function computeStats() {
     connected: all.length,
     count,
     engagedCount: engaged.length,
+    pendingCount: all.length - count,
+    gradeCounts: Object.fromEntries([..."ABCDEFG"].map(g => [g, list.filter(p => p.profile.grade === g).length])),
+    planGradeCounts: Object.fromEntries([..."ABCDEFG"].map(g => [g, list.filter(p => p.profile.planGrade === g).length])),
+    profiles: all.map(p => {
+      const profile = Object.keys(p.answers).length ? computeProfile(p.answers) : null;
+      return { number: p.number, grade: profile?.grade || null, planGrade: profile?.planGrade || null, complete: profile?.complete || false };
+    }),
     avgNoAction: Math.round(avg("tempNo") * 10) / 10,
     avgWithPlan: Math.round(avg("tempPlan") * 10) / 10,
     pctNoShutters: pct((p) => p.answers.shutters === "aucun"),
@@ -143,7 +156,7 @@ const server = http.createServer(async (req, res) => {
     if (p === "/api/join" && req.method === "POST") {
       if (session.players.size >= MAX_PLAYERS) return sendJson(res, 429, { error: "Session complète" });
       const id = crypto.randomUUID();
-      session.players.set(id, { joinedAt: Date.now(), answers: {}, submitted: false, engaged: false, tempNo: 0, tempPlan: 0, gain: 0, gestures: [] });
+      session.players.set(id, { number: session.players.size + 1, joinedAt: Date.now(), answers: {}, submitted: false, engaged: false, tempNo: 0, tempPlan: 0, gain: 0, gestures: [] });
       return sendJson(res, 200, { id, ...publicState(id) });
     }
 

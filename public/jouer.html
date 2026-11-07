@@ -103,9 +103,11 @@
 
   <!-- Résultat -->
   <section class="view" id="v-result">
-    <h1>Demain chez vous</h1>
+    <h1>Votre profil confort d’été</h1>
+    <div class="block" id="profileCard" aria-live="polite"></div>
+    <p class="muted">Simulation pédagogique, pas un DPE réglementaire. Scénario de chaleur fictif, sans météo réelle ni mesure du logement.</p>
     <div class="forecast">
-      <div class="lbl">Température prévue à 17h</div>
+      <div class="lbl">Température simulée à 17h</div>
       <div class="fc-row">
         <div class="hot"><b class="num" id="tNo">--°</b><small>sans rien faire</small></div>
         <div class="fc-band"></div>
@@ -124,8 +126,10 @@
       <div><b class="num" id="iKwh">--</b><small>kWh évités<br>par été</small></div>
     </div>
     <div id="iClim"></div>
-    <div class="block"><h3>Votre plan pour demain</h3><ol class="plan" id="plan"></ol></div>
+    <div class="block"><h3>Votre plan fraîcheur</h3><ol class="plan" id="plan"></ol></div>
     <div id="tips"></div>
+    <div class="block"><h3>Low tech · protéger et ventiler</h3><ul id="lowTech" class="solutions"></ul></div>
+    <div class="block"><h3>High tech · mesurer et piloter</h3><ul id="highTech" class="solutions"></ul><p class="muted">Options à étudier selon le logement, le budget et les possibilités d’installation. Aucun gain garanti.</p></div>
     <div class="block">
       <h3>Défi fraîcheur</h3>
       <p class="muted">Cochez ce que vous ferez au prochain épisode de chaleur.</p>
@@ -141,6 +145,7 @@
     <p class="lead">À vous tous, la salle a déjà gagné</p>
     <div class="thanks-num num" id="roomDeg">0°</div>
     <p class="lead" style="margin-top:8px">soit <b id="roomEur">0</b> € économisés et <b id="roomCo2">0</b> kg de CO₂ évités chaque été.</p>
+    <button class="btn" onclick="show('result')">Revoir ma fiche</button>
     <p class="muted" style="margin-top:28px">Les résultats de la salle s'affichent sur le grand écran.</p>
   </section>
 </div>
@@ -148,6 +153,7 @@
 <script src="/questions.js"></script>
 <script>
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+let participantNumber = null;
 let me = null, sessionId = null, lastQ = -2, view = "wait", resultBuilt = false, engaged = false;
 let localEnd = 0, duration = 15000;
 const answers = {};
@@ -185,9 +191,11 @@ async function poll() {
 }
 
 function render(d) {
+  participantNumber = d.participantNumber;
+  if (d.answers) Object.assign(answers, d.answers);
   if (d.phase === "lobby") {
     document.getElementById("waitTitle").textContent = "Vous êtes dans la salle.";
-    document.getElementById("waitText").textContent = "Dans un instant, 5 questions sur votre logement pour prévoir la température qu'il fera chez vous demain, et comment la faire baisser. Gardez un œil sur le grand écran.";
+    document.getElementById("waitText").textContent = "Dans un instant, 5 questions pour découvrir votre profil confort d’été et votre plan dans un scénario de canicule fictif. Gardez un œil sur le grand écran.";
     document.getElementById("waitCount").innerHTML = `<span class="room"><span class="sun" style="font-size:10px"></span><b>${d.connected}</b> ${d.connected > 1 ? "personnes" : "personne"} dans la salle</span>`;
     show("wait");
   } else if (d.phase === "question") {
@@ -196,7 +204,7 @@ function render(d) {
     show("question");
   } else if (d.phase === "result" || d.phase === "stats") {
     if (!resultBuilt) { resultBuilt = true; buildResult(); }
-    show(engaged ? "thanks" : "result");
+    if (view !== "result" && view !== "thanks") show(engaged ? "thanks" : "result");
   }
 }
 
@@ -237,25 +245,8 @@ setInterval(() => {
 }, 100);
 
 // --- Modèle thermique simplifié (démo) ---
-const OUT_MAX = { dijon: 34, lyon: 35, paris: 33, marseille: 35, nord: 30 };
 function A(k) { return answers[k] || DEFAULTS[k]; }
-function compute() {
-  const out = OUT_MAX[A("city")] || 33;
-  let t = out - 6;
-  t += { maison: 0, rdc: -1.5, milieu: 0.5, dernier: 2.5 }[A("floor")] || 0;
-  t += { sud: 2, ouest: 2.5, est: 1, nord: -0.5 }[A("orientation")] || 0;
-  t += { exterieur: 0, rideaux: 1.5, aucun: 2.5 }[A("shutters")] || 0;
-  t = Math.round(t);
-  const g = [];
-  if (A("shutters") === "exterieur") g.push({ id: "volets", h: "9h", txt: "Fermez les volets côté soleil avant qu'il tape", gain: 3 });
-  else g.push({ id: "occulter", h: "9h", txt: "Fermez rideaux épais ou tendez un drap clair devant les fenêtres exposées", gain: A("shutters") === "rideaux" ? 1.5 : 2 });
-  g.push({ id: "fermer", h: "11h", txt: "Gardez les fenêtres fermées : dehors il fait plus chaud que dedans", gain: 1 });
-  g.push({ id: "appareils", h: "14h", txt: "Évitez four, sèche-linge et halogènes aux heures chaudes", gain: 1 });
-  g.push({ id: "ventil", h: "22h30", txt: "Ouvrez tout en grand et créez un courant d'air jusqu'au matin", gain: A("floor") === "dernier" ? 2.5 : 2 });
-  g.push({ id: "brasseur", h: "Journée", txt: "Un ventilateur de plafond : -3°C ressentis pour ~10× moins qu'une clim", gain: 0 });
-  const plan = Math.max(23, Math.round(t - g.reduce((s, x) => s + x.gain, 0)));
-  return { out, tNo: t, tPlan: plan, gain: t - plan, gestures: g };
-}
+function compute() { return computeProfile(answers); }
 function curve(peak, amp) { return Array.from({ length: 25 }, (_, h) => peak - amp / 2 * (1 - Math.cos(2 * Math.PI * (h - 17) / 24))); }
 function drawChart(r) {
   const W = 320, H = 170, pad = { l: 28, r: 8, t: 10, b: 22 };
@@ -274,6 +265,7 @@ function drawChart(r) {
 let result = null;
 function buildResult() {
   result = compute();
+  document.getElementById("profileCard").innerHTML = `<p class="muted">Votre logement · participant ${participantNumber || "—"}</p><h2>Classe ${result.grade} → ${result.planGrade} avec le plan</h2><div class="grade-scale">${[..."ABCDEFG"].map(g => `<span class="grade grade-${g} ${g === result.grade ? "selected" : ""}">${g}</span>`).join("")}</div><p>${result.complete ? "Vos 5 réponses sont prises en compte." : "Profil incomplet : des réponses types complètent vos réponses manquantes."}</p><p class="muted">A : moins exposé · G : plus exposé à la surchauffe dans ce scénario.</p>`;
   document.getElementById("tNo").textContent = result.tNo + "°";
   document.getElementById("tPlan").textContent = result.tPlan + "°";
   document.getElementById("tGain").textContent = result.gain + "°";
@@ -285,10 +277,22 @@ function buildResult() {
   document.getElementById("iClim").innerHTML = A("clim") === "envie"
     ? `<div class="tip">Et surtout <b>~${IMPACT.climPurchase.toLocaleString("fr-FR")} € d'achat de clim évité</b> si le plan vous suffit.</div>` : "";
   document.getElementById("plan").innerHTML = result.gestures.map(g => `<li class="step"><span class="h">${g.h}</span><span class="pin"></span><span class="t">${g.txt}</span><span class="d">${g.gain ? "−" + String(g.gain).replace(".", ",") + "°" : ""}</span></li>`).join("");
+  const low = [
+    A("shutters") === "exterieur" ? "Fermer les protections extérieures avant l’arrivée du soleil." : "Étudier une protection solaire extérieure : store, volet ou ombrage amovible, avec les autorisations nécessaires.",
+    "Ventiler la nuit seulement si l’air extérieur est plus frais, en tenant compte de la sécurité et de la qualité de l’air.",
+    "Limiter les sources de chaleur intérieures ; utiliser un ventilateur pour améliorer le ressenti quand les conditions s’y prêtent."
+  ];
+  const high = [
+    "Comparer un capteur de température intérieur et un capteur extérieur pour recevoir une alerte au bon moment pour aérer.",
+    "Automatiser les volets ou stores compatibles selon l’ensoleillement, avec commande manuelle possible.",
+    A("clim") === "oui" ? "Piloter votre clim réversible par pièce et selon votre présence, avec une consigne modérée et les fenêtres fermées." : "Si les protections et la ventilation ne suffisent pas, faire étudier une PAC air-air réversible correctement dimensionnée, avec pilotage par pièce.",
+    "Utiliser un suivi de consommation pour comparer le confort obtenu à l’électricité réellement consommée."
+  ];
+  for (const [id, items] of [["lowTech", low], ["highTech", high]]) document.getElementById(id).innerHTML = items.map(t => `<li>${t}</li>`).join("");
   let tips = "";
-  if (A("clim") === "oui") tips += `<div class="tip"><b>Votre clim.</b> Réglez-la sur 26°C et lancez-la vers 13h, quand le solaire produit le plus, plutôt qu'à 19h au pic de consommation.</div>`;
+  if (A("clim") === "oui") tips += `<div class="tip"><b>Votre clim.</b> Adoptez une consigne modérée, fermez les fenêtres et adaptez le fonctionnement à votre présence. Le meilleur horaire dépend du logement et de votre contrat.</div>`;
   if (A("clim") === "envie") tips += `<div class="tip"><b>Avant d'acheter une clim.</b> Avec votre plan, vous passez à ${result.tPlan}°C. Un brasseur d'air (~80 €) pourrait suffire.</div>`;
-  if (A("shutters") !== "exterieur") tips += `<div class="tip"><b>Petit investissement.</b> Des stores extérieurs vous feraient gagner encore ~3°C, avec des aides possibles (CEE).</div>`;
+  if (A("shutters") !== "exterieur") tips += `<div class="tip"><b>Petit investissement.</b> Étudiez des stores extérieurs pour limiter les apports solaires. Coût, faisabilité et éventuelles aides sont à vérifier.</div>`;
   document.getElementById("tips").innerHTML = tips;
   document.getElementById("engageList").innerHTML = result.gestures.map(g => `<label class="chk"><input type="checkbox" value="${g.id}" data-gain="${g.gain || 1}" checked> ${g.txt}</label>`).join("");
   fetch("/api/submit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: me, tempNo: result.tNo, tempPlan: result.tPlan }) }).catch(() => {});
