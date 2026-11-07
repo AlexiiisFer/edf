@@ -430,6 +430,8 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 .addr-opt { padding: 12px 14px; font-size: 15px; }
 .addr-status { color: var(--gris); font-size: 14px; margin: 10px 0 4px; }
 #v-address:has(#dpeList button) #addrToQuestions { display: none; }
+.rite-line { margin: 2px 0 0; font-size: 13px; color: var(--gris); } .rite-line b { color: var(--edf-bleu); font-size: 15px; }
+.choice.tile .dh { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 99px; background: #E7F4EA; color: #1E6B30; font-size: 12px; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -602,6 +604,7 @@ function renderReport() {
  document.getElementById('myReport').innerHTML=`<h2>Mon bilan</h2>
   <div class="rep-row"><span>Classe</span><b>${path(p.grade,p.planGrade)}</b></div>
   <div class="rep-row"><span>Température</span><b>${p.tNo} → ${p.tPlan} °C${p.gain>0?` <em>(−${n(p.gain)} °C)</em>`:''}</b></div>
+  ${riteData&&riteData.available?`<div class="rep-row"><span>DH RITE</span><b>${nfr(riteData.dh)} → ${nfr(riteData.plan)} DH</b></div>`:''}
   <div class="rep-row"><span>Budget</span><b>${p.priceMax>p.price?'dès ':''}${n(p.price)} €</b></div>
   <div class="rep-row"><span>Délai</span><b>${picked.length?longest.delay:'—'}</b></div>
   <p class="rep-list">${picked.length?picked.map(x=>x.label).join(' · '):'Aucune solution choisie.'}</p>
@@ -622,7 +625,7 @@ function buildChoices() {
  buildPrefs();
  // Zone profil : classe, température chez soi et alerte canicule fictive de la région.
  const prof=computeProfile(answers);
- document.getElementById('myProfile').innerHTML=`${badge(prof.grade,'big-grade')}<div class="me-info"><div class="t num">${prof.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${prof.out} °C dehors</p></div>`;
+ document.getElementById('myProfile').innerHTML=`${badge(prof.grade,'big-grade')}<div class="me-info"><div class="t num">${prof.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${prof.out} °C dehors</p><p class="rite-line" id="riteLine"></p></div>`;
  for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);
  for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&fits(s)).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="cost">${priceLabel(s)}</small><small class="delay">⏱ ${s.delay}</small><small class="price">${s.detail}</small></label>`).join('');if(!box.children.length)box.innerHTML=`<p class="empty-group">${type==='low'?'Aucun geste avec ce délai.':'Aucun équipement pour ce budget et ce délai.'}</p>`;box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
  updatePlan();
@@ -634,8 +637,25 @@ function updatePlan() {
  pv.innerHTML=`<div class="mid"><div class="delta num"><b>${p.gain>0?'−'+p.gain.toLocaleString('fr-FR'):'0'} °C</b><small>${p.tNo} → ${p.tPlan} °C</small></div><div class="temp-now num">${p.priceMax>p.price?'dès ':''}${p.price.toLocaleString('fr-FR')} €</div></div><button class="go" id="saveBtn" onclick="savePlan()">Valider mon plan</button>`;
  if(view==='choices'&&lastGrade!==null&&lastGrade!==p.tPlan) UI.bump(pv.querySelector('.delta b'));
  lastGrade=p.tPlan;
+ if(riteData&&riteData.available)paintRite();
+ refreshRite();
+}
+// Calcul RITE (Cerema) côté serveur : DH du logement, gain de chaque solution, DH du plan choisi.
+let riteData=null, riteSeq=0, riteTimer=null;
+const nfr=v=>Math.round(v).toLocaleString('fr-FR');
+function refreshRite(){clearTimeout(riteTimer);riteTimer=setTimeout(async()=>{const seq=++riteSeq;
+ try{const d=await api('rite',{id:me,actions:[...chosen]});if(seq!==riteSeq)return;riteData=d;paintRite();}catch{}},150);}
+function paintRite(){
+ const d=riteData,el=document.getElementById('riteLine');
+ if(!d||!d.available){if(el)el.textContent=d&&d.reason==='maison'?'Calcul RITE : appartements uniquement.':'';document.querySelectorAll('.tile .dh').forEach(x=>x.remove());return;}
+ if(el)el.innerHTML=`<b>${nfr(d.dh)} DH</b> RITE · ${d.level}`;
+ document.querySelectorAll('#v-choices .choice.tile').forEach(t=>{const id=t.querySelector('input').value,g=d.gains[id];let b=t.querySelector('.dh');
+  if(g>0){if(!b){b=document.createElement('small');b.className='dh';t.appendChild(b);}b.textContent=`−${nfr(g)} DH`;}else if(b)b.remove();});
+ const pv=document.querySelector('#preview .delta');
+ if(pv){pv.innerHTML=`<b>${d.plan<d.dh?'−'+nfr(d.dh-d.plan):'0'} DH</b><small>${nfr(d.dh)} → ${nfr(d.plan)} DH</small>`;}
 }
 async function savePlan() {
+ try{riteData=await api('rite',{id:me,actions:[...chosen]});}catch{}
  const btn=document.getElementById('saveBtn');if(btn)btn.disabled=true;
  try {await api('engage',{id:me,actions:[...chosen]});document.getElementById('error').textContent='';renderReport();show('thanks');}catch(e){error(Error('Enregistrement impossible : '+e.message));if(btn)btn.disabled=false;}
 }

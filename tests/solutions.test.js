@@ -117,3 +117,19 @@ test('DPE prefill: region, through-flow, sun protection and air conditioning', (
   assert.equal(answersFromDpe({ type_generateur_froid: 'PAC air/air' }).clim, 'pac');
   assert.equal(dpeLabel({ complement_adresse_logement: '2e étage', surface_habitable_logement: 64.4 }), '2e étage · 64 m²');
 });
+
+test('RITE inputs: apartments only, values from the RITE lists, solutions change the right cells', () => {
+  const { riteApplicable, riteInputs, riteLevel, RITE_SOLUTIONS } = require('../public/rite.js');
+  assert.ok(riteApplicable(hot) && !riteApplicable({ ...hot, logement: 'plainpied' }));
+  const base = riteInputs(hot);
+  assert.equal(base['Général!C11'], 13);
+  assert.equal(base['Général!C18'], 'Sous toiture');
+  assert.equal(base['Méthode simplifiée!C27'], 'Ouest');
+  assert.equal(base['Méthode simplifiée!C25'], 'Aucune');
+  assert.equal(base['Méthode simplifiée!C40'], 'Contrainte');
+  assert.equal(riteInputs(hot, ['night'])['Méthode simplifiée!C40'], 'Normale');
+  assert.equal(riteInputs(hot, ['fan'])['Méthode simplifiée!C33'], 'Oui');
+  assert.equal(riteInputs({ ...cool, vitrages: ['nord', 'ouest'] })['Méthode simplifiée!C27'], 'Ouest');
+  for (const id of Object.keys(RITE_SOLUTIONS)) assert.ok(SOLUTIONS.some(s => s.id === id), id);
+  assert.equal(riteLevel(300), 'confortable'); assert.equal(riteLevel(700), 'inconfort probable'); assert.equal(riteLevel(1500), 'inconfortable');
+});

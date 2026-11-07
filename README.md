@@ -39,6 +39,15 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 - Aucun DPE trouvé, base indisponible ou logement absent de la liste : retour au questionnaire classique.
 - En production, le serveur doit pouvoir joindre `data.ademe.fr` et le navigateur `api-adresse.data.gouv.fr`.
 
+## Calcul RITE (Cerema)
+
+- `vendor/rite/RITE_V24.2.xlsm` : outil RITE du Cerema (utilisation libre de droits sous réserve de citer le Cerema).
+- `tools/rite_worker.py` garde LibreOffice et le fichier ouverts ; le serveur lui envoie les cas à calculer (≈ 15 ms par calcul, démarrage ≈ 2 s).
+- `public/rite.js` traduit les réponses en entrées RITE (approche simplifiée) et chaque solution en modification d’entrée (volets « exemplaire », aération nocturne, brasseur d’air, store extérieur).
+- `POST /api/rite` renvoie les DH du logement, le gain de chaque solution prise seule et les DH du plan choisi. Affichage sur le téléphone : carte du haut, badges « −… DH » sur les tuiles, barre du bas, bilan.
+- RITE ne couvre que les appartements : pour une maison, le site garde l’estimation simplifiée. Sans LibreOffice, le site fonctionne sans RITE (`/health` indique `"rite": false`).
+- Le Dockerfile installe LibreOffice Calc et `python3-uno` (image plus lourde, ≈ 400 Mo de plus).
+
 ## Estimations
 
 `public/solutions.js` décrit les solutions, en deux groupes (gestes manuels, équipements) : effet supposé sur la température, fourchette de prix indicative (éventuellement au m²), délai de mise en place et temps demandé (geste quotidien, installation unique ou domotique). Liste : volets, aération nocturne, effet cheminée, veilles ; volets clairs, store, brasseur d’air, brumisateur, écran d’alertes, volets auto, pièce refuge (simple ou équipée), vitrage intelligent, cool roof, cheminée solaire, mur végétal, point d’eau, puits canadien, jumeau numérique, rafraîchisseur adiabatique, clim programmée, PAC. Ce sont des **hypothèses pédagogiques**, pas des devis ni une étude thermique.

@@ -7,6 +7,69 @@ const { QUESTIONS, SECTIONS, computeProfile, isComplete, isValidAnswer } = requi
 
 const { estimatePlan, availableSolutions } = require("./public/solutions.js");
 const { DPE_FIELDS, answersFromDpe, dpeLabel } = require("./public/dpe.js");
+const { RITE_SOLUTIONS, riteApplicable, riteInputs, riteLevel } = require("./public/rite.js");
+
+// Calcul RITE (Cerema) : un moteur Python garde LibreOffice et le fichier RITE ouverts (tools/rite_worker.py).
+// Si LibreOffice ou le fichier manquent, le site fonctionne sans RITE.
+const RITE_FILE = process.env.RITE_FILE || path.join(__dirname, "vendor", "rite", "RITE_V24.2.xlsm");
+const rite = { proc: null, ready: null, pending: new Map(), seq: 0, failed: false };
+function startRite() {
+  if (rite.ready || rite.failed) return rite.ready;
+  if (!fs.existsSync(RITE_FILE)) { rite.failed = true; return null; }
+  const { spawn } = require("child_process");
+  const proc = spawn(process.env.RITE_PYTHON || "python3", [path.join(__dirname, "tools", "rite_worker.py"), RITE_FILE], { stdio: ["pipe", "pipe", "inherit"] });
+  rite.proc = proc;
+  rite.ready = new Promise((resolve, reject) => {
+    let buf = "";
+    proc.stdout.on("data", (chunk) => {
+      buf += chunk;
+      let i;
+      while ((i = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, i); buf = buf.slice(i + 1);
+        let msg; try { msg = JSON.parse(line); } catch { continue; }
+        if (msg.ready) { console.log("RITE prêt"); resolve(); continue; }
+        const job = rite.pending.get(msg.id);
+        if (job) { rite.pending.delete(msg.id); clearTimeout(job.timer); msg.error ? job.reject(new Error(msg.error)) : job.resolve(msg.results); }
+      }
+    });
+    proc.on("error", (e) => { rite.failed = true; reject(e); });
+    proc.on("exit", () => {
+      for (const job of rite.pending.values()) job.reject(new Error("RITE arrêté"));
+      rite.pending.clear(); rite.proc = null; rite.ready = null;
+      reject(new Error("RITE arrêté"));
+    });
+  });
+  rite.ready.catch((e) => console.warn("RITE indisponible :", e.message));
+  return rite.ready;
+}
+async function riteRun(cases) {
+  const ready = startRite();
+  if (!ready) throw new Error("RITE indisponible");
+  await ready;
+  const id = ++rite.seq;
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => { rite.pending.delete(id); reject(new Error("RITE trop lent")); }, 15000);
+    rite.pending.set(id, { resolve, reject, timer });
+    rite.proc.stdin.write(JSON.stringify({ id, cases }) + "\n");
+  });
+}
+const riteCache = new Map();
+// DH du logement sans action, gain de chaque solution prise seule, et DH du plan choisi.
+async function riteDiagnosis(answers, ids) {
+  const sols = availableSolutions(answers).map((x) => x.id).filter((x) => RITE_SOLUTIONS[x]);
+  const plan = ids.filter((x) => RITE_SOLUTIONS[x] && sols.includes(x));
+  const key = JSON.stringify([answers, plan]);
+  if (riteCache.has(key)) return riteCache.get(key);
+  const cases = [riteInputs(answers), ...sols.map((x) => riteInputs(answers, [x])), riteInputs(answers, plan)];
+  const r = await riteRun(cases);
+  const base = r[0].dh, gains = {};
+  sols.forEach((x, i) => { gains[x] = Math.round(base - r[i + 1].dh); });
+  const out = { available: true, dh: Math.round(base), level: riteLevel(base), jour: Math.round(r[0].jour), nuit: Math.round(r[0].nuit),
+    gains, plan: Math.round(r[r.length - 1].dh), planLevel: riteLevel(r[r.length - 1].dh) };
+  if (riteCache.size > 2000) riteCache.clear();
+  riteCache.set(key, out);
+  return out;
+}
 
 // DPE de l'ADEME (base « DPE logements existants depuis juillet 2021 ») par identifiant d'adresse BAN.
 const ADEME_DPE = "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines";
@@ -226,6 +289,16 @@ const server = http.createServer(async (req, res) => {
     if (p === "/api/next" && req.method === "POST") { advance(); return sendJson(res, 200, publicState()); }
     if (p === "/api/reset" && req.method === "POST") { session = newSession(); return sendJson(res, 200, publicState()); }
 
+    if (p === "/api/rite" && req.method === "POST") {
+      const b = await readBody(req);
+      const pl = session.players.get(String(b.id || ""));
+      if (!pl) return sendJson(res, 404, { error: "Participant inconnu" });
+      if (!riteApplicable(pl.answers)) return sendJson(res, 200, { available: false, reason: "maison" });
+      const ids = Array.isArray(b.actions) ? b.actions.slice(0, 30).map(String) : [];
+      try { return sendJson(res, 200, await riteDiagnosis(pl.answers, ids)); }
+      catch (e) { return sendJson(res, 200, { available: false, reason: "indisponible" }); }
+    }
+
     if (p === "/api/dpe" && req.method === "GET") {
       const ban = String(url.searchParams.get("ban") || "");
       if (!/^[0-9A-Za-z_]{5,40}$/.test(ban)) return sendJson(res, 400, { error: "Adresse invalide" });
@@ -233,7 +306,11 @@ const server = http.createServer(async (req, res) => {
       catch (e) { return sendJson(res, 502, { error: "Base DPE indisponible" }); }
     }
 
-    if (p === "/health") return sendJson(res, 200, { ok: true });
+    if (p === "/health") {
+      let riteOk = false;
+      if (rite.ready) riteOk = await Promise.race([rite.ready.then(() => true, () => false), new Promise((r) => setTimeout(() => r(false), 50))]);
+      return sendJson(res, 200, { ok: true, rite: riteOk });
+    }
 
     // --- Fichiers statiques ---
     const file = ROUTES[p] || p;
@@ -249,4 +326,4 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => console.log(`Météo de mon logement sur http://localhost:${PORT}`));
+server.listen(PORT, () => { console.log(`Météo de mon logement sur http://localhost:${PORT}`); startRite(); });
