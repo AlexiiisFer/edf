@@ -3,7 +3,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { QUESTIONS, SECTIONS, computeProfile, isComplete, isValidAnswer } = require("./public/questions.js");
+const { QUESTIONS, SECTIONS, computeProfile, isComplete, isValidAnswer, validAnswer } = require("./public/questions.js");
 
 const { estimatePlan, availableSolutions } = require("./public/solutions.js");
 const { DPE_FIELDS, answersFromDpe, dpeLabel } = require("./public/dpe.js");
@@ -263,10 +263,9 @@ const server = http.createServer(async (req, res) => {
       const pl = session.players.get(String(b.id || ""));
       if (!pl) return sendJson(res, 404, { error: "unknown" });
       tick();
-      const q = QUESTIONS.find((x) => x.key === b.key);
       if (session.phase === "lobby") return sendJson(res, 409, { error: "Le questionnaire n’a pas commencé" });
-      if (!q || !isValidAnswer(q, b.value)) return sendJson(res, 400, { error: "invalid" });
-      pl.answers[q.key] = b.value;
+      if (!validAnswer(String(b.key || ""), b.value)) return sendJson(res, 400, { error: "invalid" });
+      pl.answers[String(b.key)] = b.value;
       return sendJson(res, 200, { ok: true });
     }
 

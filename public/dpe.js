@@ -2,7 +2,10 @@
 // Les champs absents ou incertains restent à demander à l'utilisateur.
 const DPE_FIELDS = ['identifiant_ban', 'adresse_ban', 'complement_adresse_logement', 'numero_etage_appartement', 'type_batiment',
   'typologie_logement', 'surface_habitable_logement', 'logement_traversant', 'protection_solaire_exterieure', 'type_generateur_froid',
-  'indicateur_confort_ete', 'etiquette_dpe', 'date_etablissement_dpe', 'code_departement_ban', 'numero_dpe'];
+  'indicateur_confort_ete', 'etiquette_dpe', 'date_etablissement_dpe', 'code_departement_ban', 'numero_dpe',
+  'presence_brasseur_air', 'inertie_lourde', 'classe_inertie_batiment', 'qualite_isolation_murs',
+  'qualite_isolation_plancher_haut_comble_perdu', 'qualite_isolation_plancher_haut_comble_amenage', 'qualite_isolation_plancher_haut_toit_terrasse'];
+const QUALITE = { 'très bonne': 'bonne', 'bonne': 'bonne', 'moyenne': 'faible', 'insuffisante': 'aucune' };
 
 const DEPT_REGION = (() => {
   const m = {};
@@ -26,6 +29,16 @@ function answersFromDpe(row = {}) {
   if (region) answers.region = region;
   if (row.logement_traversant === 1 || row.logement_traversant === 0) answers.traversant = row.logement_traversant ? 'oui' : 'non';
   if (row.protection_solaire_exterieure === 0) answers.protections = 'aucune';
+  const dept = String(row.code_departement_ban || '').toUpperCase();
+  if (/^(\d{2,3}|2A|2B)$/.test(dept)) answers.dept = dept;
+  const typo = /T(\d)/i.exec(row.typologie_logement || '');
+  if (typo) answers.typo = 'T' + Math.min(5, Math.max(1, Number(typo[1])));
+  if (QUALITE[row.qualite_isolation_murs]) answers.murs = QUALITE[row.qualite_isolation_murs];
+  const toit = row.qualite_isolation_plancher_haut_comble_perdu || row.qualite_isolation_plancher_haut_comble_amenage || row.qualite_isolation_plancher_haut_toit_terrasse;
+  if (QUALITE[toit]) answers.toiture = QUALITE[toit];
+  if (row.presence_brasseur_air === 1 || row.presence_brasseur_air === 0) answers.brasseur = row.presence_brasseur_air ? 'oui' : 'non';
+  if (row.inertie_lourde === 1 || /lourde/i.test(row.classe_inertie_batiment || '')) answers.inertie = 'lourde';
+  else if (row.inertie_lourde === 0) answers.inertie = 'legere';
   // Climatisation : un générateur de froid est déclaré dans le DPE.
   if (row.type_generateur_froid) answers.clim = /mobile|split mobile/i.test(row.type_generateur_froid) ? 'mobile' : 'pac';
   else if (row.etiquette_dpe) answers.clim = 'aucune';

@@ -112,8 +112,11 @@ test('DPE prefill: region, through-flow, sun protection and air conditioning', (
   assert.equal(regionFromDept('67'), 'est');
   assert.equal(regionFromDept('29'), 'nord');
   const a = answersFromDpe({ code_departement_ban: '69', logement_traversant: 0, protection_solaire_exterieure: 0, etiquette_dpe: 'C' });
-  assert.deepEqual(a, { region: 'rhone', traversant: 'non', protections: 'aucune', clim: 'aucune' });
-  for (const [k, v] of Object.entries(a)) assert.ok(isValidAnswer(QUESTIONS.find(q => q.key === k), v), k);
+  assert.deepEqual(a, { region: 'rhone', dept: '69', traversant: 'non', protections: 'aucune', clim: 'aucune' });
+  const { validAnswer } = require('../public/questions.js');
+  const full = answersFromDpe({ code_departement_ban: '2A', typologie_logement: 'T6', qualite_isolation_murs: 'moyenne', qualite_isolation_plancher_haut_comble_perdu: 'très bonne', presence_brasseur_air: 1, inertie_lourde: 1 });
+  assert.equal(full.typo, 'T5'); assert.equal(full.murs, 'faible'); assert.equal(full.toiture, 'bonne'); assert.equal(full.brasseur, 'oui'); assert.equal(full.inertie, 'lourde');
+  for (const [k, v] of Object.entries({ ...a, ...full })) assert.ok(validAnswer(k, v), k);
   assert.equal(answersFromDpe({ type_generateur_froid: 'PAC air/air' }).clim, 'pac');
   assert.equal(dpeLabel({ complement_adresse_logement: '2e étage', surface_habitable_logement: 64.4 }), '2e étage · 64 m²');
 });
@@ -132,4 +135,18 @@ test('RITE inputs: apartments only, values from the RITE lists, solutions change
   assert.equal(riteInputs({ ...cool, vitrages: ['nord', 'ouest'] })['Méthode simplifiée!C27'], 'Ouest');
   for (const id of Object.keys(RITE_SOLUTIONS)) assert.ok(SOLUTIONS.some(s => s.id === id), id);
   assert.equal(riteLevel(300), 'confortable'); assert.equal(riteLevel(700), 'inconfort probable'); assert.equal(riteLevel(1500), 'inconfortable');
+});
+
+test('extra answers: habits already done hide the matching solutions, and feed RITE', () => {
+  const { riteInputs } = require('../public/rite.js');
+  const ids = a => availableSolutions(a).map(s => s.id);
+  const done = { ...cool, volets: 'matin', aeration: 'oui', nuitOuverte: 'oui', brasseur: 'oui' };
+  assert.ok(!ids(done).includes('shutters') && !ids(done).includes('night') && !ids(done).includes('fan'));
+  assert.ok(!ids({ ...hot, nuitOuverte: 'non' }).includes('night'));
+  assert.ok(ids({ ...hot, toiture: 'faible' }).includes('roofinsul') && !ids({ ...hot, toiture: 'bonne' }).includes('roofinsul'));
+  const r = riteInputs({ ...hot, dept: '33', typo: 'T2', murs: 'aucune', menuiserie: 'baie', volets: 'matin', aeration: 'oui', nuitOuverte: 'oui' });
+  assert.equal(r['Général!C11'], 33); assert.equal(r['Général!C16'], 'T2'); assert.equal(r['Général!G35'], '5-Mur sans isolation');
+  assert.equal(r['Méthode simplifiée!C23'], 'Coulissant 2 vantaux'); assert.equal(r['Méthode simplifiée!C38'], 'Exemplaire'); assert.equal(r['Méthode simplifiée!C40'], 'Normale');
+  assert.equal(riteInputs({ ...hot, nuitOuverte: 'non' }, ['night'])['Méthode simplifiée!C40'], 'Contrainte');
+  assert.ok(computeProfile({ ...hot, toit: 'sombre' }).tNo >= computeProfile(hot).tNo);
 });

@@ -43,7 +43,11 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 
 - `vendor/rite/RITE_V24.2.xlsm` : outil RITE du Cerema (utilisation libre de droits sous réserve de citer le Cerema).
 - `tools/rite_worker.py` garde LibreOffice et le fichier ouverts ; le serveur lui envoie les cas à calculer (≈ 15 ms par calcul, démarrage ≈ 2 s).
-- `public/rite.js` traduit les réponses en entrées RITE (approche simplifiée) et chaque solution en modification d’entrée (volets « exemplaire », aération nocturne, brasseur d’air, store extérieur).
+- `public/rite.js` traduit les réponses en entrées RITE (approche simplifiée) et chaque solution en modification d’entrée (volets « exemplaire », aération nocturne, brasseur d’air, store extérieur, isolation du toit, isolation des murs par l’extérieur).
+- Avec DPE : département exact, T1–T5, isolation des murs et du toit, brasseur d’air et inertie viennent du DPE ; on demande ensuite le type de logement, les fenêtres, les protections, puis couleur du toit, orientation de la chambre, ouverture possible la nuit, horaires des volets et aération nocturne.
+- Sans DPE : les 6 questions de base, puis un écran « Affiner » facultatif (jusqu’à 10 questions : les précédentes + pièces, murs, toit, fenêtre du séjour, ventilateur de plafond).
+- Les habitudes déjà prises (volets fermés le matin, aération la nuit, ventilateur) font disparaître la solution correspondante.
+- Les tuiles indiquent le niveau de coût du guide Cerema 2025 (€ à €€€) quand le guide le donne. Les prix de l’isolation du toit et des murs sont des estimations à vérifier.
 - `POST /api/rite` renvoie les DH du logement, le gain de chaque solution prise seule et les DH du plan choisi. Affichage sur le téléphone : carte du haut, badges « −… DH » sur les tuiles, barre du bas, bilan.
 - RITE ne couvre que les appartements : pour une maison, le site garde l’estimation simplifiée. Sans LibreOffice, le site fonctionne sans RITE (`/health` indique `"rite": false`).
 - Le Dockerfile installe LibreOffice Calc et `python3-uno` (image plus lourde, ≈ 400 Mo de plus).

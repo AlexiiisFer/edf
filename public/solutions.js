@@ -4,32 +4,35 @@
 const hasExterior = a => ['clair', 'sombre', 'toile'].includes(a.protections);
 const hasClim = a => a.clim === 'pac' || a.clim === 'mobile';
 const isHouse = a => a.logement === 'plainpied' || a.logement === 'etages';
+// cerema : niveau de coût du guide Cerema 2025 « Améliorer le confort d'été en logements collectifs » (€ à €€€).
 // type : 'low' = geste manuel, 'high' = équipement à acheter ou installer.
 // price / priceMax : fourchette indicative (€), par m² si unit = 'm²' (qty = surface supposée pour le budget).
 // quote : prix sur étude. delay : délai de mise en place. effort : 'daily' geste quotidien, 'once' installation, 'auto' automatique.
 const SOLUTIONS = [
   // Gestes manuels
-  { id: 'shutters', type: 'low', label: 'Volets fermés', detail: 'Dès le matin, côté soleil.', price: 0, delay: 'immédiat', days: 0, effort: 'daily', cooling: 1.5, when: hasExterior },
-  { id: 'night', type: 'low', label: 'Aérer la nuit', detail: 'Quand il fait plus frais dehors.', price: 0, delay: 'immédiat', days: 0, effort: 'daily', cooling: 1 },
-  { id: 'chimney', type: 'low', label: 'Effet cheminée', detail: 'Ouvrir en bas et en haut : l’air chaud sort par le haut.', price: 0, delay: '3 min', days: 0, effort: 'daily', cooling: .5, when: a => a.logement === 'etages' || a.traversant === 'oui' },
+  { id: 'shutters', type: 'low', label: 'Volets fermés', detail: 'Dès le matin, côté soleil.', price: 0, delay: 'immédiat', days: 0, effort: 'daily', cooling: 1.5, when: a => hasExterior(a) && a.volets !== 'matin' },
+  { id: 'night', type: 'low', label: 'Aérer la nuit', detail: 'Quand il fait plus frais dehors.', price: 0, delay: 'immédiat', days: 0, effort: 'daily', cooling: 1, when: a => a.aeration !== 'oui' && a.nuitOuverte !== 'non' },
+  { id: 'chimney', type: 'low', label: 'Effet cheminée', detail: 'Ouvrir en bas et en haut : l’air chaud sort par le haut.', price: 0, delay: '3 min', days: 0, effort: 'daily', cooling: .5, when: a => (a.logement === 'etages' || a.traversant === 'oui') && a.nuitOuverte !== 'non' },
   { id: 'heat', type: 'low', label: 'Couper les veilles', detail: 'Veilles coupées, four le soir.', price: 0, delay: 'immédiat', days: 0, effort: 'daily', cooling: .5 },
   // Équipements
-  { id: 'paint', type: 'high', label: 'Volets clairs', detail: 'Repeindre les volets sombres, qui chauffent.', price: 50, priceMax: 150, delay: '1 jour', days: 1, effort: 'once', cooling: 1, when: a => a.protections === 'sombre' },
-  { id: 'shade', type: 'high', label: 'Store extérieur', detail: 'Fenêtre la plus exposée.', price: 300, delay: '1 jour', days: 1, effort: 'daily', cooling: 1.5, when: a => !hasExterior(a) },
-  { id: 'fan', type: 'high', label: 'Brasseur d’air', detail: 'Ventilateur de plafond : + de confort ressenti.', price: 70, priceMax: 200, delay: '1 jour', days: 1, effort: 'once', cooling: 0, comfort: true },
+  { id: 'paint', cerema: '€€', type: 'high', label: 'Volets clairs', detail: 'Repeindre les volets sombres, qui chauffent.', price: 50, priceMax: 150, delay: '1 jour', days: 1, effort: 'once', cooling: 1, when: a => a.protections === 'sombre' },
+  { id: 'shade', cerema: '€€', type: 'high', label: 'Store extérieur', detail: 'Fenêtre la plus exposée.', price: 300, delay: '1 jour', days: 1, effort: 'daily', cooling: 1.5, when: a => !hasExterior(a) },
+  { id: 'fan', cerema: '€€', type: 'high', label: 'Brasseur d’air', detail: 'Ventilateur de plafond : + de confort ressenti.', price: 70, priceMax: 200, delay: '1 jour', days: 1, effort: 'once', cooling: 0, comfort: true, when: a => a.brasseur !== 'oui' },
   { id: 'mist', type: 'high', label: 'Brumisateur', detail: 'Évaporation d’eau pour rafraîchir l’air.', price: 80, delay: '1 jour', days: 1, effort: 'once', cooling: .5, comfort: true },
   { id: 'screen', type: 'high', label: 'Écran d’alertes', detail: 'Alerte et conseils : quand fermer volets et fenêtres.', price: 70, priceMax: 100, delay: '3 semaines', days: 21, effort: 'auto', cooling: .5 },
-  { id: 'auto', type: 'high', label: 'Volets auto', detail: 'Se ferment seuls selon la chaleur.', price: 400, delay: '1 semaine', days: 7, effort: 'auto', cooling: 1.5 },
+  { id: 'auto', cerema: '€€', type: 'high', label: 'Volets auto', detail: 'Se ferment seuls selon la chaleur.', price: 400, delay: '1 semaine', days: 7, effort: 'auto', cooling: 1.5 },
   { id: 'saferoom', type: 'high', label: 'Pièce refuge', detail: 'Garder une pièce fraîche en priorité (rideaux, ventilateur).', price: 200, delay: '5 h', days: 0, effort: 'once', cooling: 1 },
   { id: 'saferoomPlus', type: 'high', label: 'Pièce refuge équipée', detail: 'Une pièce isolée et rafraîchie.', price: 1800, delay: '3 jours', days: 3, effort: 'once', cooling: 2 },
-  { id: 'glass', type: 'high', label: 'Vitrage intelligent', detail: 'Se teinte au soleil, limite la clim.', price: 350, priceMax: 950, delay: '1 à 2 jours', days: 2, effort: 'auto', cooling: 1.5 },
-  { id: 'coolroof', type: 'high', label: 'Cool roof', detail: 'Peinture réfléchissante sur le toit.', price: 35, priceMax: 60, unit: 'm²', qty: 20, delay: '3 à 7 jours', days: 7, effort: 'once', cooling: 1.5, when: isHouse },
+  { id: 'glass', cerema: '€', type: 'high', label: 'Vitrage intelligent', detail: 'Se teinte au soleil, limite la clim.', price: 350, priceMax: 950, delay: '1 à 2 jours', days: 2, effort: 'auto', cooling: 1.5 },
+  { id: 'coolroof', cerema: '€€€', type: 'high', label: 'Cool roof', detail: 'Peinture réfléchissante sur le toit.', price: 35, priceMax: 60, unit: 'm²', qty: 20, delay: '3 à 7 jours', days: 7, effort: 'once', cooling: 1.5, when: isHouse },
   { id: 'solarChimney', type: 'high', label: 'Cheminée solaire', detail: 'Évacue l’air chaud par le toit.', price: 120, delay: '2 semaines', days: 14, effort: 'auto', cooling: 1, when: isHouse },
-  { id: 'green', type: 'high', label: 'Mur végétal', detail: 'Ombrage et fraîcheur, pousse en 1 à 3 ans.', price: 150, priceMax: 350, unit: 'm²', qty: 4, delay: '1 à 3 ans', days: 1095, effort: 'once', cooling: 1, when: isHouse },
-  { id: 'water', type: 'high', label: 'Point d’eau', detail: 'Bassin ou cascade au jardin.', price: 1300, delay: '6 mois à 1 an', days: 365, effort: 'once', cooling: .5, when: isHouse },
+  { id: 'green', cerema: '€€', type: 'high', label: 'Mur végétal', detail: 'Ombrage et fraîcheur, pousse en 1 à 3 ans.', price: 150, priceMax: 350, unit: 'm²', qty: 4, delay: '1 à 3 ans', days: 1095, effort: 'once', cooling: 1, when: isHouse },
+  { id: 'water', cerema: '€€', type: 'high', label: 'Point d’eau', detail: 'Bassin ou cascade au jardin.', price: 1300, delay: '6 mois à 1 an', days: 365, effort: 'once', cooling: .5, when: isHouse },
   { id: 'canadian', type: 'high', label: 'Puits canadien', detail: 'L’air entre par le sol, plus frais.', price: 5000, priceMax: 10000, delay: '2 semaines', days: 14, effort: 'auto', cooling: 2, when: isHouse },
   { id: 'twin', type: 'high', label: 'Jumeau numérique', detail: 'Plans, matériaux, soleil : prédit la pièce qui résiste le mieux.', price: 0, quote: true, delay: 'à l’étude', days: 60, effort: 'auto', cooling: 0 },
   { id: 'adiabatic', type: 'high', label: 'Rafraîchisseur adiabatique', detail: 'Clim à l’eau qui consomme moins.', price: 200, priceMax: 600, delay: '1 jour', days: 1, effort: 'once', cooling: 1.5 },
+  { id: 'roofinsul', cerema: 'non chiffré', type: 'high', label: 'Isoler le toit', detail: 'Isolant épais sous la toiture : moins de chaleur sous les toits.', price: 50, priceMax: 100, unit: 'm²', qty: 50, delay: '2 à 5 jours', days: 5, effort: 'once', cooling: 1.5, when: a => a.logement === 'combles' && a.toiture !== 'bonne' },
+  { id: 'ite', cerema: 'non chiffré', type: 'high', label: 'Isoler les murs par l’extérieur', detail: 'Isolation extérieure (ITE), à voter en copropriété.', price: 150, priceMax: 250, unit: 'm²', qty: 30, delay: '3 à 6 semaines', days: 42, effort: 'once', cooling: 1, when: a => a.murs !== 'bonne' },
   { id: 'control', type: 'high', label: 'Clim programmée', detail: 'Heures creuses, consigne 26 °C.', price: 80, delay: '1 jour', days: 1, effort: 'auto', cooling: 0, when: hasClim },
   { id: 'replace', type: 'high', label: 'PAC à la place du mobile', detail: 'Bien plus efficace.', price: 2500, delay: '1 à 2 jours', days: 2, effort: 'once', cooling: 0, newAc: true, when: a => a.clim === 'mobile' },
   { id: 'ac', type: 'high', label: 'Clim PAC air-air', detail: 'À dimensionner par un pro.', price: 2500, delay: '1 à 2 jours', days: 2, effort: 'once', cooling: 0, newAc: true, when: a => !hasClim(a) },

@@ -432,6 +432,8 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 #v-address:has(#dpeList button) #addrToQuestions { display: none; }
 .rite-line { margin: 2px 0 0; font-size: 13px; color: var(--gris); } .rite-line b { color: var(--edf-bleu); font-size: 15px; }
 .choice.tile .dh { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 99px; background: #E7F4EA; color: #1E6B30; font-size: 12px; font-weight: 700; }
+.refine-txt { color: var(--gris); line-height: 1.5; margin: 4px 0 18px; }
+.cerema { display: inline-block; margin: 4px 0 0 4px; padding: 2px 7px; border-radius: 99px; background: #EAF1FB; color: var(--edf-bleu); font-size: 11px; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -458,6 +460,13 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
   <p id="addrStatus" class="addr-status" aria-live="polite"></p>
   <div id="dpeList" class="addr-list"></div>
   <button class="btn link" id="addrToQuestions">Répondre aux questions à la place</button>
+</section>
+
+<section class="view" id="v-refine">
+  <div class="intro"><h1>Affiner mon diagnostic ?</h1></div>
+  <p class="refine-txt">Quelques questions de plus (isolation, fenêtres, habitudes) rendent le calcul RITE plus précis.</p>
+  <button class="btn primary" id="refineYes">Affiner</button>
+  <button class="btn link" id="refineNo">Voir mes solutions</button>
 </section>
 
 <section class="view" id="v-question">
@@ -512,16 +521,17 @@ function render(d) {
  if(!d.known || d.sessionId!==sessionId) return join();
  participantNumber=d.participantNumber;answers=Object.assign({}, d.answers || {}, answers);
  if(d.phase==='lobby') {document.getElementById('waitTitle').textContent='Vous êtes dans la salle.';document.getElementById('waitText').textContent=`${d.connected} connecté${d.connected>1?'s':''} · ${QUESTIONS.length} questions`;show('wait');return;}
- if(!editing && !isComplete(answers) && !modeChosen() && !Object.keys(answers).length) { if(view!=='mode'&&view!=='address') show('mode'); return; }
- if(editing || !isComplete(answers)) { if(qi<0){qi=Math.max(0,QUESTIONS.findIndex(q=>answers[q.key]===undefined));buildQuestion();} if(view!=='question')show('question'); return; }
+ if(asking || view==='refine' || view==='address') return;
+ if(!isComplete(answers) && !modeChosen() && !Object.keys(answers).length) { if(view!=='mode') show('mode'); return; }
+ if(!isComplete(answers)) { startQuestions(); return; }
  if(!built) {built=true;let draft=[];try{draft=JSON.parse(storage.get('ml_plan_'+sessionId)||'[]');}catch{}chosen=new Set(d.plan?.ids || draft);buildChoices();show('choices');}
 }
 function buildQuestion() {
- const q=QUESTIONS[qi];
- document.getElementById('qBar').innerHTML=QUESTIONS.map((x,i)=>`<i class="${i===qi?'now':answers[x.key]!==undefined?'done':''}"></i>`).join('');
- document.getElementById('qNum').textContent=`${qi+1}/${QUESTIONS.length}`;
+ const q=queue[qi], vis=queue.filter(x=>!x.when||x.when(answers)), pos=vis.indexOf(q);
+ document.getElementById('qBar').innerHTML=vis.map((x,i)=>`<i class="${i===pos?'now':answers[x.key]!==undefined?'done':''}"></i>`).join('');
+ document.getElementById('qNum').textContent=`${pos+1}/${vis.length}`;
  document.getElementById('qTitle').textContent=q.title;
- document.getElementById('qBack').hidden=qi===0;
+ document.getElementById('qBack').hidden=pos<=0;
  const box=document.getElementById('qOpts');
  const cur=[].concat(answers[q.key]??[]);
  box.innerHTML=q.options.map(o=>`<button class="opt ${cur.includes(o.v)?'sel':''}" data-v="${o.v}" ${q.multi?`aria-pressed="${cur.includes(o.v)}"`:''}><span class="e" aria-hidden="true">${o.e}</span><span class="txt">${o.label}</span>${q.multi?'<span class="tick" aria-hidden="true"></span>':''}</button>`).join('')
@@ -540,17 +550,38 @@ function buildQuestion() {
  UI.enter(document.querySelectorAll('#v-question .intro > *:not(.qbar)'), { y: 12, stagger: 40 });
  UI.enter(box.children, { y: 20, stagger: 55, delay: 80 });
 }
-function nextQuestion() {
- const next=QUESTIONS.findIndex((q,i)=>i>qi&&(editing||answers[q.key]===undefined));
- const missing=QUESTIONS.findIndex(q=>answers[q.key]===undefined);
- if(next>=0){qi=next;buildQuestion();window.scrollTo(0,0);return;}
- if(missing>=0){qi=missing;buildQuestion();return;}
- editing=false;qi=-1;built=true;buildChoices();show('choices');
+// File de questions : questions de base, questions après DPE ou « Affiner ». when() est évalué au fil des réponses.
+let queue=[], asking=false, queueDone=null;
+const applies=q=>!q.when||q.when(answers);
+function startQueue(list, done){
+ queue=list; queueDone=done; qi=queue.findIndex(q=>applies(q)&&(editing||answers[q.key]===undefined));
+ if(qi<0){finishQueue();return;}
+ asking=true; buildQuestion(); show('question');
 }
-document.getElementById('qBack').onclick=()=>{if(qi>0){qi--;buildQuestion();}};
+function finishQueue(){ asking=false; editing=false; qi=-1; const d=queueDone; queueDone=null; if(d) d(); }
+function nextQuestion() {
+ const next=queue.findIndex((q,i)=>i>qi&&applies(q)&&(editing||answers[q.key]===undefined));
+ if(next>=0){qi=next;buildQuestion();window.scrollTo(0,0);return;}
+ const missing=QUESTIONS.findIndex(q=>answers[q.key]===undefined);
+ if(missing>=0){qi=queue.indexOf(QUESTIONS[missing]);if(qi<0){queue=[...queue,QUESTIONS[missing]];qi=queue.length-1;}buildQuestion();return;}
+ finishQueue();
+}
+document.getElementById('qBack').onclick=()=>{let i=qi-1;while(i>=0&&!applies(queue[i]))i--;if(i>=0){qi=i;buildQuestion();}};
+function goChoices(){ built=true; buildChoices(); show('choices'); }
+const extras=group=>EXTRA_QUESTIONS.filter(q=>q.groups.includes(group));
+function refineCount(){ return extras('refine').filter(q=>applies(q)&&answers[q.key]===undefined).length; }
+document.getElementById('refineYes').onclick=()=>{ storage.set('ml_refined_'+sessionId,'1'); startQueue(extras('refine'), goChoices); };
+document.getElementById('refineNo').onclick=()=>{ storage.set('ml_refined_'+sessionId,'1'); goChoices(); };
+function askRefine(){
+ const n=refineCount();
+ if(!n||storage.get('ml_refined_'+sessionId)==='1'){goChoices();return;}
+ document.getElementById("refineYes").textContent=`Affiner (jusqu’à ${n} questions)`; show('refine');
+}
 // Choix : par adresse (DPE de l'ADEME) ou par questions. Si rien n'est trouvé, on repasse aux questions.
 function modeChosen(){ return storage.get('ml_mode_'+sessionId)==='1'; }
-function startQuestions(){ storage.set('ml_mode_'+sessionId,'1'); qi=-1; const first=QUESTIONS.findIndex(q=>answers[q.key]===undefined); if(first<0){built=true;buildChoices();show('choices');return;} qi=first; buildQuestion(); show('question'); }
+// Sans DPE : les questions de base, puis la proposition « Affiner ». Avec DPE : questions manquantes + questions complémentaires.
+function startQuestions(){ storage.set('ml_mode_'+sessionId,'1'); startQueue(QUESTIONS, askRefine); }
+function startDpeQuestions(){ storage.set('ml_mode_'+sessionId,'1'); storage.set('ml_refined_'+sessionId,'1'); startQueue([...QUESTIONS, ...extras('dpe')], goChoices); }
 document.getElementById('modeQuestions').onclick=startQuestions;
 document.getElementById('addrToQuestions').onclick=startQuestions;
 document.getElementById('modeAddress').onclick=()=>{show('address');setTimeout(()=>document.getElementById('addrInput').focus(),300);};
@@ -582,11 +613,11 @@ async function pickAddress(id,label){
 }
 async function useDpe(row){
  if(busy)return;busy=true;
- try{for(const [key,value] of Object.entries(row.answers||{})){if(!QUESTIONS.some(q=>q.key===key))continue;await api('answer',{id:me,key,value});answers[key]=value;}}
+ try{for(const [key,value] of Object.entries(row.answers||{})){if(!validAnswer(key,value))continue;await api('answer',{id:me,key,value});answers[key]=value;}}
  catch(e){error(e);}finally{busy=false;}
- startQuestions();
+ startDpeQuestions();
 }
-function editAnswers(){editing=true;qi=0;buildQuestion();show('question');}
+function editAnswers(){editing=true;startQueue([...QUESTIONS, ...EXTRA_QUESTIONS.filter(q=>answers[q.key]!==undefined)], goChoices);}
 // Budget et temps : 3 profils chacun ; changer de profil coche les solutions recommandées.
 function buildPrefs() {
  const seg=(id,list,cur,set)=>{const box=document.getElementById(id);box.querySelectorAll('button').forEach(b=>b.remove());
@@ -627,7 +658,7 @@ function buildChoices() {
  const prof=computeProfile(answers);
  document.getElementById('myProfile').innerHTML=`${badge(prof.grade,'big-grade')}<div class="me-info"><div class="t num">${prof.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${prof.out} °C dehors</p><p class="rite-line" id="riteLine"></p></div>`;
  for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);
- for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&fits(s)).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="cost">${priceLabel(s)}</small><small class="delay">⏱ ${s.delay}</small><small class="price">${s.detail}</small></label>`).join('');if(!box.children.length)box.innerHTML=`<p class="empty-group">${type==='low'?'Aucun geste avec ce délai.':'Aucun équipement pour ce budget et ce délai.'}</p>`;box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
+ for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&fits(s)).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="cost">${priceLabel(s)}</small><small class="delay">⏱ ${s.delay}${s.cerema&&s.cerema.includes('€')?` <span class="cerema" title="Niveau de coût du guide Cerema 2025">Cerema ${s.cerema}</span>`:''}</small><small class="price">${s.detail}</small></label>`).join('');if(!box.children.length)box.innerHTML=`<p class="empty-group">${type==='low'?'Aucun geste avec ce délai.':'Aucun équipement pour ce budget et ce délai.'}</p>`;box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
  updatePlan();
 }
 function updatePlan() {
