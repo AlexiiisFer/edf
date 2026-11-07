@@ -151,6 +151,84 @@ ul { padding-left: 20px; line-height: 1.5; } li { margin: 10px 0; font-size: 14p
 .sum .wide { grid-column: 1 / -1; }
 .choice small.price { margin-top: 6px !important; }
 .choice { padding: 12px 14px; }
+
+/* ----- Une page = un écran, sans défilement ----- */
+.app { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; padding: calc(10px + env(safe-area-inset-top)) 14px calc(6px + env(safe-area-inset-bottom)); }
+header { margin-bottom: 10px; gap: 12px; font-size: 15px; }
+header .edf-logo { width: 50px; padding: 6px 8px; border-radius: 8px; }
+h1 { font-size: clamp(22px, 3.7vh, 30px); margin: 4px 0 8px; }
+.view.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.block { padding: 14px; margin: 8px 0; }
+.btn { padding: 14px; margin-top: 8px; }
+.btn.link { background: none; border: 0; color: var(--gris); padding: 10px; margin-top: 2px; font-weight: 600; font-size: 15px; }
+.qbar { margin-bottom: 10px; }
+.opt { padding: clamp(8px, 1.5vh, 14px) 14px; margin: clamp(5px, .9vh, 9px) 0; font-size: 16px; }
+.opt .e { width: 38px; height: 38px; font-size: 20px; border-radius: 10px; }
+#qBack { margin-top: auto; }
+/* Solutions : tuiles compactes sur deux colonnes */
+.me-strip { display: flex; align-items: center; gap: 12px; padding: 10px 12px; }
+.me-strip .grade { font-size: 24px; width: 1.7em; height: 1.7em; border-radius: 12px; }
+.me-strip .t { font-weight: 760; font-size: 19px; line-height: 1.1; }
+.me-strip .t small { font-weight: 500; font-size: 13px; }
+.me-strip .alert { margin: 3px 0 0; font-size: 13px; color: #9a3412; font-weight: 600; }
+.tiles-head { margin: 8px 0 6px; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.choice.tile { display: block; position: relative; margin: 0; padding: 10px 34px 10px 11px; background: #fff; border: 1.5px solid var(--ligne); border-radius: 14px; }
+.choice.tile + .choice.tile { margin-top: 0; }
+.choice.tile strong { font-size: 14px; line-height: 1.25; }
+.choice.tile .price { margin-top: 5px !important; font-size: 12px; padding: 2px 8px; }
+.choice.tile input { position: absolute; top: 9px; right: 9px; width: 22px; height: 22px; margin: 0; }
+.choice.tile input::after { width: 8px; height: 5px; border-width: 0 0 2.5px 2.5px; }
+.live { position: static; margin-top: auto; padding: 10px 10px 10px 14px; }
+.live .go { border: 0; border-radius: 12px; background: var(--soleil); color: var(--encre); font-weight: 760; padding: 11px 14px; cursor: pointer; white-space: nowrap; }
+.live .cost { font-size: 16px; }
+.live .mid { display: flex; align-items: center; gap: 10px; }
+#v-choices .tiles-head + .tiles { margin-bottom: 2px; }
+/* Bilan compact */
+.stages { margin: 6px 0 8px; }
+.stages .grade { font-size: 22px; }
+.temps { margin: 6px 0; padding: 8px 14px; }
+.sum { margin-top: 8px; gap: 8px; }
+.sum div { padding: 9px 12px; }
+.sum b { font-size: 17px; }
+#payback { margin: 8px 0 0; font-size: 13px; }
+details.block summary { font-size: 15px; }
+#v-balance .btn.primary { margin-top: auto; }
+.thanks-icon { width: 60px; height: 60px; }
+.choice.tile { padding: 9px 8px 9px 34px; }
+.choice.tile input { width: 20px !important; height: 20px !important; }
+#v-choices .btn.link { font-size: 13px; padding: 6px 4px 0; margin-top: 4px; }
+.choice.tile input { left: 9px; right: auto; top: 9px; }
+.choice.tile strong { font-size: 13.5px; }
+.choice.tile .price { display: block !important; background: none; padding: 0; margin-top: 3px !important; color: var(--gris) !important; font-weight: 600; }
+#v-choices h1, #v-balance h1, #v-thanks h1 { font-size: clamp(20px, 3.3vh, 28px); }
+.stages small { margin-top: 5px; }
+.sum { grid-template-columns: repeat(3, 1fr); }
+.sum .wide { grid-column: auto; }
+.sum small { font-size: 11px; }
+.sum b { font-size: 15px; line-height: 1.2; display: block; }
+#comfortText { display: none; }
+#v-balance .stages { margin: 2px 0 6px; }
+#v-balance .btn.link, #v-thanks .btn.link { padding: 6px; font-size: 14px; }
+@media (max-height: 700px) {
+  header { margin-bottom: 6px; } header small { display: none; }
+  .stage-label { display: none; }
+  .me-strip .meteo-days { display: none; }
+  .choice.tile { padding: 6px 6px 6px 32px; }
+  #v-choices h1, #v-balance h1, #v-thanks h1 { font-size: 19px; margin: 0 0 6px; }
+  .block { padding: 10px; margin: 5px 0; }
+  .app { padding-top: calc(6px + env(safe-area-inset-top)); }
+  .btn { padding: 12px; }
+  .tiles { gap: 6px; }
+  .btn.link { padding: 6px; }
+  .stages .grade { font-size: 19px; }
+  .choice.tile input { top: 7px; left: 7px; }
+  .me-strip { padding: 8px 10px; } .me-strip .grade { font-size: 20px; }
+  .tiles-head { margin: 2px 0 3px; }
+  .tiles-head span { font-size: 10px; padding: 3px 8px; }
+  .me-strip .t { font-size: 17px; }
+  .live { padding: 8px 8px 8px 12px; }
+}
 </style>
 </head>
 <body>
@@ -167,17 +245,16 @@ ul { padding-left: 20px; line-height: 1.5; } li { margin: 10px 0; font-size: 14p
 <section class="view" id="v-question">
   <div class="intro"><div class="qbar" id="qBar" aria-hidden="true"></div><div class="progress"><span id="qSection"></span><b id="qNum"></b></div><h1 id="qTitle"></h1></div>
   <div id="qOpts"></div>
-  <button class="btn secondary" id="qBack">← Retour</button>
+  <button class="btn link" id="qBack">← Retour</button>
 </section>
 
 <section class="view" id="v-choices">
   <div class="intro"><p class="stage-label">Mes solutions</p><h1>Cochez ce que vous feriez.</h1></div>
-  <div class="block" id="myProfile"></div>
-  <div class="block"><div class="sec-title"><h2>Gestes simples</h2><span class="tag-low">Low tech</span></div><div id="lowChoices"></div></div>
-  <div class="block"><div class="sec-title"><h2>Équipements</h2><span class="tag-high">High tech</span></div><div id="highChoices"></div></div>
-  <button class="btn primary" onclick="show('balance')">Voir mon bilan</button>
-  <button class="btn secondary" onclick="editAnswers()">Modifier mes réponses</button>
+  <div class="block me-strip" id="myProfile"></div>
+  <div class="tiles-head"><span class="tag-low">Low tech · gestes simples</span></div><div class="tiles" id="lowChoices"></div>
+  <div class="tiles-head"><span class="tag-high">High tech · équipements</span></div><div class="tiles" id="highChoices"></div>
   <div class="live" id="preview" aria-live="polite"></div>
+  <button class="btn link" onclick="editAnswers()">Modifier mes réponses</button>
 </section>
 
 <section class="view" id="v-balance">
@@ -187,13 +264,13 @@ ul { padding-left: 20px; line-height: 1.5; } li { margin: 10px 0; font-size: 14p
   <details class="block"><summary>Mes hypothèses</summary><label class="field">Prix de l’électricité (€/kWh)<input id="tariff" type="number" inputmode="decimal" min="0.05" max="1" step="0.01" value="0.25"></label><label class="field" id="baselineField">Conso actuelle de la clim (kWh/an)<input id="baseline" type="number" inputmode="numeric" min="0" max="10000" step="1" value="600"></label><p class="muted">Estimations indicatives, hors aides. Pas un DPE.</p></details>
   <p id="saveStatus" role="status"></p>
   <button class="btn primary" id="saveBtn" onclick="savePlan()">Valider mon plan</button>
-  <button class="btn secondary" onclick="show('choices')">Modifier mes choix</button>
+  <button class="btn link" onclick="show('choices')">Modifier mes choix</button>
 </section>
 
 <section class="view" id="v-thanks">
   <div class="intro"><p class="stage-label">C’est validé</p><h1>Regardez le grand écran.</h1></div>
   <div class="block"><svg class="thanks-icon" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="38"/><path id="checkPath" d="M22 39 L33 50 L55 27"/></svg><div id="savedSummary"></div></div>
-  <button class="btn secondary" onclick="show('balance')">Revoir mon bilan</button>
+  <button class="btn link" onclick="show('balance')">Revoir mon bilan</button>
 </section>
 </main>
 <script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script>
@@ -206,7 +283,7 @@ const badge = (g, cls='') => `<span class="grade grade-${g} ${cls}">${g}</span>`
 const path = (...gs) => `<span class="grade-path">${gs.map(g=>badge(g)).join('<span class="arrow">→</span>')}</span>`;
 function settings() { return { tariff: Number(document.getElementById('tariff').value), baselineKwh: Number(document.getElementById('baseline').value) }; }
 function currentPlan() { return estimatePlan(answers,[...chosen],settings()); }
-function fitHero(sec = document.getElementById('v-'+view)) { const intro = sec && sec.querySelector('.intro'); if (intro) document.querySelector('.hero-bg').style.height = Math.round(intro.getBoundingClientRect().bottom + scrollY + 64) + 'px'; }
+function fitHero(sec = document.getElementById('v-'+view)) { const intro = sec && sec.querySelector('.intro'); if (intro) document.querySelector('.hero-bg').style.height = Math.round(intro.getBoundingClientRect().bottom + scrollY + 44) + 'px'; }
 addEventListener('resize', () => fitHero());
 function show(v) {
   const changed = view !== v; view = v;
@@ -260,10 +337,9 @@ function editAnswers(){editing=true;qi=0;buildQuestion();show('question');}
 function buildChoices() {
  const p=computeProfile(answers);
  for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);
- // Météo fictive de démonstration : pic de canicule de la région jeudi.
- const days=[-7,-4,-2,0,-1,-4,-8].map((d,i)=>({d:['lun','mar','mer','jeu','ven','sam','dim'][i],max:p.out+d}));
- document.getElementById('myProfile').innerHTML=`<div class="me">${badge(p.grade,'big-grade')}<div><div class="temp num">${p.tNo} °C<small> chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${p.out} °C dehors</p></div></div><div class="meteo-days">${days.map(x=>`<span class="${x.max>=30?'hot':''}"><b>${x.max}°</b>${x.d}</span>`).join('')}</div>`;
- for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type).map(s=>`<label class="choice"><span><strong>${s.label}</strong><small>${s.detail}</small><small class="price">${s.max?range(s.min,s.max):'Gratuit'}</small></span><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}></label>`).join('');box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
+ // Météo fictive de démonstration : pic de canicule de la région jeudi (p.out).
+ document.getElementById('myProfile').innerHTML=`${badge(p.grade,'big-grade')}<div style="flex:1"><div class="t num">${p.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${p.out} °C dehors</p></div>`;
+ for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="price">${s.max?range(s.min,s.max):'Gratuit'}</small></label>`).join('');box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
  document.getElementById('baselineField').hidden=!hasClim(answers);
  updatePlan();
 }
@@ -271,13 +347,13 @@ function updatePlan() {
  const auto=document.querySelector('input[value="auto"]');if(auto){auto.disabled=!hasExterior(answers)&&!chosen.has('shade');if(auto.disabled){auto.checked=false;chosen.delete('auto');}}
  const p=currentPlan();
  const pv=document.getElementById('preview');
- pv.innerHTML=`<div><div class="cost num">${p.costMax?range(p.costMin,p.costMax):'0 €'}</div><small>${p.ids.length} choix</small></div>${path(p.grade,p.planGrade)}`;
+ pv.innerHTML=`<div class="mid">${path(p.grade,p.planGrade)}<div class="cost num">${p.costMax?range(p.costMin,p.costMax):'0 €'}</div></div><button class="go" onclick="show('balance')">Voir mon bilan</button>`;
  if(view==='choices'&&lastGrade!==null&&lastGrade!==p.planGrade) UI.bump(pv.querySelector('.grade-path .grade:last-child'));
  lastGrade=p.planGrade;
- document.getElementById('gradePath').innerHTML=[['Avant',p.grade],['Après',p.planGrade]].map(([t,g])=>`<div>${badge(g)}<small>${t}</small></div>`).join('<span class="arrow">→</span>');
+ document.getElementById('gradePath').innerHTML=[['Avant',p.grade,p.tNo],['Après',p.planGrade,p.tPlan]].map(([t,g,c])=>`<div>${badge(g)}<small>${t} · ${c} °C</small></div>`).join('<span class="arrow">→</span>');
  document.getElementById('comfortText').innerHTML=`<span>${p.tNo} °C</span><span aria-hidden="true">→</span><span>${p.tPlan} °C</span>`;
  const net10=p.timeline[2];
- document.getElementById('budget').innerHTML=`<div><small>Investissement</small><b>${p.costMax?range(p.costMin,p.costMax):'0 €'}</b></div><div><small>${p.annualNet>=0?'Économie / an':'Surcoût / an'}</small><b>${money(Math.abs(p.annualNet))}</b></div><div class="wide"><small>Bilan sur 10 ans</small><b>${range(net10.netMin,net10.netMax)}</b></div>`;
+ document.getElementById('budget').innerHTML=`<div><small>Investissement</small><b>${p.costMax?range(p.costMin,p.costMax):'0 €'}</b></div><div><small>${p.annualNet>=0?'Économie / an':'Surcoût / an'}</small><b>${money(Math.abs(p.annualNet))}</b></div><div class="wide"><small>Sur 10 ans</small><b>${range(net10.netMin,net10.netMax)}</b></div>`;
  document.getElementById('payback').textContent=!p.ids.length?'Aucun choix pour l’instant.':p.paybackYears?`Rentabilisé en ${p.paybackYears} an${p.paybackYears>1?'s':''} au plus tard.`:p.fan&&!p.gain?'Ventilateur : plus de confort ressenti.':'';
  document.getElementById('saveStatus').textContent='';
 }

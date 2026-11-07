@@ -73,6 +73,20 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 .qr { width: 72px; height: 72px; background: white; padding: 5px; border-radius: 10px; flex-shrink: 0; }
 @media (max-width: 900px) { .profiles-wrap { grid-template-columns: 1fr; } }
 @media (max-width: 700px) { header { flex-wrap: wrap; } .metrics { grid-template-columns: 1fr; } .brand { flex-wrap: wrap; } .page { padding: 16px; } .card, .metric { padding: 16px; } .dist { gap: 6px; } }
+/* Tout tient sur un écran, sans défilement */
+@media (min-width: 701px) {
+  .page { height: 100vh; min-height: 0; overflow: hidden; gap: 1.6vh; padding: 2.4vh 3vw; }
+  #profilesPanel { flex: 1; min-height: 0; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+  #profilesPanel .card { min-height: 0; display: flex; flex-direction: column; }
+  .dist { flex: 1; height: auto; min-height: 0; }
+  #profileGrid { flex: 1; min-height: 0; overflow: hidden; }
+  .foot .qr { width: 56px; height: 56px; }
+}
+.wall-tile { display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; padding: 4px; min-width: 0; }
+.wall-grid.mini .wall-tile p { display: none; }
+.wall-grid.mini .wall-tile small { margin-bottom: 3px; }
+.wall-grid.micro .wall-tile small, .wall-grid.micro .grade-path .arrow, .wall-grid.micro .grade-path .grade:first-child { display: none; }
+.wall-grid.micro .wall-tile { border-radius: 8px; padding: 2px; }
 </style></head><body>
 <div class="sky" aria-hidden="true"><div class="grain"></div></div>
 <main class="page">
@@ -134,7 +148,7 @@ const qr=qrcode(0,'M');qr.addData(location.origin+'/jouer');qr.make();document.g
 // Onglets avec curseur glissant
 function placeThumb(){const b=document.querySelector('.tabs button[aria-pressed="true"]'),t=document.getElementById('thumb');t.style.left=b.offsetLeft+'px';t.style.width=b.offsetWidth+'px';}
 function tab(name){window.scrollTo(0,0);for(const t of ['profiles','budget','vision']){document.getElementById(t+'Panel').hidden=t!==name;document.getElementById(t+'Tab').setAttribute('aria-pressed',String(t===name));}placeThumb();
-  if(name==='profiles'){UI.enter('#profilesPanel > .card',{y:24,stagger:70});animateDist(true);}
+  if(name==='profiles'){fitWall();UI.enter('#profilesPanel > .card',{y:24,stagger:70});animateDist(true);}
   if(name==='budget'){UI.enter('#budgetPanel .metric',{y:24,stagger:70});if(UI.on)anime.animate('#actions .bar-fill',{scaleX:[0,1],duration:900,delay:anime.stagger(80,{start:300}),ease:'out(3)'});}
   if(name==='vision'){UI.words(document.querySelector('.vision-head h2'),{y:40});UI.enter('.vision-head p, .pillar, .why',{y:30,stagger:110,delay:300});}}
 for(const t of ['profiles','budget','vision'])document.getElementById(t+'Tab').onclick=()=>tab(t);
@@ -157,14 +171,25 @@ dist.addEventListener('pointerleave',()=>tip.style.opacity=0);
 
 // Mur : une case par participant, seules les nouvelles cases apparaissent en animation
 const tiles=new Map();
+// Ajuste la taille des cases pour que tout le mur tienne dans la carte, quel que soit le nombre de participants.
+function fitWall(){
+  const g=document.getElementById('profileGrid'),n=tiles.size;if(!n||!g.clientHeight||innerWidth<=700){g.style.gridTemplateColumns='';g.style.gridAutoRows='';g.classList.remove('mini','micro');return;}
+  const W=g.clientWidth,H=g.clientHeight,gap=6;let best=null;
+  for(let cols=3;cols<=30;cols++){const rows=Math.ceil(n/cols),w=(W-gap*(cols-1))/cols,h=Math.min(78,(H-gap*(rows-1))/rows);if(h<14)continue;const score=Math.min(w,h*1.7);if(!best||score>best.score)best={cols,h,score};}
+  if(!best)best={cols:30,h:14};
+  g.style.gap=gap+'px';g.style.gridTemplateColumns=`repeat(${best.cols},minmax(0,1fr))`;g.style.gridAutoRows=Math.floor(best.h)+'px';
+  g.classList.toggle('mini',best.h<62);g.classList.toggle('micro',best.h<38);
+}
+addEventListener('resize',fitWall);
 function renderWall(profiles){
   const grid=document.getElementById('profileGrid');
   if(!profiles.length){tiles.clear();grid.innerHTML='<p class="empty">Les profils apparaîtront après les premières réponses.</p>';return;}
   grid.querySelector('.empty')?.remove();
   const fresh=[];
   for(const p of profiles){let el=tiles.get(p.number);if(!el){el=document.createElement('article');el.className='wall-tile';tiles.set(p.number,el);grid.appendChild(el);fresh.push(el);}
-    const html=`<small>Participant ${p.number}</small>${p.grade?`<span class="grade-path">${badge(p.grade)}<span class="arrow">→</span>${badge(p.planGrade)}</span><p>${p.validated?'✓ Validé':'En cours'}</p>`:'<p>En attente</p>'}`;
+    const html=`<small>n°${p.number}</small>${p.grade?`<span class="grade-path">${badge(p.grade)}<span class="arrow">→</span>${badge(p.planGrade)}</span><p>${p.validated?'✓ Validé':'En cours'}</p>`:'<p>En attente</p>'}`;
     if(el._html!==html){const wasValidated=el.classList.contains('done');el.innerHTML=html;el._html=html;el.classList.toggle('done',p.validated);if(p.validated&&!wasValidated&&!fresh.includes(el))UI.bump(el, 1.08);}}
+  fitWall();
   UI.pop(fresh.slice(0,60),{stagger:25});
 }
 
