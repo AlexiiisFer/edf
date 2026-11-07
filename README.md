@@ -19,16 +19,17 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 ## Animation
 
 1. Ouvrir `/`, laisser les participants scanner, puis « Commencer ».
-2. Chacun répond aux 14 questions (5 thèmes) à son rythme. L’écran passe au bilan quand tout le monde a terminé, à la fin du chrono (2 min 30) ou sur « Passer au bilan ». Un participant en retard peut finir ensuite. Déroulé de 5 minutes : `PRESENTATION.md`.
-3. Les participants choisissent leurs actions, ajustent le tarif et leur consommation actuelle de climatisation, puis valident leur plan. Aucune action n’est cochée par défaut.
-4. L’animateur choisit « Afficher maintenant » quand il veut ouvrir le bilan collectif. Il n’y a plus de limite de 30 secondes pour choisir les équipements. Les participants peuvent continuer ou modifier leur plan pendant l’affichage des statistiques.
-5. « Nouvelle session » efface toutes les données. Les données sont en mémoire et disparaissent aussi au redémarrage. Le téléphone retrouve son plan validé après rechargement tant que la session existe.
+2. Chacun répond aux 14 questions (5 thèmes) à son rythme : 2 minutes au maximum (plus tôt si tout le monde a terminé, ou sur « Passer au bilan »). Un participant en retard peut finir ensuite.
+3. Les statistiques s’affichent automatiquement **4 minutes après « Commencer »**, avec un compte à rebours à l’écran. « Afficher maintenant » permet de les ouvrir plus tôt. Déroulé de 5 minutes : `PRESENTATION.md`.
+4. Les participants choisissent leurs actions, ajustent le tarif et leur consommation actuelle de climatisation, puis valident leur plan. Aucune action n’est cochée par défaut.
+5. Pendant l’affichage des statistiques, les participants peuvent encore continuer ou modifier leur plan.
+6. « Nouvelle session » efface toutes les données. Les données sont en mémoire et disparaissent aussi au redémarrage. Le téléphone retrouve son plan validé après rechargement tant que la session existe.
 
 ## Questionnaire, météo et équipements
 
 - `public/questions.js` : 5 thèmes (environnement, enveloppe, ouvertures, ventilation, équipements), 14 questions. Chaque réponse modifie l’écart intérieur/extérieur d’un scénario canicule à 35 °C (ajusté selon la zone) : valeurs pédagogiques, pas une étude thermique.
 - Les solutions proposées dépendent des équipements déclarés (volets existants, Velux, VMC double flux, brasseurs d’air, climatiseur mobile ou PAC…).
-- Météo automatique : sur la fiche, le bouton interroge Open-Meteo (gratuit, sans clé) avec la position du téléphone, qui n’est pas enregistrée. Il faut HTTPS (ou localhost) pour la géolocalisation, et l’accès réseau à `api.open-meteo.com`. Sans réseau, la fiche garde le scénario canicule.
+- Météo automatique : prévision **fictive** de démonstration (vague de chaleur sur 7 jours, pic égal au scénario canicule de la zone), affichée automatiquement sur la fiche. Aucun appel réseau ni géolocalisation.
 - Intégration avec l’appli EDF & moi : proposition présentée dans l’onglet « Demain avec EDF & moi ». Aucune donnée client n’est utilisée.
 
 ## Estimations
@@ -46,7 +47,7 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 
 `node --test tests/solutions.test.js`
 
-Le parcours a également été vérifié avec Playwright : téléphones simulés répondant aux 14 questions, modification des réponses, météo (prévision simulée et réseau indisponible), choix, validation et les trois onglets du bilan.
+Le parcours a également été vérifié avec Playwright : téléphones simulés répondant aux 14 questions, modification des réponses, météo fictive, enchaînement automatique questionnaire → choix → statistiques, choix, validation et les trois onglets du bilan.
 
 ## Logo
 
@@ -56,6 +57,6 @@ Il accompagne la mention « Projet proposé pour le défi confort d’été », 
 
 ## Réglages et déploiement
 
-`PORT` : 3000 par défaut. `QUESTIONNAIRE_SECONDS` : 150 par défaut.
+`PORT` : 3000 par défaut. `QUESTIONNAIRE_SECONDS` : 120 par défaut. `TOTAL_SECONDS` : 240 par défaut (de « Commencer » à l’affichage des statistiques).
 
 Coolify : Dockerfile existant, port 3000. Vérification locale : `curl -fsS http://127.0.0.1:3000/health`.

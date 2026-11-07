@@ -70,7 +70,8 @@
   .chrono.low .sec { color: var(--chaleur); }
   .chrono .track { flex: 1; height: 1.4vh; border-radius: 99px; background: var(--ombre); overflow: hidden; box-shadow: inset 0 0 0 1px var(--verre-bord); }
   .chrono .track div { height: 100%; width: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--fraicheur), var(--soleil) 55%, var(--chaleur)); background-size: 75vw 100%; }
-  .auto-pill { font-size: 1vw; color: var(--brume); }
+  .auto-pill { font-size: 1.2vw; color: var(--brume); padding: .6em 1.1em; border-radius: 999px; background: var(--verre); border: 1px solid var(--verre-bord); white-space: nowrap; }
+  .auto-pill b { color: var(--soleil); font-size: 1.3em; }
 
   /* ---------- Résultat individuel ---------- */
   #v-result { grid-template-columns: auto 1fr; grid-template-rows: auto 1fr; column-gap: 6vw; }
@@ -129,7 +130,7 @@
   <div class="sections" id="sections"></div>
   <div class="q-foot">
     <div class="chrono" id="chrono" aria-label="Temps restant"><div class="sec num" id="qSec">2:30</div><div class="track"><div id="mercury"></div></div></div>
-    <span class="auto-pill">Passage automatique quand tout le monde a terminé</span>
+    <span class="auto-pill">Statistiques dans <b class="num stats-in">4:00</b></span>
     <button class="btn btn-quiet" onclick="api('next')">Passer au bilan</button>
   </div>
 </section>
@@ -152,6 +153,7 @@
     <div class="band" id="band"></div>
     <div class="result-foot">
       <span><b class="num" id="rEng">0</b> plans validés sur <span id="rTot">0</span></span>
+      <span class="auto-pill">Statistiques dans <b class="num stats-in">2:00</b></span>
       <button class="btn btn-quiet" onclick="api('next')">Afficher maintenant</button>
     </div>
   </div>
@@ -173,7 +175,7 @@ document.getElementById("halo").innerHTML = Array.from({ length: 24 }, (_, i) =>
   return `<line x1="${(Math.cos(a) * r1).toFixed(1)}" y1="${(Math.sin(a) * r1).toFixed(1)}" x2="${(Math.cos(a) * r2).toFixed(1)}" y2="${(Math.sin(a) * r2).toFixed(1)}"/>`;
 }).join("");
 
-let view = "lobby", localEnd = 0, duration = 15000, dots = 0, lastSession = null;
+let statsEnd = 0, view = "lobby", localEnd = 0, duration = 15000, dots = 0, lastSession = null;
 
 function show(v) {
   if (view === v) return; view = v;
@@ -193,6 +195,7 @@ async function api(action) {
 }
 
 function render(d) {
+  if (d.statsIn) statsEnd = Date.now() + d.statsIn;
   if (d.sessionId !== lastSession) { lastSession = d.sessionId; dots = 0; document.getElementById("players").innerHTML = ""; }
   if (d.phase === "lobby") {
     UI.tween(document.getElementById("count"), d.connected, ([v]) => Math.round(v), 500);
@@ -230,9 +233,10 @@ function render(d) {
 // Chrono : le mercure descend
 setInterval(() => {
   const left = Math.max(0, localEnd - Date.now());
+  const clock = ms => { const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+  document.querySelectorAll(".stats-in").forEach(el => el.textContent = clock(Math.max(0, statsEnd - Date.now())));
   if (view === "question") {
-    const sec = Math.ceil(left / 1000);
-    document.getElementById("qSec").textContent = Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
+    document.getElementById("qSec").textContent = clock(left);
     document.getElementById("mercury").style.width = (duration ? left / duration * 100 : 0) + "%";
     document.getElementById("chrono").classList.toggle("low", left < 20000);
   }

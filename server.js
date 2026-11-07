@@ -9,20 +9,24 @@ const { estimatePlan, availableSolutions } = require("./public/solutions.js");
 
 const PORT = process.env.PORT || 3000;
 // Durée laissée à la salle pour le questionnaire (chacun avance à son rythme).
-const QUESTION_MS = (Number(process.env.QUESTIONNAIRE_SECONDS) || 150) * 1000;
+const QUESTION_MS = (Number(process.env.QUESTIONNAIRE_SECONDS) || 120) * 1000;
+// Durée totale entre « Commencer » et l'affichage automatique des statistiques.
+const TOTAL_MS = Math.max(QUESTION_MS + 10000, (Number(process.env.TOTAL_SECONDS) || 240) * 1000);
 const PUBLIC_DIR = path.join(__dirname, "public");
 const MAX_PLAYERS = 500;
 
 // phase : lobby → question (questionnaire libre sur téléphone) → result (chacun fait son plan) → stats
 let session = newSession();
 function newSession() {
-  return { id: crypto.randomUUID(), phase: "lobby", q: -1, endsAt: 0, players: new Map() };
+  return { id: crypto.randomUUID(), phase: "lobby", q: -1, endsAt: 0, startedAt: 0, players: new Map() };
 }
 
 function goTo(phase, q = -1) {
   session.phase = phase;
   session.q = q;
-  session.endsAt = phase === "question" ? Date.now() + QUESTION_MS : 0;
+  if (phase === "question") session.startedAt = Date.now();
+  // Questionnaire : QUESTION_MS ; choix des solutions : jusqu'à TOTAL_MS après le lancement.
+  session.endsAt = phase === "question" ? Date.now() + QUESTION_MS : phase === "result" ? session.startedAt + TOTAL_MS : 0;
 }
 
 function advance() {
@@ -39,6 +43,8 @@ function tick() {
     const allAnswered = players.length > 0 && players.every((p) => isComplete(p.answers));
     if (now >= session.endsAt) advance();
     else if (allAnswered && session.endsAt - now > 2500) session.endsAt = now + 2500; // petite pause avant la suite
+  } else if (session.phase === "result" && now >= session.endsAt) {
+    advance();
   }
 }
 setInterval(tick, 500);
@@ -90,6 +96,7 @@ function publicState(id) {
     total: QUESTIONS.length,
     remaining: session.endsAt ? Math.max(0, session.endsAt - Date.now()) : 0,
     duration: session.phase === "question" ? QUESTION_MS : 0,
+    statsIn: ["question", "result"].includes(session.phase) ? Math.max(0, session.startedAt + TOTAL_MS - Date.now()) : 0,
     connected: players.length,
     completed: players.filter((p) => isComplete(p.answers)).length,
     sectionsDone: SECTIONS.map((s) => players.filter((p) => QUESTIONS.filter((q) => q.section === s.id).every((q) => p.answers[q.key] !== undefined)).length),

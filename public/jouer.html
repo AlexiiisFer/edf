@@ -159,7 +159,7 @@ ul { padding-left: 20px; line-height: 1.5; } li { margin: 10px 0; font-size: 14p
 <section class="view" id="v-profile">
   <div class="intro"><div class="stepper" aria-hidden="true"><span class="on"></span><span></span><span></span><span></span></div><p class="stage-label">01 · Comprendre</p><h1>Votre point de départ</h1></div>
   <div class="block profile-card" id="initialProfile"></div>
-  <div class="block meteo" id="meteo"><h2>☀️ Météo automatique</h2><p class="muted">Demain, l’appli pourrait déclencher l’alerte toute seule. Essayez avec la prévision réelle sur 7 jours à votre position.</p><button class="btn secondary" id="meteoBtn">Détecter la météo de ma position</button><div id="meteoResult" aria-live="polite"></div></div>
+  <div class="block meteo" id="meteo"><h2>☀️ Météo automatique</h2><p class="muted">Démonstration : prévision fictive. Dans l’appli, l’alerte se déclencherait toute seule à J-3.</p><div id="meteoResult" aria-live="polite"></div></div>
   <p class="muted">Profil confort d’été pédagogique, pas un DPE réglementaire. Classe calculée sur un scénario de canicule à 35 °C (ajusté selon la zone). Intégration envisagée avec l’appli EDF & moi : réponses pré-remplies (logement, équipements, consommation Linky) et alertes canicule.</p>
   <button class="btn primary" onclick="show('low')">Voir mes solutions low tech</button>
   <button class="btn secondary" onclick="editAnswers()">Modifier mes réponses</button>
@@ -265,7 +265,7 @@ function nextQuestion() {
 document.getElementById('qBack').onclick=()=>{if(qi>0){qi--;buildQuestion();}};
 function editAnswers(){editing=true;qi=0;buildQuestion();show('question');}
 function buildChoices() {
- const p=computeProfile(answers);for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);document.getElementById('meteoResult').innerHTML='';
+ const p=computeProfile(answers);for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);showMeteo();
  document.getElementById('initialProfile').innerHTML=`<p class="who">Participant ${participantNumber}</p>${badge(p.grade,'big-grade')}<p class="temp num">${p.tNo}<small> °C simulés</small></p><div class="grade-scale">${[...'ABCDEFG'].map(g=>badge(g,g===p.grade?'selected':'')).join('')}</div><p class="muted">${p.complete?'14 réponses prises en compte.':'Profil incomplet : réponses types pour les questions manquantes.'} A : moins exposé · G : plus exposé.</p>`;
  for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type).map(s=>`<label class="choice"><span><strong>${s.label}</strong><small>${s.detail}</small><small class="price">${range(s.min,s.max)} au départ</small></span><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}></label>`).join('');box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
  document.getElementById('baselineField').hidden=!hasClim(answers);document.getElementById('baselineNote').textContent=hasClim(answers)?'Valeur initiale de démonstration : 600 kWh/an. Remplacez-la par votre consommation de climatisation estimée ou mesurée, pas celle de tout le logement.':'Sans climatisation actuelle, la référence de refroidissement est 0 kWh : aucun achat de clim hypothétique évité n’est compté comme une économie.';
@@ -300,22 +300,14 @@ async function savePlan() {
  const btn=document.getElementById('saveBtn');btn.disabled=true;
  try {const d=await api('engage',{id:me,actions:[...chosen],settings:settings()});document.getElementById('savedSummary').innerHTML=`<p>${path(d.plan.grade,d.plan.lowGrade,d.plan.planGrade)}</p><p>Investissement : <strong>${range(d.plan.costMin,d.plan.costMax)}</strong></p><p>Bilan net à 10 ans : <strong>${range(d.plan.timeline[2].netMin,d.plan.timeline[2].netMax)}</strong></p>`;show('thanks');}catch(e){document.getElementById('saveStatus').textContent='Enregistrement impossible : '+e.message;}finally{btn.disabled=false;}
 }
-// Météo automatique : prévision réelle Open-Meteo (gratuite, sans clé) à la position du téléphone.
-document.getElementById('meteoBtn').onclick=()=>{
- const out=document.getElementById('meteoResult'),btn=document.getElementById('meteoBtn');
- if(!navigator.geolocation){out.innerHTML='<p class="muted">Localisation indisponible sur ce navigateur.</p>';return;}
- btn.disabled=true;btn.textContent='Recherche de la prévision…';
- navigator.geolocation.getCurrentPosition(async pos=>{
-  try{const {latitude:la,longitude:lo}=pos.coords;
-   const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la.toFixed(2)}&longitude=${lo.toFixed(2)}&daily=temperature_2m_max&timezone=auto&forecast_days=7`);
-   if(!r.ok)throw Error();const w=await r.json();const days=w.daily.time.map((t,i)=>({t,max:Math.round(w.daily.temperature_2m_max[i])}));
-   const peak=days.reduce((a,b)=>b.max>a.max?b:a);const day=new Date(peak.t+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-   const real=computeProfile(answers,peak.max),hot=peak.max>=30;
-   out.innerHTML=`<div class="meteo-res ${hot?'alert':''}"><p><strong>Pic prévu : ${peak.max} °C</strong> ${day}.</p><p>${hot?`⚠️ Épisode chaud : environ <strong>${real.tNo} °C</strong> chez vous sans action (classe ${badge(real.grade)}). ${real.tNo<=26?'Votre logement résiste bien : gardez les protections fermées côté soleil.':'Fermez les protections côté soleil dès le matin et aérez la nuit.'}`:`Pas de chaleur prévue cette semaine : environ ${real.tNo} °C chez vous. L’alerte se déclencherait au-dessus de 30 °C.`}</p><div class="meteo-days">${days.map(x=>`<span class="${x.max>=30?'hot':''}"><b>${x.max}°</b>${new Date(x.t+'T12:00').toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','')}</span>`).join('')}</div><p class="muted" style="margin-bottom:0">Prévision Open-Meteo. Votre position n’est pas enregistrée.</p></div>`;
-   UI.enter(out.children,{y:12});
-  }catch{out.innerHTML='<p class="muted">Prévision indisponible (réseau). La simulation garde le scénario canicule.</p>';}
-  finally{btn.disabled=false;btn.textContent='Actualiser la météo';}
- },()=>{out.innerHTML='<p class="muted">Localisation refusée : la simulation garde le scénario canicule à 35 °C.</p>';btn.disabled=false;},{timeout:10000,maximumAge:600000});
-};
+// Météo automatique : prévision fictive de démonstration (vague de chaleur), ajustée selon la zone déclarée.
+function showMeteo() {
+ const shift={urbain:2,periurbain:0,rural:-1,altitude:-3}[answers.zone]||0, base=[28,31,33,35,34,31,27];
+ const names=['lun','mar','mer','jeu','ven','sam','dim'], days=base.map((t,i)=>({d:names[i],max:t+shift}));
+ const peak=days.reduce((a,b)=>b.max>a.max?b:a), real=computeProfile(answers,peak.max), hot=peak.max>=30;
+ const out=document.getElementById('meteoResult');
+ out.innerHTML=`<div class="meteo-res ${hot?'alert':''}"><p><strong>${hot?'⚠️ Alerte canicule':'Chaleur modérée'} : pic à ${peak.max} °C ${peak.d==='jeu'?'jeudi':peak.d}</strong></p><p>Sans action, environ <strong>${real.tNo} °C</strong> chez vous (classe ${badge(real.grade)}). ${real.tNo<=26?'Votre logement résiste bien : gardez les protections fermées côté soleil.':'Fermez les protections côté soleil dès le matin et aérez la nuit.'}</p><div class="meteo-days">${days.map(x=>`<span class="${x.max>=30?'hot':''}"><b>${x.max}°</b>${x.d}</span>`).join('')}</div></div>`;
+ UI.enter(out.children,{y:12,delay:400});
+}
 (async()=>{me=storage.get('ml_id');sessionId=storage.get('ml_session');if(me){try{render(await api('state?id='+encodeURIComponent(me)));}catch{await join();}}else await join();setInterval(async()=>{if(me)try{render(await api('state?id='+encodeURIComponent(me)));}catch{}},1000);})();
 </script></body></html>
