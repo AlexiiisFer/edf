@@ -397,6 +397,9 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 .view.active { min-height: auto; flex: 1 0 auto; }
 /* En-tête inversé : la courbe vient de la droite et descend à gauche */
 .brand-wave.phone svg { transform: scaleX(-1); }
+/* Carte classe/température remontée dans l'en-tête */
+#v-choices .me-strip { margin-top: -34px; }
+@media (max-height: 700px) { #v-choices .me-strip { margin-top: -26px; } }
 </style>
 </head>
 <body>
