@@ -277,6 +277,32 @@ header small { color: var(--gris); }
 .radar i { border-color: var(--edf-orange); } .radar b { background: var(--edf-orange); box-shadow: 0 0 24px rgba(255,94,17,.45); }
 .thanks-icon circle { fill: var(--edf-orange); } .thanks-icon path { stroke: #fff; }
 .done-card { text-align: center; } .done-card .thanks-icon { margin: 6px auto 8px; display: block; } .done-card p { font-weight: 700; color: var(--encre); }
+
+/* ----- Version épurée : propositions plus espacées ----- */
+.progress { justify-content: flex-end; }
+.prefs { gap: 8px; margin: 4px 0 14px; }
+.seg { grid-template-columns: 64px repeat(3, 1fr); gap: 6px; }
+.seg > span { font-size: 13px; }
+.seg button { padding: 8px 2px; }
+#v-choices .tiles { gap: 10px; }
+#v-choices .tiles-2 { margin-top: 18px; }
+#v-choices .choice.tile { padding: 14px 10px 14px 40px; }
+#v-choices .choice.tile input { top: 14px; left: 11px; }
+#v-choices .choice.tile strong { font-size: 15px; }
+#v-choices .choice.tile .cost { margin-top: 4px; font-size: 13px; }
+@media (max-height: 700px) {
+  .prefs { margin-bottom: 10px; }
+  #v-choices .tiles { gap: 8px; } #v-choices .tiles-2 { margin-top: 12px; }
+  #v-choices .choice.tile { padding: 10px 8px 10px 36px; }
+  #v-choices .choice.tile input { top: 10px; left: 9px; }
+  #v-choices .choice.tile strong { font-size: 14px; }
+}
+.live { gap: 8px; }
+.live .mid { gap: 8px; min-width: 0; }
+.live .grade-path { gap: 4px; }
+.live .grade { padding: 5px 7px; font-size: 16px; min-width: 1.7em; }
+.live .go { font-size: 15px; padding: 11px 14px; flex-shrink: 0; }
+@media (max-width: 380px) { .live .go { font-size: 14px; padding: 10px 10px; } .live .temp-now { font-size: 14px; } }
 </style>
 </head>
 <body>
@@ -291,17 +317,16 @@ header small { color: var(--gris); }
 </section>
 
 <section class="view" id="v-question">
-  <div class="intro"><div class="qbar" id="qBar" aria-hidden="true"></div><div class="progress"><span id="qSection"></span><b id="qNum"></b></div><h1 id="qTitle"></h1></div>
+  <div class="intro"><div class="qbar" id="qBar" aria-hidden="true"></div><div class="progress"><b id="qNum"></b></div><h1 id="qTitle"></h1></div>
   <div id="qOpts"></div>
   <button class="btn link" id="qBack">← Retour</button>
 </section>
 
 <section class="view" id="v-choices">
-  <div class="intro"><p class="stage-label">Mes solutions</p><h1>Cochez ce que vous feriez.</h1></div>
-  <div class="block me-strip" id="myProfile"></div>
-  <div class="prefs"><div class="seg" id="segBudget" role="group" aria-label="Budget"><span>💶 Budget</span></div><div class="seg" id="segTime" role="group" aria-label="Temps disponible"><span>⏱️ Temps</span></div></div>
-  <div class="tiles-head"><span class="tag-low">Low tech · gestes simples</span></div><div class="tiles" id="lowChoices"></div>
-  <div class="tiles-head"><span class="tag-high">High tech · équipements</span></div><div class="tiles" id="highChoices"></div>
+  <div class="intro"><h1>Cochez ce que vous feriez.</h1></div>
+  <div class="prefs"><div class="seg" id="segBudget" role="group" aria-label="Budget"><span>Budget</span></div><div class="seg" id="segTime" role="group" aria-label="Temps disponible"><span>Temps</span></div></div>
+  <div class="tiles" id="lowChoices"></div>
+  <div class="tiles tiles-2" id="highChoices"></div>
   <div class="live" id="preview" aria-live="polite"></div>
   <button class="btn link" onclick="editAnswers()">Modifier mes réponses</button>
 </section>
@@ -330,7 +355,6 @@ function show(v) {
   const sec = document.getElementById('v-'+v); fitHero(sec);
   if(!changed) return;
   UI.enter(sec.querySelectorAll('.intro > *, :scope > .block, :scope > .btn'), { y: 20, stagger: 50 });
-  if(v==='choices') UI.pop('#myProfile .big-grade', { delay: 200 });
   if(v==='thanks') { UI.pop('.thanks-icon circle'); UI.draw('#checkPath', { duration: 700, delay: 300 }); }
 }
 async function api(action, body) { const r=await fetch('/api/'+action, body === undefined ? {cache:'no-store'} : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok) throw Error(d.error || 'Connexion impossible');return d; }
@@ -345,9 +369,8 @@ function render(d) {
  if(!built) {built=true;let draft=[];try{draft=JSON.parse(storage.get('ml_plan_'+sessionId)||'[]');}catch{}chosen=new Set(d.plan?.ids || (draft.length?draft:recommend(answers,budget,time)));buildChoices();show('choices');}
 }
 function buildQuestion() {
- const q=QUESTIONS[qi], sec=SECTIONS.find(x=>x.id===q.section);
+ const q=QUESTIONS[qi];
  document.getElementById('qBar').innerHTML=QUESTIONS.map((x,i)=>`<i class="${i===qi?'now':answers[x.key]!==undefined?'done':''}"></i>`).join('');
- document.getElementById('qSection').textContent=`${sec.e} ${sec.title}`;
  document.getElementById('qNum').textContent=`${qi+1}/${QUESTIONS.length}`;
  document.getElementById('qTitle').textContent=q.title;
  document.getElementById('qBack').hidden=qi===0;
@@ -378,10 +401,7 @@ function buildPrefs() {
 }
 function buildChoices() {
  buildPrefs();
- const p=computeProfile(answers);
  for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);
- // Météo fictive de démonstration : pic de canicule de la région jeudi (p.out).
- document.getElementById('myProfile').innerHTML=`${badge(p.grade,'big-grade')}<div style="flex:1"><div class="t num">${p.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${p.out} °C dehors</p></div>`;
  for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&s.price<=BUDGETS.find(b=>b.id===budget).max).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="cost">${s.price?s.price.toLocaleString('fr-FR')+' €':'Gratuit'}</small><small class="price">${s.detail}</small></label>`).join('');box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
  updatePlan();
 }
