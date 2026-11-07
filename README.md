@@ -13,7 +13,7 @@ Application Node.js >=18, sans dépendance externe. Démarrer avec `npm start`.
 Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en particulier) :
 
 - `public/theme.css` : thème commun aux couleurs EDF sur fond blanc (bleu `#07387A` et orange `#FF5E11` du logo), échelle A–G, mur des profils.
-- `public/ui.js` : petites chorégraphies Anime.js v4 (entrées en cascade, titres mot à mot, compteurs animés, tracés SVG, rebonds). Elles sont désactivées si « réduire les animations » est actif, et l’interface fonctionne sans elles.
+- `public/ui.js` : en-tête animé du téléphone (`UI.brandWave` : bande bleue qui part du haut à gauche, ligne orange courbe qui descend vers la droite) et petites chorégraphies Anime.js v4 (entrées en cascade, titres mot à mot, compteurs animés, tracés SVG, rebonds). Elles sont désactivées si « réduire les animations » est actif, et l’interface fonctionne sans elles.
 - `public/vendor/anime.umd.min.js` : Anime.js 4.2.2 (MIT, licence dans `public/vendor/ANIME-LICENSE.md`), servi en local pour fonctionner sans CDN.
 
 ## Animation
@@ -27,7 +27,7 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 
 ## Questionnaire, météo et équipements
 
-- `public/questions.js` : version démo, 6 questions (région, type de logement, orientation des fenêtres, protections extérieures, courant d’air nocturne, climatisation). La région fixe la température extérieure du scénario canicule. Chaque réponse modifie l’écart intérieur/extérieur d’un scénario canicule à 35 °C (ajusté selon la zone) : valeurs pédagogiques, pas une étude thermique.
+- `public/questions.js` : version démo, 6 questions (région, type de logement, orientation des fenêtres — Nord, Sud, Est, Ouest, plusieurs choix possibles, la façade la plus exposée compte —, protections extérieures, courant d’air nocturne, climatisation). La région fixe la température extérieure du scénario canicule. Chaque réponse modifie l’écart intérieur/extérieur d’un scénario canicule à 35 °C (ajusté selon la zone) : valeurs pédagogiques, pas une étude thermique.
 - Les solutions proposées dépendent des équipements déclarés (protections existantes ou non, climatiseur mobile, PAC ou aucune clim).
 - Météo automatique : prévision **fictive** de démonstration (pic de canicule de la région jeudi), affichée sur l’écran des solutions.
 

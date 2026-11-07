@@ -291,9 +291,9 @@ header small { color: var(--gris); }
 #v-choices .choice.tile strong { font-size: 15px; }
 #v-choices .choice.tile .cost { margin-top: 4px; font-size: 13px; }
 @media (max-height: 700px) {
-  .prefs { margin-bottom: 10px; }
-  #v-choices .tiles { gap: 8px; } #v-choices .tiles-2 { margin-top: 12px; }
-  #v-choices .choice.tile { padding: 10px 8px 10px 36px; }
+  .prefs { margin-bottom: 8px; }
+  #v-choices .tiles { gap: 7px; } #v-choices .tiles-2 { margin-top: 9px; }
+  #v-choices .choice.tile { padding: 8px 8px 8px 36px; }
   #v-choices .choice.tile input { top: 10px; left: 9px; }
   #v-choices .choice.tile strong { font-size: 14px; }
 }
@@ -303,6 +303,17 @@ header small { color: var(--gris); }
 .live .grade { padding: 5px 7px; font-size: 16px; min-width: 1.7em; }
 .live .go { font-size: 15px; padding: 11px 14px; flex-shrink: 0; }
 @media (max-width: 380px) { .live .go { font-size: 14px; padding: 10px 10px; } .live .temp-now { font-size: 14px; } }
+.opt .tick { margin-left: auto; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #C3CFDC; flex-shrink: 0; position: relative; }
+.opt.sel .tick { background: var(--edf-orange); border-color: var(--edf-orange); }
+.opt.sel .tick::after { content: ""; position: absolute; left: 7px; top: 3px; width: 6px; height: 11px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+.multi-hint { text-align: center; color: var(--gris); font-size: 13px; margin: 6px 0 0; }
+#qNext:disabled { opacity: .45; cursor: not-allowed; }
+/* En-tête bleu EDF sur la vague */
+.brand-wave.phone { height: 108px; }
+header { color: #fff; border-bottom: 0; min-height: 56px; margin-bottom: 38px; padding-bottom: 0; }
+header small { color: rgba(255,255,255,.8); }
+header .edf-logo { border: 0; }
+@media (max-height: 700px) { .brand-wave.phone { height: 92px; } header { margin-bottom: 26px; min-height: 50px; } }
 </style>
 </head>
 <body>
@@ -338,7 +349,7 @@ header small { color: var(--gris); }
   <button class="btn link" onclick="show('choices')">Modifier mes choix</button>
 </section>
 </main>
-<script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script>
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script><script>UI.brandWave({ left: .58, className: 'phone' });</script>
 <script src="/questions.js"></script><script src="/solutions.js"></script><script>
 const storage = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k,v) { try { localStorage.setItem(k,v); } catch {} } };
 let budget = 'moyen', time = 'unpeu', me, sessionId, participantNumber, answers = {}, chosen = new Set(), view = 'wait', qi = -1, editing = false, built = false, busy = false, lastGrade = null;
@@ -375,7 +386,15 @@ function buildQuestion() {
  document.getElementById('qTitle').textContent=q.title;
  document.getElementById('qBack').hidden=qi===0;
  const box=document.getElementById('qOpts');
- box.innerHTML=q.options.map(o=>`<button class="opt ${answers[q.key]===o.v?'sel':''}" data-v="${o.v}"><span class="e" aria-hidden="true">${o.e}</span><span class="txt">${o.label}</span></button>`).join('');
+ const cur=[].concat(answers[q.key]??[]);
+ box.innerHTML=q.options.map(o=>`<button class="opt ${cur.includes(o.v)?'sel':''}" data-v="${o.v}" ${q.multi?`aria-pressed="${cur.includes(o.v)}"`:''}><span class="e" aria-hidden="true">${o.e}</span><span class="txt">${o.label}</span>${q.multi?'<span class="tick" aria-hidden="true"></span>':''}</button>`).join('')
+  +(q.multi?`<p class="multi-hint">Plusieurs choix possibles</p><button class="btn primary" id="qNext" ${cur.length?'':'disabled'}>Suivant</button>`:'');
+ if(q.multi){
+  const picked=new Set(cur),next=document.getElementById('qNext');
+  box.querySelectorAll('.opt').forEach(btn=>btn.onclick=()=>{const v=btn.dataset.v;picked.has(v)?picked.delete(v):picked.add(v);btn.classList.toggle('sel',picked.has(v));btn.setAttribute('aria-pressed',String(picked.has(v)));next.disabled=!picked.size;UI.bump(btn,1.03);});
+  next.onclick=async()=>{if(busy||!picked.size)return;busy=true;const value=q.options.map(o=>o.v).filter(v=>picked.has(v));
+   try{await api('answer',{id:me,key:q.key,value});answers[q.key]=value;document.getElementById('error').textContent='';busy=false;nextQuestion();}catch(e){busy=false;error(e);}};
+ } else
  box.querySelectorAll('button').forEach(btn=>btn.onclick=async()=>{if(busy)return;busy=true;
   box.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',b===btn));UI.bump(btn,1.03);
   try{await api('answer',{id:me,key:q.key,value:btn.dataset.v});answers[q.key]=btn.dataset.v;document.getElementById('error').textContent='';

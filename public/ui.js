@@ -66,5 +66,35 @@
       A.animate(A.svg.createDrawable(targets), { draw: ['0 0', '0 1'], duration, delay: A.stagger(90, { start: delay }), ease: 'inOut(3)' });
     },
   };
+  // En-tête EDF : bande bleue qui part du haut à gauche et descend en courbe vers la droite, soulignée d'une ligne orange.
+  // left = hauteur du bord à gauche (0 à 1) ; la courbe finit en bas à droite.
+  UI.brandWave = function ({ left = 0, className = '', fit = '' } = {}) {
+    const y0 = Math.round(left * 100), mid = Math.round(y0 + (100 - y0) * .18);
+    const wrap = document.createElement('div');
+    wrap.className = 'brand-wave ' + className;
+    wrap.setAttribute('aria-hidden', 'true');
+    wrap.innerHTML = `<svg viewBox="0 0 1000 112" preserveAspectRatio="none">
+      <path class="bw-fill" d="M0,0 H1000 V100 C660,100 320,${mid} 0,${y0} Z"/>
+      <path class="bw-line" pathLength="1" d="M0,${y0 + 7} C320,${mid + 7} 660,107 1000,107"/></svg>`;
+    const sky = document.querySelector('.sky');
+    sky ? sky.after(wrap) : document.body.prepend(wrap);
+    // fit : la bande s'ajuste à la première ligne visible (logo, étapes, onglets) pour qu'elle tienne entièrement dans le bleu.
+    if (fit) {
+      const resize = () => {
+        const row = [...document.querySelectorAll(fit)].find(el => el.offsetParent !== null);
+        if (!row) return;
+        row.style.marginBottom = '';
+        const r = row.getBoundingClientRect(), bottom = r.bottom + 12, h = Math.round(bottom / Math.max(left, .3));
+        wrap.style.height = h + 'px';
+        const mb = parseFloat(getComputedStyle(row).marginBottom) || 0;
+        row.style.marginBottom = Math.max(mb, h - r.bottom + 8) + 'px';
+      };
+      resize();
+      addEventListener('resize', resize);
+      document.fonts?.ready.then(resize);
+      new MutationObserver(resize).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class', 'hidden'] });
+    }
+    return wrap;
+  };
   window.UI = UI;
 })();

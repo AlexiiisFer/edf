@@ -268,7 +268,7 @@ UI.enter(".qr", { y: 0, x: 40, duration: 1000, delay: 300 });
 // Chiffres en direct : de quoi commenter pendant que la salle répond.
 const pct = (n, t) => t ? Math.round(n / t * 100) : 0;
 function facts(s, phase) {
-  const c = s.answerCounts || {}, tot = k => Object.values(c[k] || {}).reduce((a, b) => a + b, 0), list = [];
+  const c = s.answerCounts || {}, tot = k => s.answeredCounts?.[k] ?? Object.values(c[k] || {}).reduce((a, b) => a + b, 0), list = [];
   const add = (key, n, total, label, cool) => list.push({ key, v: total ? pct(n, total) : null, suffix: " %", label, cool });
   if (phase === "result") {
     list.push({ key: "avg", v: s.count ? s.avgNoAction : null, suffix: " °C", label: "en moyenne chez vous" });

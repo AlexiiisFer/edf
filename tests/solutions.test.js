@@ -3,16 +3,24 @@ const assert = require('node:assert/strict');
 const { estimatePlan, availableSolutions, recommend, BUDGETS, TIMES, SOLUTIONS, CLIM_USAGE, usageCost } = require('../public/solutions.js');
 const { QUESTIONS, computeProfile, isComplete } = require('../public/questions.js');
 
-const hot = { region: 'sud', logement: 'combles', vitrages: 'ouest', protections: 'aucune', traversant: 'non', clim: 'pac' };
+const hot = { region: 'sud', logement: 'combles', vitrages: ['ouest'], protections: 'aucune', traversant: 'non', clim: 'pac' };
 const noAc = { ...hot, clim: 'aucune' };
 const mobile = { ...hot, clim: 'mobile' };
-const cool = { region: 'nord', logement: 'appart', vitrages: 'nordest', protections: 'clair', traversant: 'oui', clim: 'aucune' };
+const cool = { region: 'nord', logement: 'appart', vitrages: ['nord'], protections: 'clair', traversant: 'oui', clim: 'aucune' };
 
 test('demo questionnaire: 6 questions with valid unique keys, region first', () => {
   assert.equal(QUESTIONS.length, 6);
   assert.equal(QUESTIONS[0].key, 'region');
   assert.equal(new Set(QUESTIONS.map(q => q.key)).size, QUESTIONS.length);
   assert.ok(isComplete(hot) && !isComplete({}));
+});
+
+test('windows: several orientations allowed, the most exposed one counts', () => {
+  const { isValidAnswer } = require('../public/questions.js');
+  const q = QUESTIONS.find(x => x.key === 'vitrages');
+  assert.ok(q.multi && isValidAnswer(q, ['nord', 'ouest']) && !isValidAnswer(q, []) && !isValidAnswer(q, 'ouest') && !isValidAnswer(q, ['nord', 'nord']));
+  assert.equal(computeProfile({ ...cool, vitrages: ['nord', 'ouest'] }).tNo, computeProfile({ ...cool, vitrages: ['ouest'] }).tNo);
+  assert.ok(computeProfile({ ...cool, vitrages: ['nord'] }).tNo < computeProfile({ ...cool, vitrages: ['ouest'] }).tNo);
 });
 
 test('exposure ranks homes: hot home is worse than cool home', () => {
@@ -86,7 +94,9 @@ test('all questionnaire combinations: no action keeps the class, all actions nev
       assert.ok(estimatePlan(answers, availableSolutions(answers).map(s => s.id)).tPlan <= p.tNo);
       return;
     }
-    for (const o of QUESTIONS[i].options) check(i + 1, { ...answers, [QUESTIONS[i].key]: o.v });
+    const q = QUESTIONS[i];
+    const values = q.multi ? [...q.options.map(o => [o.v]), q.options.map(o => o.v)] : q.options.map(o => o.v);
+    for (const v of values) check(i + 1, { ...answers, [q.key]: v });
   }
   check(0, {});
 });

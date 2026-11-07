@@ -23,10 +23,12 @@ const QUESTIONS = [
     { v: 'appart', e: '🏢', label: 'Appartement' },
     { v: 'combles', e: '🔺', label: 'Sous les toits' },
   ]},
-  { key: 'vitrages', section: 'vitres', title: 'Vos fenêtres donnent surtout…', options: [
-    { v: 'nordest', e: '🌅', label: 'Au nord ou à l’est' },
-    { v: 'sud', e: '☀️', label: 'Au sud' },
-    { v: 'ouest', e: '🌇', label: 'À l’ouest' },
+  // Plusieurs réponses possibles : la façade la plus exposée compte.
+  { key: 'vitrages', section: 'vitres', multi: true, title: 'Vos fenêtres donnent au…', options: [
+    { v: 'nord', e: '⬆️', label: 'Nord' },
+    { v: 'sud', e: '⬇️', label: 'Sud' },
+    { v: 'est', e: '➡️', label: 'Est' },
+    { v: 'ouest', e: '⬅️', label: 'Ouest' },
   ]},
   { key: 'protections', section: 'vitres', title: 'Protections extérieures ?', options: [
     { v: 'clair', e: '⬜', label: 'Volets clairs' },
@@ -46,7 +48,7 @@ const QUESTIONS = [
 ];
 
 // Réponses types quand une question est sautée (scénario de démonstration).
-const DEFAULTS = { region: 'idf', logement: 'appart', vitrages: 'sud', protections: 'clair', traversant: 'non', clim: 'aucune' };
+const DEFAULTS = { region: 'idf', logement: 'appart', vitrages: ['sud'], protections: 'clair', traversant: 'non', clim: 'aucune' };
 
 // Scénario canicule : maximum extérieur selon la région (°C), valeurs de démonstration.
 const REGION_OUT = { nord: 32, idf: 35, est: 35, rhone: 36, sud: 37 };
@@ -54,14 +56,19 @@ const CANICULE_OUT = 35;
 // Écart intérieur/extérieur (°C) selon chaque réponse. Valeurs pédagogiques, pas une étude thermique.
 const EFFECTS = {
   logement: { plainpied: 0, etages: .5, appart: -.5, combles: 3 },
-  vitrages: { nordest: -1.5, sud: .5, ouest: 2 },
+  vitrages: { nord: -1.5, est: -.5, sud: .5, ouest: 2 },
   protections: { clair: -1.5, sombre: 0, toile: -1, aucune: 2 },
   traversant: { oui: -1.5, non: 1 },
 };
 
 // Classes pédagogiques, sans lien avec les seuils réglementaires du DPE.
 function comfortGrade(t) { return 'ABCDEFG'[[24, 26, 28, 30, 32, 34].filter(limit => t > limit).length]; }
-function isComplete(answers = {}) { return QUESTIONS.every(q => q.options.some(o => o.v === answers[q.key])); }
+// Une réponse est valide si elle fait partie des options (ou, pour une question à choix multiple, une liste non vide d'options).
+function isValidAnswer(q, v) {
+  if (q.multi) return Array.isArray(v) && v.length > 0 && v.length <= q.options.length && new Set(v).size === v.length && v.every(x => q.options.some(o => o.v === x));
+  return q.options.some(o => o.v === v);
+}
+function isComplete(answers = {}) { return QUESTIONS.every(q => isValidAnswer(q, answers[q.key])); }
 
 // out (facultatif) : température extérieure maximale réelle, par exemple issue d'une prévision météo.
 function computeProfile(answers = {}, out) {
@@ -69,10 +76,11 @@ function computeProfile(answers = {}, out) {
   const outMax = Number.isFinite(out) ? out : (REGION_OUT[A('region')] || CANICULE_OUT);
   let delta = -6;
   for (const [k, table] of Object.entries(EFFECTS)) {
-    delta += table[A(k)] || 0;
+    const v = A(k);
+    delta += Array.isArray(v) ? Math.max(...v.map(x => table[x] || 0)) : (table[v] || 0);
   }
   const t = Math.min(42, Math.max(18, Math.round(outMax + delta)));
   return { out: outMax, tNo: t, grade: comfortGrade(t), complete: isComplete(answers) };
 }
 
-if (typeof module !== 'undefined') module.exports = { SECTIONS, QUESTIONS, DEFAULTS, REGION_OUT, computeProfile, comfortGrade, isComplete };
+if (typeof module !== 'undefined') module.exports = { SECTIONS, QUESTIONS, DEFAULTS, REGION_OUT, isValidAnswer, computeProfile, comfortGrade, isComplete };

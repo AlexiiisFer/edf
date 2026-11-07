@@ -3,7 +3,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { QUESTIONS, SECTIONS, computeProfile, isComplete } = require("./public/questions.js");
+const { QUESTIONS, SECTIONS, computeProfile, isComplete, isValidAnswer } = require("./public/questions.js");
 
 const { estimatePlan, availableSolutions } = require("./public/solutions.js");
 
@@ -147,7 +147,8 @@ function computeStats() {
     degreesSaved: Math.round(engaged.reduce((s, p) => s + p.plan.gain, 0)),
     gestureCounts,
     // Réponses de la salle par question, pour les chiffres en direct de l'écran projeté.
-    answerCounts: Object.fromEntries(QUESTIONS.map((q) => [q.key, Object.fromEntries(q.options.map((o) => [o.v, all.filter((p) => p.answers[q.key] === o.v).length]))])),
+    answeredCounts: Object.fromEntries(QUESTIONS.map((q) => [q.key, all.filter((p) => p.answers[q.key] !== undefined).length])),
+    answerCounts: Object.fromEntries(QUESTIONS.map((q) => [q.key, Object.fromEntries(q.options.map((o) => [o.v, all.filter((p) => [].concat(p.answers[q.key]).includes(o.v)).length]))])),
     hottest: count ? Math.max(...list.map((p) => p.tempNo)) : null,
     coolest: count ? Math.min(...list.map((p) => p.tempNo)) : null,
   };
@@ -177,7 +178,7 @@ const server = http.createServer(async (req, res) => {
       tick();
       const q = QUESTIONS.find((x) => x.key === b.key);
       if (session.phase === "lobby") return sendJson(res, 409, { error: "Le questionnaire n’a pas commencé" });
-      if (!q || !q.options.some((o) => o.v === b.value)) return sendJson(res, 400, { error: "invalid" });
+      if (!q || !isValidAnswer(q, b.value)) return sendJson(res, 400, { error: "invalid" });
       pl.answers[q.key] = b.value;
       return sendJson(res, 200, { ok: true });
     }
