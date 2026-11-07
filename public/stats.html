@@ -87,11 +87,32 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 .wall-grid.mini .wall-tile small { margin-bottom: 3px; }
 .wall-grid.micro .wall-tile small, .wall-grid.micro .grade-path .arrow, .wall-grid.micro .grade-path .grade:first-child { display: none; }
 .wall-grid.micro .wall-tile { border-radius: 8px; padding: 2px; }
+#energyPanel { flex: 1; min-height: 0; grid-template-rows: minmax(0, 1fr) auto; }
+.energy { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.6vw; min-height: 0; }
+.energy > .card { display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+.en-compare h2 .muted { font-weight: 500; }
+.en-row { display: grid; grid-template-columns: minmax(200px, 30%) 1fr auto; align-items: center; gap: 1.4vw; margin: 3.4vh 0; }
+.en-lbl { font-size: clamp(13px, 1.1vw, 20px); color: var(--brume); } .en-lbl b { color: var(--craie); }
+.en-track { height: clamp(14px, 2.4vh, 26px); border-radius: 99px; background: rgba(255,255,255,.06); overflow: hidden; }
+.en-bar { display: block; height: 100%; border-radius: 99px; transform-origin: left; }
+.en-bar.hot { background: linear-gradient(90deg, var(--soleil), var(--chaleur)); }
+.en-bar.ok { background: linear-gradient(90deg, var(--fraicheur-2), var(--fraicheur)); }
+.en-bar.free { background: #5fd39a; width: 1.5%; }
+.en-val { text-align: right; min-width: 7ch; } .en-val b { display: block; font-size: clamp(20px, 2.2vw, 40px); line-height: 1; } .en-val small { color: var(--brume); font-size: clamp(11px, .9vw, 15px); }
+.en-big { margin-top: 3vh; font-size: clamp(18px, 1.8vw, 32px); font-weight: 700; } .en-big b { color: var(--fraicheur); font-size: 1.6em; }
+.en-tips ol { list-style: none; display: grid; gap: 2vh; margin-top: 2vh; }
+.en-tips li { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1vw; padding: 1.4vh 1vw; border-radius: 14px; background: rgba(255,255,255,.05); }
+.en-tips li span { font-size: clamp(20px, 1.8vw, 32px); }
+.en-tips li b { display: block; font-size: clamp(14px, 1.15vw, 21px); } .en-tips li small { color: var(--brume); font-size: clamp(11px, .9vw, 15px); }
+.en-tips li em { font-style: normal; font-weight: 760; color: var(--fraicheur); font-size: clamp(14px, 1.2vw, 22px); white-space: nowrap; }
+.en-room { font-size: clamp(14px, 1.3vw, 24px); } .en-room b { color: var(--soleil); }
+@media (max-width: 900px) { .energy { grid-template-columns: 1fr; } .en-row { grid-template-columns: 1fr auto; } .en-track { grid-column: 1 / -1; grid-row: 2; } }
 </style></head><body>
 <div class="sky" aria-hidden="true"><div class="grain"></div></div>
 <main class="page">
 <header><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><div><p class="kicker">Démo · défi confort d’été</p><h1 class="display">Le bilan de la salle</h1></div></div><button class="btn btn-ghost" id="resetBtn">Nouvelle session</button></header>
 <div class="bar">
+  <div class="tabs" role="group" aria-label="Vue"><span class="thumb" id="thumb" aria-hidden="true"></span><button id="profilesTab" aria-pressed="true">La salle</button><button id="energyTab" aria-pressed="false">Quand consommer ?</button></div>
   <div class="status"><span class="chip live"><b class="num" id="cConnected">0</b> participants</span><span class="chip"><b class="num" id="cProfiles">0</b> profils</span><span class="chip"><b class="num" id="cValidated">0</b> plans validés</span></div>
 </div>
 <p class="sr-only" id="count" role="status">Connexion au bilan…</p>
@@ -111,6 +132,29 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 </section>
 
 
+
+<section id="energyPanel" class="panel" hidden>
+  <div class="energy">
+    <div class="card en-compare">
+      <h2>Une clim pendant l’été <span class="muted">· 40 jours chauds</span></h2>
+      <div class="en-row" data-row="h24"><div class="en-lbl">🔴 <b id="lblH24"></b></div><div class="en-track"><i class="en-bar hot"></i></div><div class="en-val"><b class="num" id="costH24">—</b><small id="dayH24"></small></div></div>
+      <div class="en-row" data-row="hc"><div class="en-lbl">🟢 <b id="lblHc"></b></div><div class="en-track"><i class="en-bar ok"></i></div><div class="en-val"><b class="num" id="costHc">—</b><small id="dayHc"></small></div></div>
+      <div class="en-row" data-row="free"><div class="en-lbl">🪟 <b>Volets + aération, sans clim</b></div><div class="en-track"><i class="en-bar free"></i></div><div class="en-val"><b class="num">0 €</b><small>gratuit</small></div></div>
+      <p class="en-big"><b class="num" id="ratio">—</b> moins cher aux heures creuses</p>
+      <p class="muted">Rafraîchir pendant les heures creuses, puis garder la fraîcheur volets fermés.</p>
+    </div>
+    <div class="card en-tips">
+      <h2>Au frais pour pas cher</h2>
+      <ol>
+        <li><span>🪟</span><div><b>Volets fermés le jour</b><small>côté soleil</small></div><em>0 €</em></li>
+        <li><span>🌙</span><div><b>Aérer la nuit</b><small>quand il fait plus frais</small></div><em>0 €</em></li>
+        <li><span>💨</span><div><b>Ventilateur</b><small>+ de confort ressenti</small></div><em id="tipFan"></em></li>
+        <li><span>❄️</span><div><b>Clim aux heures creuses</b><small>consigne 26 °C</small></div><em id="tipHc"></em></li>
+      </ol>
+    </div>
+  </div>
+  <div class="card en-room" id="enRoom"></div>
+</section>
 
 <footer class="foot"><img id="qr" class="qr" alt="QR code pour retrouver sa fiche"><p class="muted">Démo pédagogique, pas un DPE. Météo fictive.</p></footer>
 </main>
@@ -168,7 +212,32 @@ UI.tween(document.getElementById('cConnected'),s.connected,int,600);UI.tween(doc
 const first=!distCounts;distCounts=[...'ABCDEFG'].map(g=>[s.gradeCounts[g],s.planGradeCounts[g]]);animateDist(first);
 document.getElementById('distTable').innerHTML=`<tr><th>Classe</th>${STAGES.map(t=>`<th>${t}</th>`).join('')}</tr>`+[...'ABCDEFG'].map((g,i)=>`<tr><th>${g}</th>${distCounts[i].map(n=>`<td>${n}</td>`).join('')}</tr>`).join('');
 renderWall(s.profiles);
+climUsers=(s.answerCounts?.clim?.pac||0)+(s.answerCounts?.clim?.mobile||0);if(!document.getElementById('energyPanel').hidden)renderRoom();
 }catch{showError('Connexion interrompue : les dernières valeurs peuvent être anciennes. Nouvelle tentative automatique…');}}
+// Onglets : la salle / quand consommer
+function placeThumb(){const b=document.querySelector('.tabs button[aria-pressed="true"]'),t=document.getElementById('thumb');t.style.left=b.offsetLeft+'px';t.style.width=b.offsetWidth+'px';}
+function tab(name){for(const t of ['profiles','energy']){document.getElementById(t+'Panel').hidden=t!==name;document.getElementById(t+'Tab').setAttribute('aria-pressed',String(t===name));}placeThumb();
+  if(name==='profiles'){fitWall();UI.enter('#profilesPanel > .card',{y:24,stagger:70});animateDist(true);}
+  if(name==='energy')showEnergy();}
+for(const t of ['profiles','energy'])document.getElementById(t+'Tab').onclick=()=>tab(t);
+addEventListener('resize',placeThumb);document.fonts?.ready.then(placeThumb);placeThumb();
+
+// Quand consommer : clim H24 contre clim aux heures creuses (estimations indicatives).
+const eur=(n,d=0)=>n.toLocaleString('fr-FR',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d});
+const H24=usageCost(CLIM_USAGE.h24),HC=usageCost(CLIM_USAGE.offPeak),FAN=usageCost(CLIM_USAGE.fan);
+document.getElementById('lblH24').textContent=CLIM_USAGE.h24.label;document.getElementById('lblHc').textContent=CLIM_USAGE.offPeak.label;
+document.getElementById('dayH24').textContent=`${eur(H24.perDay,2)} / jour`;document.getElementById('dayHc').textContent=`${eur(HC.perDay,2)} / jour`;
+document.getElementById('tipFan').textContent=`≈ ${eur(FAN.perDay,2)} / jour`;document.getElementById('tipHc').textContent=`≈ ${eur(HC.perDay,2)} / jour`;
+document.querySelector('.en-bar.hot').style.width='100%';document.querySelector('.en-bar.ok').style.width=(HC.cost/H24.cost*100)+'%';
+let climUsers=0;
+function renderRoom(){const save=climUsers*(H24.cost-HC.cost);document.getElementById('enRoom').innerHTML=climUsers?`Dans la salle, <b>${climUsers}</b> participant${climUsers>1?'s ont':' a'} une clim : en passant aux heures creuses, <b>≈ ${eur(save)}</b> économisés ensemble cet été.`:'Personne dans la salle n’a de clim pour l’instant.';}
+function showEnergy(){
+  const eu=([v])=>eur(v);
+  for(const [id,v] of [['costH24',H24.cost],['costHc',HC.cost]]){const el=document.getElementById(id);el._twTarget=null;el._twCur=null;UI.tween(el,v,eu,1400);}
+  const r=document.getElementById('ratio');r._twTarget=null;r._twCur=null;UI.tween(r,H24.cost/HC.cost,([v])=>'×'+(Math.round(v*10)/10).toLocaleString('fr-FR'),1400);
+  if(UI.on){anime.animate('.en-bar',{scaleX:[0,1],duration:1200,delay:anime.stagger(250),ease:'out(3)'});UI.enter('.en-tips li',{x:30,y:0,stagger:120,delay:400});UI.enter('#enRoom',{y:20,delay:900});}
+  renderRoom();
+}
 UI.enter('header, .bar, #profilesPanel > .card',{y:20,stagger:80});
 refresh();setInterval(refresh,2000);
 </script></body></html>

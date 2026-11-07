@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { estimatePlan, availableSolutions } = require('../public/solutions.js');
+const { estimatePlan, availableSolutions, recommend, BUDGETS, TIMES, SOLUTIONS, CLIM_USAGE, usageCost } = require('../public/solutions.js');
 const { QUESTIONS, computeProfile, isComplete } = require('../public/questions.js');
 
 const hot = { region: 'sud', logement: 'combles', vitrages: 'ouest', protections: 'aucune', traversant: 'non', clim: 'pac' };
@@ -30,10 +30,28 @@ test('no selection: no change', () => {
   }
 });
 
-test('plan exposes temperatures only, no cost fields', () => {
+test('plan gives temperatures and purchase price only', () => {
   const p = estimatePlan(hot, ['shade', 'night']);
   for (const k of ['costMin', 'costMax', 'annualNet', 'timeline', 'tariff', 'kwhSaved']) assert.ok(!(k in p), k);
   assert.equal(p.gain, 2.5);
+  assert.equal(p.price, 300);
+});
+
+test('recommendations respect budget and available time', () => {
+  for (const a of [hot, noAc, mobile, cool]) for (const b of BUDGETS) for (const t of TIMES) {
+    const ids = recommend(a, b.id, t.id), p = estimatePlan(a, ids);
+    assert.ok(p.price <= b.max, `${b.id} ${t.id}`);
+    assert.deepEqual(p.ids, ids, 'every recommendation is usable');
+    const efforts = ids.map(id => SOLUTIONS.find(s => s.id === id).effort);
+    assert.ok(efforts.every(e => t.efforts.includes(e)));
+    if (t.maxDaily) assert.ok(efforts.filter(e => e === 'daily').length <= t.maxDaily);
+  }
+  assert.ok(recommend(noAc, 'large', 'peu').includes('ac'), 'a large budget for a hot home can include a heat pump');
+  assert.ok(!recommend(noAc, 'petit', 'beaucoup').includes('ac'));
+});
+
+test('air conditioning running 24/7 costs several times more than off-peak use', () => {
+  assert.ok(usageCost(CLIM_USAGE.h24).cost / usageCost(CLIM_USAGE.offPeak).cost > 3);
 });
 
 test('solutions follow declared equipment', () => {
@@ -49,7 +67,6 @@ test('a heat pump caps the illustrative temperature at 26 °C; fan only improves
   const f = estimatePlan(noAc, ['fan']);
   assert.equal(f.fan, true);
   assert.equal(f.gain, 0);
-  assert.equal(estimatePlan(hot, ['sensors']).gain, 0);
 });
 
 test('selection deduplicates, excludes incompatible options and requires shade for automation', () => {

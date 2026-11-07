@@ -166,7 +166,7 @@ h1 { font-size: clamp(22px, 3.7vh, 30px); margin: 4px 0 8px; }
 .opt .e { width: 38px; height: 38px; font-size: 20px; border-radius: 10px; }
 #qBack { margin-top: auto; }
 /* Solutions : tuiles compactes sur deux colonnes */
-.me-strip { display: flex; align-items: center; gap: 12px; padding: 10px 12px; }
+.me-strip { display: flex; align-items: center; gap: 12px; padding: 8px 12px; }
 .me-strip .grade { font-size: 24px; width: 1.7em; height: 1.7em; border-radius: 12px; }
 .me-strip .t { font-weight: 760; font-size: 19px; line-height: 1.1; }
 .me-strip .t small { font-weight: 500; font-size: 13px; }
@@ -208,6 +208,15 @@ details.block summary { font-size: 15px; }
 .sum small { font-size: 11px; }
 .sum b { font-size: 15px; line-height: 1.2; display: block; }
 #comfortText { display: none; }
+.prefs { display: grid; gap: 6px; margin: 4px 0 6px; }
+.seg { display: grid; grid-template-columns: 78px repeat(3, 1fr); gap: 4px; align-items: center; }
+.seg > span { font-size: 12px; font-weight: 700; color: var(--gris); }
+.seg button { border: 1.5px solid var(--ligne); background: #fff; border-radius: 10px; padding: 4px 2px; font-size: 13px; font-weight: 700; color: var(--encre); cursor: pointer; line-height: 1.1; }
+.seg button small { display: block; font-size: 10px; font-weight: 600; color: var(--gris); }
+.seg button[aria-pressed="true"] { background: var(--nuit); border-color: var(--nuit); color: #fff; }
+.seg button[aria-pressed="true"] small { color: var(--brume); }
+.choice.tile .cost { display: block; font-size: 12px; font-weight: 700; color: #24497a; margin-top: 2px; }
+.budget-line { text-align: center; font-weight: 700; margin: 6px 0 0; font-size: 14px; }
 .picked { list-style: none; padding: 0; margin: 0; }
 .picked li { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; font-weight: 600; color: var(--encre); }
 .picked li span { font-size: 10px; padding: 2px 7px; }
@@ -223,13 +232,20 @@ details.block summary { font-size: 15px; }
   .block { padding: 10px; margin: 5px 0; }
   .app { padding-top: calc(6px + env(safe-area-inset-top)); }
   .btn { padding: 12px; }
-  .tiles { gap: 6px; }
+  .tiles { gap: 5px; }
+  .live .go { padding: 9px 12px; }
   .btn.link { padding: 6px; }
   .stages .grade { font-size: 19px; }
   .choice.tile input { top: 7px; left: 7px; }
   .me-strip { padding: 8px 10px; } .me-strip .grade { font-size: 20px; }
   .tiles-head { margin: 2px 0 3px; }
   .choice.tile .price { display: none !important; }
+  #v-choices .intro h1 { display: none; }
+  .seg button { padding: 5px 2px; } .seg button small { display: none; }
+  .prefs { gap: 4px; margin: 2px 0 4px; }
+  .choice.tile strong { font-size: 13px; }
+  .choice.tile .cost { margin-top: 0; }
+  .me-strip .grade { font-size: 18px; } .me-strip .t { font-size: 16px; }
   .tiles-head span { font-size: 10px; padding: 3px 8px; }
   .me-strip .t { font-size: 17px; }
   .live { padding: 8px 8px 8px 12px; }
@@ -256,6 +272,7 @@ details.block summary { font-size: 15px; }
 <section class="view" id="v-choices">
   <div class="intro"><p class="stage-label">Mes solutions</p><h1>Cochez ce que vous feriez.</h1></div>
   <div class="block me-strip" id="myProfile"></div>
+  <div class="prefs"><div class="seg" id="segBudget" role="group" aria-label="Budget"><span>💶 Budget</span></div><div class="seg" id="segTime" role="group" aria-label="Temps disponible"><span>⏱️ Temps</span></div></div>
   <div class="tiles-head"><span class="tag-low">Low tech · gestes simples</span></div><div class="tiles" id="lowChoices"></div>
   <div class="tiles-head"><span class="tag-high">High tech · équipements</span></div><div class="tiles" id="highChoices"></div>
   <div class="live" id="preview" aria-live="polite"></div>
@@ -264,7 +281,7 @@ details.block summary { font-size: 15px; }
 
 <section class="view" id="v-balance">
   <div class="intro"><p class="stage-label">Mon bilan</p><h1>Ce que ça change.</h1></div>
-  <div class="block"><div class="stages" id="gradePath"></div><p id="effect" class="muted"></p></div>
+  <div class="block"><div class="stages" id="gradePath"></div><p id="effect" class="muted"></p><p class="budget-line" id="budgetLine"></p></div>
   <div class="block"><h2 style="font-size:16px">Mes choix</h2><ul class="picked" id="picked"></ul></div>
   <p id="saveStatus" role="status"></p>
   <button class="btn primary" id="saveBtn" onclick="savePlan()">Valider mon plan</button>
@@ -280,7 +297,7 @@ details.block summary { font-size: 15px; }
 <script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script>
 <script src="/questions.js"></script><script src="/solutions.js"></script><script>
 const storage = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k,v) { try { localStorage.setItem(k,v); } catch {} } };
-let me, sessionId, participantNumber, answers = {}, chosen = new Set(), view = 'wait', qi = -1, editing = false, built = false, busy = false, lastGrade = null;
+let budget = 'moyen', time = 'unpeu', me, sessionId, participantNumber, answers = {}, chosen = new Set(), view = 'wait', qi = -1, editing = false, built = false, busy = false, lastGrade = null;
 const badge = (g, cls='') => `<span class="grade grade-${g} ${cls}">${g}</span>`;
 const path = (...gs) => `<span class="grade-path">${gs.map(g=>badge(g)).join('<span class="arrow">→</span>')}</span>`;
 function currentPlan() { return estimatePlan(answers,[...chosen]); }
@@ -307,7 +324,7 @@ function render(d) {
  participantNumber=d.participantNumber;answers=Object.assign({}, d.answers || {}, answers);
  if(d.phase==='lobby') {document.getElementById('waitTitle').textContent='Vous êtes dans la salle.';document.getElementById('waitText').textContent=`${d.connected} connecté${d.connected>1?'s':''} · ${QUESTIONS.length} questions`;show('wait');return;}
  if(editing || !isComplete(answers)) { if(qi<0){qi=Math.max(0,QUESTIONS.findIndex(q=>answers[q.key]===undefined));buildQuestion();} if(view!=='question')show('question'); return; }
- if(!built) {built=true;let draft=[];try{draft=JSON.parse(storage.get('ml_plan_'+sessionId)||'[]');}catch{}chosen=new Set(d.plan?.ids || draft);buildChoices();show('choices');}
+ if(!built) {built=true;let draft=[];try{draft=JSON.parse(storage.get('ml_plan_'+sessionId)||'[]');}catch{}chosen=new Set(d.plan?.ids || (draft.length?draft:recommend(answers,budget,time)));buildChoices();show('choices');}
 }
 function buildQuestion() {
  const q=QUESTIONS[qi], sec=SECTIONS.find(x=>x.id===q.section);
@@ -331,27 +348,35 @@ function nextQuestion() {
  const missing=QUESTIONS.findIndex(q=>answers[q.key]===undefined);
  if(next>=0){qi=next;buildQuestion();window.scrollTo(0,0);return;}
  if(missing>=0){qi=missing;buildQuestion();return;}
- editing=false;qi=-1;built=true;buildChoices();show('choices');
+ editing=false;qi=-1;if(!built||!chosen.size)chosen=new Set(recommend(answers,budget,time));built=true;buildChoices();show('choices');
 }
 document.getElementById('qBack').onclick=()=>{if(qi>0){qi--;buildQuestion();}};
 function editAnswers(){editing=true;qi=0;buildQuestion();show('question');}
+// Budget et temps : 3 profils chacun ; changer de profil coche les solutions recommandées.
+function buildPrefs() {
+ const seg=(id,list,cur,set)=>{const box=document.getElementById(id);box.querySelectorAll('button').forEach(b=>b.remove());
+  for(const o of list){const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(o.id===cur));b.innerHTML=o.label+(o.hint?`<small>${o.hint}</small>`:'');b.onclick=()=>{set(o.id);chosen=new Set(recommend(answers,budget,time));storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));buildChoices();UI.enter(document.querySelectorAll('#v-choices .tiles .choice'),{y:8,stagger:25});};box.appendChild(b);}};
+ seg('segBudget',BUDGETS,budget,v=>budget=v);seg('segTime',TIMES,time,v=>time=v);
+}
 function buildChoices() {
+ buildPrefs();
  const p=computeProfile(answers);
  for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);
  // Météo fictive de démonstration : pic de canicule de la région jeudi (p.out).
  document.getElementById('myProfile').innerHTML=`${badge(p.grade,'big-grade')}<div style="flex:1"><div class="t num">${p.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${p.out} °C dehors</p></div>`;
- for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="price">${s.detail}</small></label>`).join('');box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
+ for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&s.price<=BUDGETS.find(b=>b.id===budget).max).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="cost">${s.price?s.price.toLocaleString('fr-FR')+' €':'Gratuit'}</small><small class="price">${s.detail}</small></label>`).join('');box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
  updatePlan();
 }
 function updatePlan() {
  const auto=document.querySelector('input[value="auto"]');if(auto){auto.disabled=!hasExterior(answers)&&!chosen.has('shade');if(auto.disabled){auto.checked=false;chosen.delete('auto');}}
  const p=currentPlan();
  const pv=document.getElementById('preview');
- pv.innerHTML=`<div class="mid">${path(p.grade,p.planGrade)}<div class="temp-now num">${p.tPlan} °C</div></div><button class="go" onclick="show('balance')">Voir mon bilan</button>`;
+ pv.innerHTML=`<div class="mid">${path(p.grade,p.planGrade)}<div class="temp-now num">${p.price.toLocaleString('fr-FR')} €</div></div><button class="go" onclick="show('balance')">Voir mon bilan</button>`;
  if(view==='choices'&&lastGrade!==null&&lastGrade!==p.planGrade) UI.bump(pv.querySelector('.grade-path .grade:last-child'));
  lastGrade=p.planGrade;
  document.getElementById('gradePath').innerHTML=[['Avant',p.grade,p.tNo],['Après',p.planGrade,p.tPlan]].map(([t,g,c])=>`<div>${badge(g)}<small>${t} · ${c} °C</small></div>`).join('<span class="arrow">→</span>');
  document.getElementById('effect').textContent=!p.ids.length?'Aucun choix pour l’instant.':p.gain>0?`${p.gain} °C de moins chez vous.`:p.fan?'Plus de confort ressenti.':'';
+ document.getElementById('budgetLine').textContent=`Budget : ${p.price.toLocaleString('fr-FR')} € · temps : ${TIMES.find(t=>t.id===time).label.toLowerCase()}`;
  const picked=SOLUTIONS.filter(s=>p.ids.includes(s.id));
  document.getElementById('picked').innerHTML=picked.length?picked.map(s=>`<li><span class="${s.type==='low'?'tag-low':'tag-high'}">${s.type==='low'?'Low':'High'}</span>${s.label}</li>`).join(''):'<li class="muted">Rien de coché.</li>';
  document.getElementById('saveStatus').textContent='';
