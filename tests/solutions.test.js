@@ -45,14 +45,16 @@ test('plan gives temperatures and purchase price only', () => {
   assert.equal(p.price, 300);
 });
 
+test('every solution has a numeric installation delay', () => {
+  assert.ok(SOLUTIONS.every(s => Number.isFinite(s.days) && typeof s.delay === 'string'));
+});
+
 test('recommendations respect budget and available time', () => {
   for (const a of [hot, noAc, mobile, cool]) for (const b of BUDGETS) for (const t of TIMES) {
     const ids = recommend(a, b.id, t.id), p = estimatePlan(a, ids);
     assert.ok(p.price <= b.max, `${b.id} ${t.id}`);
     assert.deepEqual(p.ids, ids, 'every recommendation is usable');
-    const efforts = ids.map(id => SOLUTIONS.find(s => s.id === id).effort);
-    assert.ok(efforts.every(e => t.efforts.includes(e)));
-    if (t.maxDaily) assert.ok(efforts.filter(e => e === 'daily').length <= t.maxDaily);
+    assert.ok(ids.every(id => SOLUTIONS.find(s => s.id === id).days <= t.maxDays), 'installation delay fits the time profile');
   }
   assert.ok(recommend(noAc, 'large', 'peu').includes('ac'), 'a large budget for a hot home can include a heat pump');
   assert.ok(!recommend(noAc, 'petit', 'beaucoup').includes('ac'));

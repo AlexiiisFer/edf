@@ -414,6 +414,14 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
   #v-choices .me-strip .alert { font-size: 13px !important; }
 }
 .empty-group { grid-column: 1 / -1; margin: 0; padding: 12px 14px; border: 1.5px dashed var(--ligne); border-radius: 14px; color: var(--gris); font-size: 14px; }
+.report h2 { font-size: 17px; margin-bottom: 8px; }
+.report h3 { font-size: 15px; margin: 14px 0 6px; color: var(--edf-orange); }
+.rep-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--ligne); font-size: 14px; }
+.rep-row > span { color: var(--gris); } .rep-row b { color: var(--encre); } .rep-row em { font-style: normal; color: var(--bon); }
+.rep-list { font-size: 13px; color: var(--gris); margin: 8px 0 0; }
+.rep-tips { list-style: none; padding: 0; margin: 0; }
+.rep-tips li { display: flex; flex-direction: column; margin: 0 0 8px; padding: 10px 12px; background: #FFF6F1; border-radius: 12px; font-size: 14px; color: var(--encre); }
+.rep-tips li span { color: var(--gris); font-size: 13px; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -447,6 +455,7 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 <section class="view" id="v-thanks">
   <div class="intro"><p class="stage-label">Merci</p><h1>C’est validé.</h1></div>
   <div class="block done-card"><svg class="thanks-icon" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="38"/><path id="checkPath" d="M22 39 L33 50 L55 27"/></svg><p>Regardez le grand écran.</p></div>
+  <div class="block report" id="myReport"></div>
   <button class="btn link" onclick="show('choices')">Modifier mes choix</button>
 </section>
 </main>
@@ -520,6 +529,23 @@ function buildPrefs() {
   for(const o of list){const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(o.id===cur));b.innerHTML=o.label+(o.hint?`<small>${o.hint}</small>`:'');b.onclick=()=>{set(o.id);const ok=new Set(visibleSolutions().map(x=>x.id));chosen=new Set([...chosen].filter(id=>ok.has(id)));storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));buildChoices();UI.enter(document.querySelectorAll('#v-choices .tiles .choice'),{y:8,stagger:25});};box.appendChild(b);}};
  seg('segBudget',BUDGETS,budget,v=>budget=v);seg('segTime',TIMES,time,v=>time=v);
 }
+// Bilan individuel après validation, et pistes pour aller plus loin.
+function renderReport() {
+ const p=currentPlan(), picked=SOLUTIONS.filter(x=>p.ids.includes(x.id)), n=v=>v.toLocaleString('fr-FR');
+ const maxDays=picked.reduce((m,x)=>Math.max(m,x.days),0), longest=picked.find(x=>x.days===maxDays);
+ // Pistes : solutions non choisies qui rafraîchissent le plus, à petit prix d'abord.
+ const tips=availableSolutions(answers).filter(x=>!p.ids.includes(x.id)&&(x.cooling>0||x.comfort)&&!x.quote)
+  .map(x=>({x,gain:estimatePlan(answers,[...p.ids,x.id]).tPlan}))
+  .filter(t=>t.gain<p.tPlan||t.x.comfort).sort((a,b)=>(a.gain-b.gain)||(costMin(a.x)-costMin(b.x))).slice(0,3);
+ document.getElementById('myReport').innerHTML=`<h2>Mon bilan</h2>
+  <div class="rep-row"><span>Classe</span><b>${path(p.grade,p.planGrade)}</b></div>
+  <div class="rep-row"><span>Température</span><b>${p.tNo} → ${p.tPlan} °C${p.gain>0?` <em>(−${n(p.gain)} °C)</em>`:''}</b></div>
+  <div class="rep-row"><span>Budget</span><b>${p.priceMax>p.price?'dès ':''}${n(p.price)} €</b></div>
+  <div class="rep-row"><span>Délai</span><b>${picked.length?longest.delay:'—'}</b></div>
+  <p class="rep-list">${picked.length?picked.map(x=>x.label).join(' · '):'Aucune solution choisie.'}</p>
+  ${tips.length?`<h3>Pour aller plus loin</h3><ul class="rep-tips">${tips.map(t=>`<li><b>${t.x.label}</b><span>${t.gain<p.tPlan?`−${n(p.tPlan-t.gain)} °C`:'+ confort'} · ${priceLabel(t.x)} · ${t.x.delay}</span></li>`).join('')}</ul>`:'<p class="rep-list">Votre plan est déjà très complet.</p>'}`;
+ UI.enter(document.querySelectorAll('#myReport > *'),{y:10,stagger:40,delay:300});
+}
 function priceLabel(s) {
  const n=v=>v.toLocaleString('fr-FR');
  if(s.quote) return 'Sur étude';
@@ -528,7 +554,7 @@ function priceLabel(s) {
  return s.unit?`${r}/${s.unit}`:r;
 }
 // Budget et temps filtrent les propositions affichées ; rien n'est coché d'avance.
-function fits(s) { return costMin(s)<=BUDGETS.find(b=>b.id===budget).max && TIMES.find(t=>t.id===time).efforts.includes(s.effort); }
+function fits(s) { return costMin(s)<=BUDGETS.find(b=>b.id===budget).max && fitsTime(s,TIMES.find(t=>t.id===time)); }
 function visibleSolutions() { return availableSolutions(answers).filter(fits); }
 function buildChoices() {
  buildPrefs();
@@ -536,7 +562,7 @@ function buildChoices() {
  const prof=computeProfile(answers);
  document.getElementById('myProfile').innerHTML=`${badge(prof.grade,'big-grade')}<div class="me-info"><div class="t num">${prof.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${prof.out} °C dehors</p></div>`;
  for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);
- for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&fits(s)).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="cost">${priceLabel(s)}</small><small class="delay">⏱ ${s.delay}</small><small class="price">${s.detail}</small></label>`).join('');if(!box.children.length)box.innerHTML=`<p class="empty-group">${type==='low'?'Aucun geste avec ce temps disponible.':'Aucun équipement dans ce budget.'}</p>`;box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
+ for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&fits(s)).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="cost">${priceLabel(s)}</small><small class="delay">⏱ ${s.delay}</small><small class="price">${s.detail}</small></label>`).join('');if(!box.children.length)box.innerHTML=`<p class="empty-group">${type==='low'?'Aucun geste avec ce délai.':'Aucun équipement pour ce budget et ce délai.'}</p>`;box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
  updatePlan();
 }
 function updatePlan() {
@@ -549,7 +575,7 @@ function updatePlan() {
 }
 async function savePlan() {
  const btn=document.getElementById('saveBtn');if(btn)btn.disabled=true;
- try {await api('engage',{id:me,actions:[...chosen]});document.getElementById('error').textContent='';show('thanks');}catch(e){error(Error('Enregistrement impossible : '+e.message));if(btn)btn.disabled=false;}
+ try {await api('engage',{id:me,actions:[...chosen]});document.getElementById('error').textContent='';renderReport();show('thanks');}catch(e){error(Error('Enregistrement impossible : '+e.message));if(btn)btn.disabled=false;}
 }
 (async()=>{me=storage.get('ml_id');sessionId=storage.get('ml_session');if(me){try{render(await api('state?id='+encodeURIComponent(me)));}catch{await join();}}else await join();setInterval(async()=>{if(me)try{render(await api('state?id='+encodeURIComponent(me)));}catch{}},1000);})();
 </script></body></html>
