@@ -314,6 +314,84 @@ header { color: #fff; border-bottom: 0; min-height: 56px; margin-bottom: 38px; p
 header small { color: rgba(255,255,255,.8); }
 header .edf-logo { border: 0; }
 @media (max-height: 700px) { .brand-wave.phone { height: 92px; } header { margin-bottom: 26px; min-height: 50px; } }
+/* Solutions : zone profil, filtres espacés, deux groupes */
+#v-choices .me-strip { margin: 0 0 4px; }
+#v-choices .prefs { margin: 14px 0 26px; gap: 10px; }
+#v-choices .group { font-size: 14px; font-weight: 700; color: var(--encre); margin: 0 0 8px; }
+#v-choices .tiles + .group { margin-top: 18px; }
+.live .delta { display: flex; flex-direction: column; line-height: 1.1; }
+.live .delta b { font-size: 20px; color: #fff; white-space: nowrap; }
+.live .delta small { color: var(--brume); font-size: 12px; white-space: nowrap; }
+@media (max-height: 760px) {
+  #v-choices .prefs { margin: 10px 0 16px; gap: 6px; }
+  #v-choices .group { font-size: 13px; margin-bottom: 6px; }
+  #v-choices .tiles + .group { margin-top: 12px; }
+}
+@media (max-height: 700px) {
+  #v-choices .me-strip .alert { font-size: 12px; }
+  #v-choices .prefs { margin: 8px 0 12px; }
+  #v-choices .tiles + .group { margin-top: 9px; }
+  #v-choices .group { margin-bottom: 5px; }
+}
+@media (max-height: 700px) {
+  #v-choices .me-strip { padding: 6px 10px; }
+  #v-choices .me-strip .grade { font-size: 16px; }
+  #v-choices .me-strip .t { font-size: 15px; }
+  #v-choices .choice.tile { padding: 7px 8px 7px 34px; }
+  #v-choices .choice.tile input { top: 8px; }
+  #v-choices .tiles { gap: 6px; }
+}
+#v-choices .choice.tile .price { display: none !important; }
+@media (max-height: 700px) {
+  .brand-wave.phone { height: 78px; } header { margin-bottom: 16px; min-height: 46px; }
+  #v-choices .me-strip { padding: 5px 10px; gap: 10px; }
+  #v-choices .me-strip .grade { font-size: 14px; }
+  #v-choices .me-strip > div { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  #v-choices .me-strip .t small { display: none; }
+  #v-choices .me-strip .alert { margin: 0; }
+  #v-choices .prefs { margin: 6px 0 10px; gap: 5px; }
+  #v-choices .group { font-size: 12px; margin-bottom: 4px; }
+  #v-choices .tiles + .group { margin-top: 8px; }
+  #v-choices .choice.tile { padding: 6px 6px 6px 32px; }
+  #v-choices .choice.tile input { top: 6px; left: 7px; }
+  .live { padding: 6px 6px 6px 10px; } .live .go { padding: 9px 10px; }
+  #v-choices .btn.link { padding: 4px 4px 0; }
+}
+@media (max-height: 700px) {
+  #v-choices .me-strip > div { flex-wrap: nowrap; min-width: 0; }
+  #v-choices .me-strip .t { font-size: 15px; white-space: nowrap; }
+  #v-choices .me-strip .alert { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #v-choices .choice.tile strong { font-size: 12.5px; }
+  #v-choices .choice.tile .cost { font-size: 11.5px; }
+}
+/* En-tête façon carte : bleu presque plat, grand arrondi qui descend à droite ;
+   sur l'écran des solutions, la zone classe/température est à cheval entre l'en-tête et le contenu */
+.brand-wave.phone { height: 124px; transition: height .45s var(--ease); }
+body[data-view="choices"] .brand-wave.phone { height: 150px; }
+header { margin-bottom: 20px; }
+#v-choices .me-strip { position: relative; z-index: 2; background: #FFFFFF; border: 0; margin-top: 0; box-shadow: 0 10px 26px rgba(7,56,122,.20); border-radius: 16px; }
+@media (max-height: 700px) {
+  .brand-wave.phone { height: 108px; } body[data-view="choices"] .brand-wave.phone { height: 128px; }
+  header { margin-bottom: 12px; }
+}
+body:not([data-view="choices"]) header { margin-bottom: 36px; }
+@media (max-height: 700px) { body:not([data-view="choices"]) header { margin-bottom: 26px; } }
+/* ----- Plus d'espace (le défilement est accepté) ; la barre de validation reste visible en bas ----- */
+#v-choices .me-strip { margin-bottom: 10px; padding: 12px 14px; }
+#v-choices .prefs { margin: 24px 0 36px; gap: 12px; }
+#v-choices .seg button { padding: 11px 2px; }
+#v-choices .group { font-size: 15px; margin: 0 0 12px; }
+#v-choices .tiles { gap: 12px; }
+#v-choices .tiles + .group { margin-top: 32px; }
+#v-choices .choice.tile { padding: 16px 12px 16px 44px; }
+#v-choices .choice.tile input { top: 16px; left: 12px; }
+#v-choices .choice.tile strong { font-size: 15px; }
+#v-choices .choice.tile .cost { font-size: 13px; margin-top: 4px; }
+#v-choices .live { position: sticky; bottom: calc(10px + env(safe-area-inset-bottom)); margin-top: 32px; z-index: 3; }
+#v-choices .btn.link { padding: 12px 4px 4px; }
+.opt { padding: 16px; margin: 12px 0; }
+#qOpts { margin-top: 18px; }
+.app { min-height: auto; }
 </style>
 </head>
 <body>
@@ -334,10 +412,11 @@ header .edf-logo { border: 0; }
 </section>
 
 <section class="view" id="v-choices">
-  <div class="intro"><h1>Cochez ce que vous feriez.</h1></div>
+  <div class="intro"></div>
+  <div class="block me-strip" id="myProfile"></div>
   <div class="prefs"><div class="seg" id="segBudget" role="group" aria-label="Budget"><span>Budget</span></div><div class="seg" id="segTime" role="group" aria-label="Temps disponible"><span>Temps</span></div></div>
-  <div class="tiles" id="lowChoices"></div>
-  <div class="tiles tiles-2" id="highChoices"></div>
+  <h2 class="group">Gestes manuels</h2><div class="tiles" id="lowChoices"></div>
+  <h2 class="group">Équipements</h2><div class="tiles" id="highChoices"></div>
   <div class="live" id="preview" aria-live="polite"></div>
   <button class="btn link" onclick="editAnswers()">Modifier mes réponses</button>
 </section>
@@ -349,7 +428,7 @@ header .edf-logo { border: 0; }
   <button class="btn link" onclick="show('choices')">Modifier mes choix</button>
 </section>
 </main>
-<script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script><script>UI.brandWave({ left: .58, className: 'phone' });</script>
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script><script>UI.brandWave({ className: 'phone', variant: 'card' });</script>
 <script src="/questions.js"></script><script src="/solutions.js"></script><script>
 const storage = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k,v) { try { localStorage.setItem(k,v); } catch {} } };
 let budget = 'moyen', time = 'unpeu', me, sessionId, participantNumber, answers = {}, chosen = new Set(), view = 'wait', qi = -1, editing = false, built = false, busy = false, lastGrade = null;
@@ -360,6 +439,7 @@ function fitHero(sec = document.getElementById('v-'+view)) { const intro = sec &
 addEventListener('resize', () => fitHero());
 function show(v) {
   const changed = view !== v; view = v;
+  document.body.dataset.view = v;
   document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id==='v-'+v));
   if(v==='choices') updatePlan();
   window.scrollTo(0,0);
@@ -420,6 +500,9 @@ function buildPrefs() {
 }
 function buildChoices() {
  buildPrefs();
+ // Zone profil : classe, température chez soi et alerte canicule fictive de la région.
+ const prof=computeProfile(answers);
+ document.getElementById('myProfile').innerHTML=`${badge(prof.grade,'big-grade')}<div style="flex:1"><div class="t num">${prof.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${prof.out} °C dehors</p></div>`;
  for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);
  for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&s.price<=BUDGETS.find(b=>b.id===budget).max).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="cost">${s.price?s.price.toLocaleString('fr-FR')+' €':'Gratuit'}</small><small class="price">${s.detail}</small></label>`).join('');box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
  updatePlan();
@@ -428,9 +511,9 @@ function updatePlan() {
  const auto=document.querySelector('input[value="auto"]');if(auto){auto.disabled=!hasExterior(answers)&&!chosen.has('shade');if(auto.disabled){auto.checked=false;chosen.delete('auto');}}
  const p=currentPlan();
  const pv=document.getElementById('preview');
- pv.innerHTML=`<div class="mid">${path(p.grade,p.planGrade)}<div class="temp-now num">${p.price.toLocaleString('fr-FR')} €</div></div><button class="go" id="saveBtn" onclick="savePlan()">Valider mon plan</button>`;
- if(view==='choices'&&lastGrade!==null&&lastGrade!==p.planGrade) UI.bump(pv.querySelector('.grade-path .grade:last-child'));
- lastGrade=p.planGrade;
+ pv.innerHTML=`<div class="mid"><div class="delta num"><b>${p.gain>0?'−'+p.gain.toLocaleString('fr-FR'):'0'} °C</b><small>${p.tNo} → ${p.tPlan} °C</small></div><div class="temp-now num">${p.price.toLocaleString('fr-FR')} €</div></div><button class="go" id="saveBtn" onclick="savePlan()">Valider mon plan</button>`;
+ if(view==='choices'&&lastGrade!==null&&lastGrade!==p.tPlan) UI.bump(pv.querySelector('.delta b'));
+ lastGrade=p.tPlan;
 }
 async function savePlan() {
  const btn=document.getElementById('saveBtn');if(btn)btn.disabled=true;
