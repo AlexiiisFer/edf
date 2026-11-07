@@ -56,6 +56,18 @@ p { line-height: 1.5; margin: 10px 0; }
 .opt.sel .e { background: rgba(255,255,255,.12); }
 .opt:disabled:not(.sel) { opacity: .5; }
 #qDone { text-align: center; font-weight: 600; color: var(--bon); }
+.qbar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; margin-bottom: 16px; }
+.qbar i { height: 5px; border-radius: 99px; background: rgba(255,255,255,.2); transition: background .3s; }
+.qbar i.done { background: var(--fraicheur); } .qbar i.now { background: var(--soleil); }
+.progress span { color: var(--soleil); font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+.opt .txt small { display: block; font-weight: 500; font-size: 13px; color: var(--gris); margin-top: 3px; line-height: 1.35; }
+.opt.sel .txt small { color: var(--brume); }
+.meteo-res { margin-top: 14px; padding: 14px; border-radius: 14px; background: #f3f7fb; }
+.meteo-res.alert { background: #fff1e8; }
+.meteo-days { display: flex; gap: 4px; margin-top: 10px; overflow-x: auto; }
+.meteo-days span { flex: 1; min-width: 0; text-align: center; padding: 6px 2px; border-radius: 10px; background: #fff; font-size: 12px; color: var(--gris); }
+.meteo-days span b { display: block; font-size: 15px; color: var(--encre); }
+.meteo-days span.hot { background: #ffe2d3; } .meteo-days span.hot b { color: #9a3412; }
 
 /* Profil */
 .profile-card { text-align: center; }
@@ -138,16 +150,19 @@ ul { padding-left: 20px; line-height: 1.5; } li { margin: 10px 0; font-size: 14p
 </section>
 
 <section class="view" id="v-question">
-  <div class="intro"><div class="progress"><span id="qNum"></span><b id="qSec"></b></div><h1 id="qTitle"></h1></div>
+  <div class="intro"><div class="qbar" id="qBar" aria-hidden="true"></div><div class="progress"><span id="qSection"></span><b id="qNum"></b></div><h1 id="qTitle"></h1></div>
   <div id="qOpts"></div>
+  <button class="btn secondary" id="qBack">← Question précédente</button>
   <p id="qDone" aria-live="polite"></p>
 </section>
 
 <section class="view" id="v-profile">
   <div class="intro"><div class="stepper" aria-hidden="true"><span class="on"></span><span></span><span></span><span></span></div><p class="stage-label">01 · Comprendre</p><h1>Votre point de départ</h1></div>
   <div class="block profile-card" id="initialProfile"></div>
-  <p class="muted">Profil confort d’été pédagogique, pas un DPE réglementaire. Scénario de canicule fictif, sans météo réelle ni mesure du logement.</p>
-  <button class="btn primary" onclick="show('low')">Commencer par le low tech</button>
+  <div class="block meteo" id="meteo"><h2>☀️ Météo automatique</h2><p class="muted">Demain, l’appli pourrait déclencher l’alerte toute seule. Essayez avec la prévision réelle sur 7 jours à votre position.</p><button class="btn secondary" id="meteoBtn">Détecter la météo de ma position</button><div id="meteoResult" aria-live="polite"></div></div>
+  <p class="muted">Profil confort d’été pédagogique, pas un DPE réglementaire. Classe calculée sur un scénario de canicule à 35 °C (ajusté selon la zone). Intégration envisagée avec l’appli EDF & moi : réponses pré-remplies (logement, équipements, consommation Linky) et alertes canicule.</p>
+  <button class="btn primary" onclick="show('low')">Voir mes solutions low tech</button>
+  <button class="btn secondary" onclick="editAnswers()">Modifier mes réponses</button>
 </section>
 
 <section class="view" id="v-low">
@@ -188,7 +203,7 @@ ul { padding-left: 20px; line-height: 1.5; } li { margin: 10px 0; font-size: 14p
 <script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script>
 <script src="/questions.js"></script><script src="/solutions.js"></script><script>
 const storage = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k,v) { try { localStorage.setItem(k,v); } catch {} } };
-let me, sessionId, participantNumber, answers = {}, chosen = new Set(), view = 'wait', lastQ = -1, localEnd = 0, built = false, busy = false, lastPreviewGrade = null;
+let me, sessionId, participantNumber, answers = {}, chosen = new Set(), view = 'wait', qi = -1, editing = false, built = false, busy = false, lastPreviewGrade = null;
 const money = n => new Intl.NumberFormat('fr-FR', { style:'currency', currency:'EUR', maximumFractionDigits:0 }).format(n);
 const range = (a,b) => Math.round(a) === Math.round(b) ? money(a) : `${money(a)} à ${money(b)}`;
 const badge = (g, cls='') => `<span class="grade grade-${g} ${cls}">${g}</span>`;
@@ -213,27 +228,47 @@ function fitHero(sec = document.getElementById('v-'+view)) { const intro = sec &
 addEventListener('resize', () => fitHero());
 async function api(action, body) { const r=await fetch('/api/'+action, body === undefined ? {cache:'no-store'} : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok) throw Error(d.error || 'Connexion impossible');return d; }
 function error(e) { document.getElementById('error').textContent=e.message; }
-async function join() { try {const d=await api('join',{});me=d.id;sessionId=d.sessionId;storage.set('ml_id',me);storage.set('ml_session',sessionId);built=false;answers={};chosen=new Set();lastQ=-1;render(d);document.getElementById('error').textContent='';document.getElementById('retry').hidden=true;}catch(e){error(e);document.getElementById('retry').hidden=false;} }
+async function join() { try {const d=await api('join',{});me=d.id;sessionId=d.sessionId;storage.set('ml_id',me);storage.set('ml_session',sessionId);built=false;answers={};chosen=new Set();qi=-1;editing=false;render(d);document.getElementById('error').textContent='';document.getElementById('retry').hidden=true;}catch(e){error(e);document.getElementById('retry').hidden=false;} }
 document.getElementById('retry').onclick=join;
 function render(d) {
  if(!d.known || d.sessionId!==sessionId) return join();
- participantNumber=d.participantNumber;answers=d.answers || {};
- if(d.phase==='lobby') {document.getElementById('waitTitle').textContent='Vous êtes dans la salle.';document.getElementById('waitText').textContent=`${d.connected} participant${d.connected>1?'s':''} · 5 questions, puis vos choix low tech et high tech.`;show('wait');}
- else if(d.phase==='question') {localEnd=Date.now()+d.remaining;if(lastQ!==d.q){lastQ=d.q;buildQuestion(d);}show('question');}
- else if(!built) {built=true;let draft=[];try{draft=JSON.parse(storage.get('ml_plan_'+sessionId)||'[]');}catch{}chosen=new Set(d.plan?.ids || draft);if(d.plan){document.getElementById('tariff').value=d.plan.tariff;document.getElementById('baseline').value=d.plan.baselineKwh;}buildChoices();show('profile');}
+ participantNumber=d.participantNumber;answers=Object.assign({}, d.answers || {}, answers);
+ if(d.phase==='lobby') {document.getElementById('waitTitle').textContent='Vous êtes dans la salle.';document.getElementById('waitText').textContent=`${d.connected} participant${d.connected>1?'s':''} · 14 questions à votre rythme, puis vos solutions et votre bilan.`;show('wait');return;}
+ if(editing || !isComplete(answers)) { if(qi<0){qi=Math.max(0,QUESTIONS.findIndex(q=>answers[q.key]===undefined));buildQuestion();} if(view!=='question')show('question'); return; }
+ if(!built) {built=true;let draft=[];try{draft=JSON.parse(storage.get('ml_plan_'+sessionId)||'[]');}catch{}chosen=new Set(d.plan?.ids || draft);if(d.plan){document.getElementById('tariff').value=d.plan.tariff;document.getElementById('baseline').value=d.plan.baselineKwh;}buildChoices();show('profile');}
 }
-function buildQuestion(d) {
- const q=QUESTIONS[d.q];document.getElementById('qNum').textContent=`Question ${d.q+1} sur ${d.total}`;document.getElementById('qTitle').textContent=q.title;document.getElementById('qDone').textContent=d.myAnswer?'✓ Réponse enregistrée':'';
- const box=document.getElementById('qOpts');box.innerHTML=q.options.map(o=>`<button class="opt ${d.myAnswer===o.v?'sel':''}" data-v="${o.v}"><span class="e" aria-hidden="true">${o.e}</span>${o.label}</button>`).join('');
- box.querySelectorAll('button').forEach(btn=>{btn.disabled=!!d.myAnswer;btn.onclick=async()=>{if(busy)return;busy=true;try{await api('answer',{id:me,q:d.q,value:btn.dataset.v});answers[q.key]=btn.dataset.v;box.querySelectorAll('button').forEach(b=>b.disabled=true);btn.classList.add('sel');UI.bump(btn, 1.04);document.getElementById('qDone').textContent='✓ Réponse enregistrée';}catch(e){error(e);}finally{busy=false;}};});
- if(view==='question') { UI.enter('#v-question .intro > *', { y: 16 }); }
- UI.enter(box.children, { y: 24, stagger: 70, delay: 120 });
+function buildQuestion() {
+ const q=QUESTIONS[qi], sec=SECTIONS.find(x=>x.id===q.section);
+ document.getElementById('qBar').innerHTML=QUESTIONS.map((x,i)=>`<i class="${i===qi?'now':answers[x.key]!==undefined?'done':''}"></i>`).join('');
+ document.getElementById('qSection').textContent=`${sec.e} Thème ${sec.n} · ${sec.title}`;
+ document.getElementById('qNum').textContent=`${qi+1}/${QUESTIONS.length}`;
+ document.getElementById('qTitle').textContent=q.title;
+ document.getElementById('qDone').textContent='';
+ document.getElementById('qBack').hidden=qi===0;
+ const box=document.getElementById('qOpts');
+ box.innerHTML=q.options.map(o=>`<button class="opt ${answers[q.key]===o.v?'sel':''}" data-v="${o.v}"><span class="e" aria-hidden="true">${o.e}</span><span class="txt">${o.label}${o.hint?`<small>${o.hint}</small>`:''}</span></button>`).join('');
+ box.querySelectorAll('button').forEach(btn=>btn.onclick=async()=>{if(busy)return;busy=true;
+  box.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',b===btn));UI.bump(btn,1.03);
+  try{await api('answer',{id:me,key:q.key,value:btn.dataset.v});answers[q.key]=btn.dataset.v;document.getElementById('error').textContent='';
+   setTimeout(()=>{busy=false;nextQuestion();},280);}catch(e){busy=false;error(e);}});
+ fitHero(document.getElementById('v-question'));
+ UI.enter(document.querySelectorAll('#v-question .intro > *:not(.qbar)'), { y: 12, stagger: 40 });
+ UI.enter(box.children, { y: 20, stagger: 55, delay: 80 });
 }
+function nextQuestion() {
+ const next=QUESTIONS.findIndex((q,i)=>i>qi&&(editing||answers[q.key]===undefined));
+ const missing=QUESTIONS.findIndex(q=>answers[q.key]===undefined);
+ if(next>=0){qi=next;buildQuestion();window.scrollTo(0,0);return;}
+ if(missing>=0){qi=missing;buildQuestion();return;}
+ editing=false;qi=-1;built=true;buildChoices();show('profile');
+}
+document.getElementById('qBack').onclick=()=>{if(qi>0){qi--;buildQuestion();}};
+function editAnswers(){editing=true;qi=0;buildQuestion();show('question');}
 function buildChoices() {
- const p=computeProfile(answers);
- document.getElementById('initialProfile').innerHTML=`<p class="who">Participant ${participantNumber}</p>${badge(p.grade,'big-grade')}<p class="temp num">${p.tNo}<small> °C simulés</small></p><div class="grade-scale">${[...'ABCDEFG'].map(g=>badge(g,g===p.grade?'selected':'')).join('')}</div><p class="muted">${p.complete?'5 réponses prises en compte.':'Profil incomplet : réponses types pour les questions manquantes.'} A : moins exposé · G : plus exposé.</p>`;
+ const p=computeProfile(answers);for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);document.getElementById('meteoResult').innerHTML='';
+ document.getElementById('initialProfile').innerHTML=`<p class="who">Participant ${participantNumber}</p>${badge(p.grade,'big-grade')}<p class="temp num">${p.tNo}<small> °C simulés</small></p><div class="grade-scale">${[...'ABCDEFG'].map(g=>badge(g,g===p.grade?'selected':'')).join('')}</div><p class="muted">${p.complete?'14 réponses prises en compte.':'Profil incomplet : réponses types pour les questions manquantes.'} A : moins exposé · G : plus exposé.</p>`;
  for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type).map(s=>`<label class="choice"><span><strong>${s.label}</strong><small>${s.detail}</small><small class="price">${range(s.min,s.max)} au départ</small></span><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}></label>`).join('');box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
- document.getElementById('baselineField').hidden=answers.clim!=='oui';document.getElementById('baselineNote').textContent=answers.clim==='oui'?'Valeur initiale de démonstration : 600 kWh/an. Remplacez-la par votre consommation de climatisation estimée ou mesurée, pas celle de tout le logement.':'Sans climatisation actuelle, la référence de refroidissement est 0 kWh : aucun achat de clim hypothétique évité n’est compté comme une économie.';
+ document.getElementById('baselineField').hidden=!hasClim(answers);document.getElementById('baselineNote').textContent=hasClim(answers)?'Valeur initiale de démonstration : 600 kWh/an. Remplacez-la par votre consommation de climatisation estimée ou mesurée, pas celle de tout le logement.':'Sans climatisation actuelle, la référence de refroidissement est 0 kWh : aucun achat de clim hypothétique évité n’est compté comme une économie.';
  updatePlan();
 }
 function timelineHtml(p) {
@@ -243,7 +278,7 @@ function timelineHtml(p) {
 }
 function animateTimeline() { if(UI.on) anime.animate('#timeline .tl-bar', { scaleX: [0, 1], opacity: [0, 1], duration: 800, delay: anime.stagger(120, { start: 300 }), ease: 'out(3)' }); }
 function updatePlan() {
- const auto=document.querySelector('input[value="auto"]');if(auto){auto.disabled=answers.shutters!=='exterieur'&&!chosen.has('shade');if(auto.disabled){auto.checked=false;chosen.delete('auto');}}
+ const auto=document.querySelector('input[value="auto"]');if(auto){auto.disabled=!hasExterior(answers)&&!chosen.has('shade');if(auto.disabled){auto.checked=false;chosen.delete('auto');}}
  const p=currentPlan();
  const low=estimatePlan(answers,[...chosen].filter(id=>SOLUTIONS.find(s=>s.id===id)?.type==='low'),settings());
  for(const id of ['lowPreview','highPreview']){const isLow=id==='lowPreview';const target=isLow?p.lowGrade:p.planGrade;const el=document.getElementById(id);
@@ -265,6 +300,22 @@ async function savePlan() {
  const btn=document.getElementById('saveBtn');btn.disabled=true;
  try {const d=await api('engage',{id:me,actions:[...chosen],settings:settings()});document.getElementById('savedSummary').innerHTML=`<p>${path(d.plan.grade,d.plan.lowGrade,d.plan.planGrade)}</p><p>Investissement : <strong>${range(d.plan.costMin,d.plan.costMax)}</strong></p><p>Bilan net à 10 ans : <strong>${range(d.plan.timeline[2].netMin,d.plan.timeline[2].netMax)}</strong></p>`;show('thanks');}catch(e){document.getElementById('saveStatus').textContent='Enregistrement impossible : '+e.message;}finally{btn.disabled=false;}
 }
-setInterval(()=>{if(view==='question')document.getElementById('qSec').textContent=Math.ceil(Math.max(0,localEnd-Date.now())/1000)+' s';},200);
+// Météo automatique : prévision réelle Open-Meteo (gratuite, sans clé) à la position du téléphone.
+document.getElementById('meteoBtn').onclick=()=>{
+ const out=document.getElementById('meteoResult'),btn=document.getElementById('meteoBtn');
+ if(!navigator.geolocation){out.innerHTML='<p class="muted">Localisation indisponible sur ce navigateur.</p>';return;}
+ btn.disabled=true;btn.textContent='Recherche de la prévision…';
+ navigator.geolocation.getCurrentPosition(async pos=>{
+  try{const {latitude:la,longitude:lo}=pos.coords;
+   const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la.toFixed(2)}&longitude=${lo.toFixed(2)}&daily=temperature_2m_max&timezone=auto&forecast_days=7`);
+   if(!r.ok)throw Error();const w=await r.json();const days=w.daily.time.map((t,i)=>({t,max:Math.round(w.daily.temperature_2m_max[i])}));
+   const peak=days.reduce((a,b)=>b.max>a.max?b:a);const day=new Date(peak.t+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+   const real=computeProfile(answers,peak.max),hot=peak.max>=30;
+   out.innerHTML=`<div class="meteo-res ${hot?'alert':''}"><p><strong>Pic prévu : ${peak.max} °C</strong> ${day}.</p><p>${hot?`⚠️ Épisode chaud : environ <strong>${real.tNo} °C</strong> chez vous sans action (classe ${badge(real.grade)}). ${real.tNo<=26?'Votre logement résiste bien : gardez les protections fermées côté soleil.':'Fermez les protections côté soleil dès le matin et aérez la nuit.'}`:`Pas de chaleur prévue cette semaine : environ ${real.tNo} °C chez vous. L’alerte se déclencherait au-dessus de 30 °C.`}</p><div class="meteo-days">${days.map(x=>`<span class="${x.max>=30?'hot':''}"><b>${x.max}°</b>${new Date(x.t+'T12:00').toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','')}</span>`).join('')}</div><p class="muted" style="margin-bottom:0">Prévision Open-Meteo. Votre position n’est pas enregistrée.</p></div>`;
+   UI.enter(out.children,{y:12});
+  }catch{out.innerHTML='<p class="muted">Prévision indisponible (réseau). La simulation garde le scénario canicule.</p>';}
+  finally{btn.disabled=false;btn.textContent='Actualiser la météo';}
+ },()=>{out.innerHTML='<p class="muted">Localisation refusée : la simulation garde le scénario canicule à 35 °C.</p>';btn.disabled=false;},{timeout:10000,maximumAge:600000});
+};
 (async()=>{me=storage.get('ml_id');sessionId=storage.get('ml_session');if(me){try{render(await api('state?id='+encodeURIComponent(me)));}catch{await join();}}else await join();setInterval(async()=>{if(me)try{render(await api('state?id='+encodeURIComponent(me)));}catch{}},1000);})();
 </script></body></html>

@@ -47,34 +47,30 @@
   .dot { width: 1vw; height: 1vw; border-radius: 50%; background: var(--soleil); box-shadow: 0 0 .8vw rgba(255,200,69,.5); }
   .dot:nth-child(3n+2) { background: var(--fraicheur); box-shadow: 0 0 .8vw rgba(143,227,240,.5); } .dot:nth-child(3n) { background: var(--chaleur); box-shadow: 0 0 .8vw rgba(255,106,61,.5); }
 
-  /* ---------- Question ---------- */
-  #v-question { grid-template-columns: 1fr 9vw; grid-template-rows: auto 1fr auto; column-gap: 4vw; }
-  .q-head { display: flex; align-items: center; gap: 2vw; }
-  .q-count { font-size: 1.35vw; color: var(--brume); font-weight: 600; white-space: nowrap; }
-  .q-count b { color: var(--soleil); }
-  .q-steps { display: flex; gap: .5vw; }
-  .q-steps i { width: 3.4vw; height: .7vh; border-radius: 99px; background: var(--ombre-2); transition: background .4s; }
-  .q-steps i.done { background: var(--fraicheur); } .q-steps i.now { background: var(--soleil); }
-  .q-main { align-self: center; }
-  .q-title { font-size: 4.6vw; max-width: 72vw; }
-  .q-opts { margin-top: 5.5vh; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.3vw; max-width: 74vw; }
-  .q-opt { display: flex; align-items: center; gap: 1.4vw; padding: 2.4vh 1.6vw; background: var(--verre); border: 1px solid var(--verre-bord); border-radius: 1.4vw; font-size: 1.9vw; font-weight: 600; backdrop-filter: blur(8px); }
-  .q-opt .e { font-size: 2.4vw; width: 4.4vw; height: 4.4vw; flex-shrink: 0; display: grid; place-items: center; border-radius: 1vw; background: rgba(255,255,255,.08); }
+  /* ---------- Questionnaire (chacun à son rythme) ---------- */
+  #v-question { grid-template-columns: 1fr auto; grid-template-rows: auto auto 1fr auto; column-gap: 4vw; row-gap: 3vh; }
+  #v-question .brand { grid-column: 1 / -1; }
+  .q-head { grid-column: 1 / -1; display: flex; align-items: flex-end; justify-content: space-between; gap: 3vw; }
+  .q-head .kicker { color: var(--soleil); font-size: 1vw; display: block; margin-bottom: 1.6vh; }
+  .q-head h1 { font-size: 4.2vw; }
+  .q-done { text-align: right; white-space: nowrap; }
+  .q-done b { display: block; font-size: 7vw; line-height: .9; font-weight: 760; }
+  .q-done span { font-size: 1.3vw; color: var(--brume); }
+  .sections { grid-column: 1 / -1; align-self: center; display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.2vw; }
+  .sec-card { padding: 2.6vh 1.3vw; border-radius: 1.4vw; background: var(--verre); border: 1px solid var(--verre-bord); backdrop-filter: blur(8px); display: flex; flex-direction: column; gap: 1.4vh; min-height: 30vh; }
+  .sec-card .e { font-size: 2.6vw; width: 4.6vw; height: 4.6vw; display: grid; place-items: center; border-radius: 1vw; background: rgba(255,255,255,.08); }
+  .sec-card small { font-size: .9vw; color: var(--soleil); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .sec-card h2 { font-size: 1.5vw; line-height: 1.2; font-weight: 700; flex: 1; }
+  .sec-card .meter { height: .9vh; border-radius: 99px; background: var(--ombre); overflow: hidden; }
+  .sec-card .meter i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--fraicheur-2), var(--fraicheur)); transition: width .6s var(--ease); }
+  .sec-card .count { font-size: 1.1vw; color: var(--brume); } .sec-card .count b { color: var(--craie); font-size: 1.5vw; }
   .q-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: 2vw; }
-  .answers { font-size: 1.45vw; color: var(--brume); white-space: nowrap; } .answers b { color: var(--craie); font-size: 2.4vw; }
-  .track { flex: 1; height: 1vh; border-radius: 99px; background: var(--ombre); overflow: hidden; }
-  .track div { height: 100%; width: 0; background: linear-gradient(90deg, var(--fraicheur-2), var(--fraicheur)); border-radius: 99px; transition: width .6s var(--ease); }
-
-  /* Le chrono-thermomètre */
-  .thermo { grid-row: 1 / 3; grid-column: 2; align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 2vh; padding: 2vh 0; }
-  .thermo .sec { font-size: 4vw; font-weight: 760; line-height: 1; transition: color .3s; }
-  .thermo .unit { font-size: .9vw; color: var(--brume); margin-top: -1.4vh; letter-spacing: .1em; text-transform: uppercase; }
-  .tube { flex: 1; width: 2.4vw; border-radius: 99px; background: var(--ombre); position: relative; overflow: hidden; box-shadow: inset 0 0 0 2px var(--verre-bord); }
-  .mercury { position: absolute; left: 4px; right: 4px; bottom: 4px; height: 100%; max-height: calc(100% - 8px); border-radius: 99px; background: linear-gradient(0deg, var(--chaleur), var(--soleil) 55%, var(--fraicheur)); background-size: 100% 80vh; background-position: bottom; }
-  .bulb { width: 5vw; height: 5vw; border-radius: 50%; background: var(--chaleur); margin-top: -2.6vh; box-shadow: 0 0 3vw rgba(255,106,61,.55); }
-  .thermo.low .sec { color: var(--chaleur); }
-  .thermo.low .bulb { animation: beat .8s ease-in-out infinite; }
-  @keyframes beat { 50% { transform: scale(1.1); } }
+  .chrono { display: flex; align-items: center; gap: 1.2vw; flex: 1; }
+  .chrono .sec { font-size: 2.6vw; font-weight: 760; min-width: 5ch; transition: color .3s; }
+  .chrono.low .sec { color: var(--chaleur); }
+  .chrono .track { flex: 1; height: 1.4vh; border-radius: 99px; background: var(--ombre); overflow: hidden; box-shadow: inset 0 0 0 1px var(--verre-bord); }
+  .chrono .track div { height: 100%; width: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--fraicheur), var(--soleil) 55%, var(--chaleur)); background-size: 75vw 100%; }
+  .auto-pill { font-size: 1vw; color: var(--brume); }
 
   /* ---------- Résultat individuel ---------- */
   #v-result { grid-template-columns: auto 1fr; grid-template-rows: auto 1fr; column-gap: 6vw; }
@@ -103,11 +99,11 @@
   <div class="pitch">
     <span class="kicker">Alerte canicule · simulation en direct</span>
     <h1 class="display" id="lobbyTitle">Votre logement est-il prêt pour la canicule&nbsp;?</h1>
-    <p>Découvrez votre profil confort d’été de A à G, puis le bilan collectif de la salle. Simulation ludique, pas un DPE réglementaire.</p>
+    <p>Environnement, bâti, fenêtres, ventilation, équipements : en 2 minutes, découvrez votre profil confort d’été de A à G et les solutions adaptées à vos équipements. Simulation pédagogique, pas un DPE réglementaire.</p>
     <ol class="steps">
       <li>Scannez le QR code</li>
-      <li>Répondez à 5 questions sur votre logement</li>
-      <li>Recevez votre fiche et découvrez les profils de la salle</li>
+      <li>Répondez à 14 questions sur votre logement, à votre rythme</li>
+      <li>Recevez votre fiche, vos solutions et votre bilan</li>
     </ol>
   </div>
   <div class="qr">
@@ -123,23 +119,18 @@
   </div>
 </section>
 
-<!-- QUESTION -->
+<!-- QUESTIONNAIRE -->
 <section class="view" id="v-question">
-  <div class="q-head"><div class="q-count" id="qNum">Question <b>1</b> sur 5</div><div class="q-steps" id="qSteps" aria-hidden="true"></div></div>
-  <div class="q-main">
-    <div class="q-title display" id="qTitle"></div>
-    <div class="q-opts" id="qOpts"></div>
+  <div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Météo de mon logement · défi confort d’été</span></div>
+  <div class="q-head">
+    <div><span class="kicker">Questionnaire en cours · à votre rythme</span><h1 class="display">5 thèmes pour diagnostiquer votre logement.</h1></div>
+    <div class="q-done"><b class="num" id="qDone">0</b><span>terminés sur <span id="qTot">0</span></span></div>
   </div>
-  <div class="thermo" id="thermo" aria-label="Temps restant">
-    <div class="sec num" id="qSec">15</div>
-    <div class="unit">secondes</div>
-    <div class="tube"><div class="mercury" id="mercury"></div></div>
-    <div class="bulb"></div>
-  </div>
+  <div class="sections" id="sections"></div>
   <div class="q-foot">
-    <div class="answers"><b class="num" id="qAns">0</b> réponses sur <span id="qTot">0</span></div>
-    <div class="track"><div id="qProg"></div></div>
-    <button class="btn btn-quiet" onclick="api('next')">Question suivante</button>
+    <div class="chrono" id="chrono" aria-label="Temps restant"><div class="sec num" id="qSec">2:30</div><div class="track"><div id="mercury"></div></div></div>
+    <span class="auto-pill">Passage automatique quand tout le monde a terminé</span>
+    <button class="btn btn-quiet" onclick="api('next')">Passer au bilan</button>
   </div>
 </section>
 
@@ -182,7 +173,7 @@ document.getElementById("halo").innerHTML = Array.from({ length: 24 }, (_, i) =>
   return `<line x1="${(Math.cos(a) * r1).toFixed(1)}" y1="${(Math.sin(a) * r1).toFixed(1)}" x2="${(Math.cos(a) * r2).toFixed(1)}" y2="${(Math.sin(a) * r2).toFixed(1)}"/>`;
 }).join("");
 
-let view = "lobby", lastQ = -2, localEnd = 0, duration = 15000, dots = 0, lastSession = null;
+let view = "lobby", localEnd = 0, duration = 15000, dots = 0, lastSession = null;
 
 function show(v) {
   if (view === v) return; view = v;
@@ -213,22 +204,19 @@ function render(d) {
     show("lobby");
   } else if (d.phase === "question") {
     localEnd = Date.now() + d.remaining; duration = d.duration;
-    if (d.q !== lastQ) {
-      lastQ = d.q;
-      const q = QUESTIONS[d.q];
-      document.getElementById("qNum").innerHTML = `Question <b>${d.q + 1}</b> sur ${d.total}`;
-      document.getElementById("qSteps").innerHTML = Array.from({ length: d.total }, (_, i) => `<i class="${i < d.q ? "done" : i === d.q ? "now" : ""}"></i>`).join("");
-      const title = document.getElementById("qTitle");
-      title.textContent = q.title;
-      document.getElementById("qOpts").innerHTML = q.options.map(o => `<div class="q-opt"><span class="e">${o.e}</span>${o.label}</div>`).join("");
-      show("question");
-      UI.words(title, { y: 50 });
-      UI.enter("#qOpts .q-opt", { y: 30, stagger: 90, delay: 350 });
-    }
-    document.getElementById("qAns").textContent = d.answeredQ;
-    document.getElementById("qTot").textContent = d.connected;
-    document.getElementById("qProg").style.width = (d.connected ? d.answeredQ / d.connected * 100 : 0) + "%";
+    const box = document.getElementById("sections");
+    if (!box.children.length) box.innerHTML = SECTIONS.map(x => `<article class="sec-card"><span class="e">${x.e}</span><small>Thème ${x.n}</small><h2>${x.title}</h2><div class="meter"><i></i></div><div class="count"><b class="num">0</b> / <span>0</span></div></article>`).join("");
+    const first = view !== "question";
     show("question");
+    if (first) { UI.enter("#v-question .q-head > *", { y: 30, stagger: 120 }); UI.enter("#sections .sec-card", { y: 40, stagger: 90, delay: 300 }); }
+    [...box.children].forEach((card, i) => {
+      const n = d.sectionsDone[i] || 0;
+      card.querySelector(".meter i").style.width = (d.connected ? n / d.connected * 100 : 0) + "%";
+      UI.tween(card.querySelector(".count b"), n, ([v]) => Math.round(v), 500);
+      card.querySelector(".count span").textContent = d.connected;
+    });
+    UI.tween(document.getElementById("qDone"), d.completed, ([v]) => Math.round(v), 600);
+    document.getElementById("qTot").textContent = d.connected;
   } else if (d.phase === "result") {
     localEnd = Date.now() + d.remaining;
     UI.tween(document.getElementById("rEng"), d.submitted, ([v]) => Math.round(v), 600);
@@ -243,9 +231,10 @@ function render(d) {
 setInterval(() => {
   const left = Math.max(0, localEnd - Date.now());
   if (view === "question") {
-    document.getElementById("qSec").textContent = Math.ceil(left / 1000);
-    document.getElementById("mercury").style.height = (left / duration * 100) + "%";
-    document.getElementById("thermo").classList.toggle("low", left < 5000);
+    const sec = Math.ceil(left / 1000);
+    document.getElementById("qSec").textContent = Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
+    document.getElementById("mercury").style.width = (duration ? left / duration * 100 : 0) + "%";
+    document.getElementById("chrono").classList.toggle("low", left < 20000);
   }
 }, 100);
 

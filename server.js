@@ -3,16 +3,17 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { QUESTIONS, computeProfile } = require("./public/questions.js");
+const { QUESTIONS, SECTIONS, computeProfile, isComplete } = require("./public/questions.js");
 
 const { estimatePlan, availableSolutions } = require("./public/solutions.js");
 
 const PORT = process.env.PORT || 3000;
-const QUESTION_MS = (Number(process.env.QUESTION_SECONDS) || 15) * 1000;
+// Durée laissée à la salle pour le questionnaire (chacun avance à son rythme).
+const QUESTION_MS = (Number(process.env.QUESTIONNAIRE_SECONDS) || 150) * 1000;
 const PUBLIC_DIR = path.join(__dirname, "public");
 const MAX_PLAYERS = 500;
 
-// phase : lobby → question (q = 0..N-1) → result (chacun voit son résultat) → stats
+// phase : lobby → question (questionnaire libre sur téléphone) → result (chacun fait son plan) → stats
 let session = newSession();
 function newSession() {
   return { id: crypto.randomUUID(), phase: "lobby", q: -1, endsAt: 0, players: new Map() };
@@ -26,19 +27,16 @@ function goTo(phase, q = -1) {
 
 function advance() {
   if (session.phase === "lobby") return goTo("question", 0);
-  if (session.phase === "question") {
-    return session.q + 1 < QUESTIONS.length ? goTo("question", session.q + 1) : goTo("result");
-  }
+  if (session.phase === "question") return goTo("result");
   if (session.phase === "result") return goTo("stats");
 }
 
-// Avance automatique : fin du chrono, ou tout le monde a répondu
+// Avance automatique : fin du chrono, ou tout le monde a terminé le questionnaire
 function tick() {
   const now = Date.now();
   if (session.phase === "question") {
-    const key = QUESTIONS[session.q].key;
     const players = [...session.players.values()];
-    const allAnswered = players.length > 0 && players.every((p) => p.answers[key] !== undefined);
+    const allAnswered = players.length > 0 && players.every((p) => isComplete(p.answers));
     if (now >= session.endsAt) advance();
     else if (allAnswered && session.endsAt - now > 2500) session.endsAt = now + 2500; // petite pause avant la suite
   }
@@ -84,7 +82,6 @@ function num(v, min, max) {
 function publicState(id) {
   tick();
   const players = [...session.players.values()];
-  const key = session.q >= 0 ? QUESTIONS[session.q].key : null;
   const me = id ? session.players.get(id) : null;
   return {
     sessionId: session.id,
@@ -94,7 +91,8 @@ function publicState(id) {
     remaining: session.endsAt ? Math.max(0, session.endsAt - Date.now()) : 0,
     duration: session.phase === "question" ? QUESTION_MS : 0,
     connected: players.length,
-    answeredQ: key ? players.filter((p) => p.answers[key] !== undefined).length : 0,
+    completed: players.filter((p) => isComplete(p.answers)).length,
+    sectionsDone: SECTIONS.map((s) => players.filter((p) => QUESTIONS.filter((q) => q.section === s.id).every((q) => p.answers[q.key] !== undefined)).length),
     submitted: players.filter((p) => p.submitted).length,
     engaged: players.filter((p) => p.engaged).length,
     known: !!me,
@@ -102,7 +100,6 @@ function publicState(id) {
     answers: me ? me.answers : undefined,
     profile: me && (session.phase === "result" || session.phase === "stats") ? computeProfile(me.answers) : null,
     plan: me?.plan || null,
-    myAnswer: me && key ? me.answers[key] ?? null : null,
   };
 }
 
@@ -140,9 +137,9 @@ function computeStats() {
     }),
     avgNoAction: Math.round(avg("tempNo") * 10) / 10,
     avgWithPlan: Math.round(avg("tempPlan") * 10) / 10,
-    pctNoShutters: pct((p) => p.answers.shutters === "aucun"),
-    pctClim: pct((p) => p.answers.clim === "oui"),
-    pctTopFloor: pct((p) => p.answers.floor === "dernier"),
+    pctNoShutters: pct((p) => p.answers.protections === "aucune"),
+    pctClim: pct((p) => p.answers.clim === "pac" || p.answers.clim === "mobile"),
+    pctTopFloor: pct((p) => p.answers.logement === "combles"),
     pctTooHot: pct((p) => p.tempNo >= 28),
     degreesSaved: Math.round(engaged.reduce((s, p) => s + p.plan.gain, 0)),
     kwhSaved: Math.round(engaged.reduce((s, p) => s + p.plan.kwhSaved, 0)),
@@ -177,9 +174,9 @@ const server = http.createServer(async (req, res) => {
       const pl = session.players.get(String(b.id || ""));
       if (!pl) return sendJson(res, 404, { error: "unknown" });
       tick();
-      const q = QUESTIONS[Number(b.q)];
-      if (session.phase !== "question" || Number(b.q) !== session.q || !q) return sendJson(res, 409, { error: "trop tard" });
-      if (!q.options.some((o) => o.v === b.value)) return sendJson(res, 400, { error: "invalid" });
+      const q = QUESTIONS.find((x) => x.key === b.key);
+      if (session.phase === "lobby") return sendJson(res, 409, { error: "Le questionnaire n’a pas commencé" });
+      if (!q || !q.options.some((o) => o.v === b.value)) return sendJson(res, 400, { error: "invalid" });
       pl.answers[q.key] = b.value;
       return sendJson(res, 200, { ok: true });
     }
@@ -188,7 +185,7 @@ const server = http.createServer(async (req, res) => {
       const b = await readBody(req);
       const pl = session.players.get(String(b.id || ""));
       if (!pl) return sendJson(res, 404, { error: "Participant inconnu" });
-      if (!["result", "stats"].includes(session.phase)) return sendJson(res, 409, { error: "Attendez la fin des questions" });
+      if (session.phase === "lobby") return sendJson(res, 409, { error: "Le questionnaire n’a pas commencé" });
       if (!Object.keys(pl.answers).length) return sendJson(res, 400, { error: "Répondez au moins à une question avant de valider" });
       const valid = new Set(availableSolutions(pl.answers).map(s => s.id));
       if (!Array.isArray(b.actions) || b.actions.length > 20 || b.actions.some(id => !valid.has(id))) return sendJson(res, 400, { error: "Actions invalides" });

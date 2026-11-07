@@ -56,6 +56,19 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 #actions .lbl { flex: 1; }
 #actions b { color: var(--craie); font-variant-numeric: tabular-nums; }
 
+.vision-head h2 { font-size: clamp(26px, 3.2vw, 58px); max-width: 60vw; margin: 6px 0 10px; }
+.vision-head .kicker { color: var(--soleil); font-size: clamp(10px, .8vw, 14px); }
+.pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4vw; }
+.pillar { background: var(--verre); border: 1px solid var(--verre-bord); border-radius: 20px; padding: 2.6vh 1.6vw; display: flex; flex-direction: column; gap: 1vh; }
+.pillar .e { font-size: clamp(26px, 2.4vw, 44px); }
+.pillar small { color: var(--soleil); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: clamp(10px, .8vw, 13px); }
+.pillar h3 { font-size: clamp(18px, 1.6vw, 28px); }
+.pillar p { color: var(--brume); line-height: 1.45; font-size: clamp(13px, 1vw, 18px); }
+.pillar em { color: var(--craie); font-style: normal; font-weight: 700; }
+.pillar .proof { margin-top: auto; padding-top: 1vh; border-top: 1px solid var(--verre-bord); color: var(--fraicheur); font-weight: 600; }
+.why ul { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4vw; margin-top: 1vh; }
+.why li { color: var(--brume); line-height: 1.45; font-size: clamp(13px, 1vw, 18px); } .why b { color: var(--craie); display: block; }
+@media (max-width: 900px) { .pillars, .why ul { grid-template-columns: 1fr; } .vision-head h2 { max-width: none; } }
 .foot { margin-top: auto; display: flex; align-items: center; gap: 20px; padding-top: 1vh; border-top: 1px solid var(--verre-bord); }
 .qr { width: 72px; height: 72px; background: white; padding: 5px; border-radius: 10px; flex-shrink: 0; }
 @media (max-width: 900px) { .profiles-wrap { grid-template-columns: 1fr; } }
@@ -65,7 +78,7 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 <main class="page">
 <header><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><div><p class="kicker">Projet proposé pour le défi confort d’été</p><h1 class="display">Les choix de la salle, leur coût et leur effet</h1></div></div><button class="btn btn-ghost" id="resetBtn">Nouvelle session</button></header>
 <div class="bar">
-  <div class="tabs" role="group" aria-label="Vue"><span class="thumb" id="thumb" aria-hidden="true"></span><button id="profilesTab" aria-pressed="true">Profils de la salle</button><button id="budgetTab" aria-pressed="false">Investissement et bénéfices</button></div>
+  <div class="tabs" role="group" aria-label="Vue"><span class="thumb" id="thumb" aria-hidden="true"></span><button id="profilesTab" aria-pressed="true">Profils de la salle</button><button id="budgetTab" aria-pressed="false">Investissement et bénéfices</button><button id="visionTab" aria-pressed="false">Demain avec EDF & moi</button></div>
   <div class="status"><span class="chip live"><b class="num" id="cConnected">0</b> participants</span><span class="chip"><b class="num" id="cProfiles">0</b> profils</span><span class="chip"><b class="num" id="cValidated">0</b> plans validés</span></div>
 </div>
 <p class="sr-only" id="count" role="status">Connexion au bilan…</p>
@@ -100,6 +113,16 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
   <p class="muted">Les totaux financiers portent uniquement sur les plans validés et se mettent à jour après chaque modification. Un choix peut améliorer le confort sans être rentable financièrement.</p>
 </section>
 
+<section id="visionPanel" class="panel" hidden>
+  <div class="vision-head"><p class="kicker">Intégration envisagée</p><h2 class="display">Le même diagnostic, automatique, dans l’appli EDF &amp; moi.</h2><p class="muted">Ce que vous venez de faire en 2 minutes, l’appli pourrait le faire pour des millions de clients, avant chaque vague de chaleur.</p></div>
+  <div class="pillars">
+    <article class="pillar"><span class="e">🌡️</span><small>01 · Météo automatique</small><h3>Alerte canicule à J-3</h3><p>La prévision locale déclenche l’alerte et la température estimée dans <em>votre</em> logement, pas seulement dehors.</p><p class="proof">Déjà dans la démo : prévision réelle Open-Meteo sur la fiche.</p></article>
+    <article class="pillar"><span class="e">🏠</span><small>02 · Logement connu</small><h3>Questionnaire pré-rempli</h3><p>Type de logement, surface et équipements déclarés dans l’espace client ; consommation Linky pour repérer une climatisation et estimer son poids réel.</p><p class="proof">Les 14 réponses deviennent 2 ou 3 confirmations.</p></article>
+    <article class="pillar"><span class="e">🧭</span><small>03 · Solutions adaptées</small><h3>Low tech d’abord, puis équipement</h3><p>Gestes gratuits selon les équipements existants (volets, by-pass VMC, ventilateurs), puis offres et artisans seulement si nécessaire, avec bilan sur 10 ans.</p><p class="proof">Suivi de l’effet réel sur la facture via Linky.</p></article>
+  </div>
+  <div class="card why"><h2>Pourquoi c’est intéressant pour EDF</h2><ul><li><b>Pointe de consommation estivale</b>Moins de climatisations mal utilisées les jours de canicule.</li><li><b>Relation client</b>Un service utile au moment où le client en a besoin.</li><li><b>Conseil juste</b>La clim n’est proposée qu’après les solutions passives, avec un coût honnête.</li></ul></div>
+</section>
+
 <footer class="foot"><img id="qr" class="qr" alt="QR code pour retrouver sa fiche"><p class="muted">Simulation pédagogique, pas un DPE. Scénario fictif, coûts indicatifs à confirmer par devis. Tarif et consommation sont ajustables sur chaque téléphone. Aucun gain garanti ni aide déduite. Le chauffage hivernal n’est pas évalué.</p></footer>
 </main>
 <div class="tip" id="tip" role="tooltip"></div>
@@ -113,10 +136,11 @@ const qr=qrcode(0,'M');qr.addData(location.origin+'/jouer');qr.make();document.g
 
 // Onglets avec curseur glissant
 function placeThumb(){const b=document.querySelector('.tabs button[aria-pressed="true"]'),t=document.getElementById('thumb');t.style.left=b.offsetLeft+'px';t.style.width=b.offsetWidth+'px';}
-function tab(profiles){window.scrollTo(0,0);document.getElementById('profilesPanel').hidden=!profiles;document.getElementById('budgetPanel').hidden=profiles;document.getElementById('profilesTab').setAttribute('aria-pressed',String(profiles));document.getElementById('budgetTab').setAttribute('aria-pressed',String(!profiles));placeThumb();
-  const panel=document.getElementById(profiles?'profilesPanel':'budgetPanel');UI.enter(panel.querySelectorAll(profiles?':scope > .card':'.metric'),{y:24,stagger:70});
-  if(!profiles){if(UI.on)anime.animate('#actions .bar-fill',{scaleX:[0,1],duration:900,delay:anime.stagger(80,{start:300}),ease:'out(3)'});}else animateDist(true);}
-document.getElementById('profilesTab').onclick=()=>tab(true);document.getElementById('budgetTab').onclick=()=>tab(false);
+function tab(name){window.scrollTo(0,0);for(const t of ['profiles','budget','vision']){document.getElementById(t+'Panel').hidden=t!==name;document.getElementById(t+'Tab').setAttribute('aria-pressed',String(t===name));}placeThumb();
+  if(name==='profiles'){UI.enter('#profilesPanel > .card',{y:24,stagger:70});animateDist(true);}
+  if(name==='budget'){UI.enter('#budgetPanel .metric',{y:24,stagger:70});if(UI.on)anime.animate('#actions .bar-fill',{scaleX:[0,1],duration:900,delay:anime.stagger(80,{start:300}),ease:'out(3)'});}
+  if(name==='vision'){UI.words(document.querySelector('.vision-head h2'),{y:40});UI.enter('.vision-head p, .pillar, .why',{y:30,stagger:110,delay:300});}}
+for(const t of ['profiles','budget','vision'])document.getElementById(t+'Tab').onclick=()=>tab(t);
 addEventListener('resize',placeThumb);document.fonts?.ready.then(placeThumb);placeThumb();
 document.getElementById('resetBtn').onclick=async()=>{if(!confirm('Effacer les réponses et les plans de la salle ?'))return;try{const r=await fetch('/api/reset',{method:'POST'});if(!r.ok)throw Error();location.href='/';}catch{showError('Réinitialisation impossible. Réessayez.');}};
 function showError(t){const e=document.getElementById('countError');e.textContent=t;e.hidden=!t;}

@@ -57,7 +57,7 @@
       if (!el) return;
       const text = el.textContent;
       el.setAttribute('aria-label', text);
-      el.innerHTML = text.split(/( +)/).map(w => /^ +$/.test(w) ? w : `<span class="w" aria-hidden="true" style="display:inline-block">${w}</span>`).join('');
+      el.innerHTML = text.split(/( +)/).map(w => /^ +$/.test(w) ? w : `<span class="w" aria-hidden="true" style="display:inline-block">${w.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</span>`).join('');
       UI.enter(el.querySelectorAll('.w'), { y: 40, stagger: 70, duration: 900, ...opts });
     },
     // Dessine les tracés SVG (stroke)
