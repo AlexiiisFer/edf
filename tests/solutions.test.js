@@ -3,10 +3,10 @@ const assert = require('node:assert/strict');
 const { estimatePlan, availableSolutions } = require('../public/solutions.js');
 const { QUESTIONS, computeProfile, isComplete } = require('../public/questions.js');
 
-const hot = { zone: 'urbain', logement: 'combles', vitrages: 'ouest', protections: 'aucune', traversant: 'non', clim: 'pac' };
+const hot = { region: 'sud', logement: 'combles', vitrages: 'ouest', protections: 'aucune', traversant: 'non', clim: 'pac' };
 const noAc = { ...hot, clim: 'aucune' };
 const mobile = { ...hot, clim: 'mobile' };
-const cool = { zone: 'altitude', logement: 'appart', vitrages: 'nordest', protections: 'clair', traversant: 'oui', clim: 'aucune' };
+const cool = { region: 'nord', logement: 'appart', vitrages: 'nordest', protections: 'clair', traversant: 'oui', clim: 'aucune' };
 
 test('demo questionnaire: 6 questions with valid unique keys', () => {
   assert.equal(QUESTIONS.length, 6);

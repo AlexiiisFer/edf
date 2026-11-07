@@ -122,13 +122,13 @@
 <section class="view active" id="v-lobby">
   <div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Météo de mon logement · défi confort d’été</span></div>
   <div class="pitch">
-    <span class="kicker">Démo · alerte canicule · 2 minutes</span>
+    <span class="kicker">Démo · 2 minutes</span>
     <h1 class="display" id="lobbyTitle">Votre logement est-il prêt pour la canicule&nbsp;?</h1>
-    <p>Version démo en 6 questions : découvrez votre profil confort d’été de A à G et les solutions adaptées à vos équipements. Simulation pédagogique, pas un DPE réglementaire.</p>
+    <p>6 questions, votre classe de A à G et vos solutions.</p>
     <ol class="steps">
-      <li>Scannez le QR code</li>
-      <li>Répondez à 6 questions clés sur votre logement</li>
-      <li>Recevez votre fiche, vos solutions et votre bilan</li>
+      <li>Scannez</li>
+      <li>Répondez</li>
+      <li>Choisissez vos solutions</li>
     </ol>
   </div>
   <div class="qr">
@@ -148,14 +148,14 @@
 <section class="view" id="v-question">
   <div class="runbar"><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Démo · Météo de mon logement</span></div><ol class="steps-run" aria-label="Déroulé de la démo"><li data-step="question"><b>1</b>Questionnaire</li><li class="sep" aria-hidden="true"></li><li data-step="result"><b>2</b>Solutions</li><li class="sep" aria-hidden="true"></li><li data-step="stats"><b>3</b>Bilan collectif</li></ol></div>
   <div class="q-head">
-    <div><span class="kicker">Démo · questionnaire en cours</span><h1 class="display">6 questions pour diagnostiquer votre logement.</h1></div>
+    <div><span class="kicker">Démo · étape 1</span><h1 class="display">Répondez sur votre téléphone.</h1></div>
     <div class="q-done"><b class="num" id="qDone">0</b><span>terminés sur <span id="qTot">0</span></span></div>
   </div>
   <div class="sections" id="sections"></div>
   <div class="live-feed"><div class="live-title">En direct de la salle</div><div class="facts" data-feed></div></div>
   <div class="q-foot">
     <div class="chrono" id="chrono" aria-label="Temps restant"><div class="sec num" id="qSec">0:45</div><div class="track"><div id="mercury"></div></div></div>
-    <span class="auto-pill">Bilan collectif dans <b class="num stats-in">2:00</b></span>
+    <span class="auto-pill">Bilan dans <b class="num stats-in">2:00</b></span>
     <button class="btn btn-quiet" onclick="api('next')">Passer au bilan</button>
   </div>
 </section>
@@ -164,16 +164,15 @@
 <section class="view" id="v-result">
   <div class="runbar"><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Démo · Météo de mon logement</span></div><ol class="steps-run" aria-label="Déroulé de la démo"><li data-step="question"><b>1</b>Questionnaire</li><li class="sep" aria-hidden="true"></li><li data-step="result"><b>2</b>Solutions</li><li class="sep" aria-hidden="true"></li><li data-step="stats"><b>3</b>Bilan collectif</li></ol></div>
   <div class="result-copy">
-    <span class="kicker">À vous de jouer</span>
-    <h1 class="display">Regardez votre téléphone.</h1>
-    <p>Votre classe de A à G, puis les solutions adaptées à vos équipements : low tech d’abord, high tech si besoin, avec le coût sur 10 ans. Validez votre plan.</p>
-    <div class="flow"><span>Profil</span><i>→</i><span>Low tech</span><i>→</i><span>High tech</span><i>→</i><span>Bilan</span></div>
+    <span class="kicker">Démo · étape 2</span>
+    <h1 class="display">Choisissez vos solutions.</h1>
+    <p>Cochez, puis validez votre plan.</p>
   </div>
   <div class="live-feed"><div class="live-title">En direct de la salle</div><div class="facts" data-feed></div><div class="top-actions" id="topActions"></div></div>
   <div class="result-foot">
     <span><b class="num" id="rEng">0</b> plans validés sur <span id="rTot">0</span></span>
     <div class="band" id="band" style="flex:1;margin:0"></div>
-    <span class="auto-pill">Bilan collectif dans <b class="num stats-in">1:15</b></span>
+    <span class="auto-pill">Bilan dans <b class="num stats-in">1:15</b></span>
     <button class="btn btn-quiet" onclick="api('next')">Afficher maintenant</button>
   </div>
 </section>
@@ -273,14 +272,14 @@ function facts(s, phase) {
   const c = s.answerCounts || {}, tot = k => Object.values(c[k] || {}).reduce((a, b) => a + b, 0), list = [];
   const add = (key, n, total, label, cool) => list.push({ key, v: total ? pct(n, total) : null, suffix: " %", label, cool });
   if (phase === "result") {
-    list.push({ key: "avg", v: s.count ? s.avgNoAction : null, suffix: " °C", label: "simulés en moyenne chez les participants, sans action" });
-    list.push({ key: "plans", v: s.validatedCount, suffix: "", label: `plan${s.validatedCount > 1 ? "s" : ""} validé${s.validatedCount > 1 ? "s" : ""} · ${s.profiles.filter(p => p.validated && p.planGrade < p.grade).length} gagnent au moins une classe`, cool: true });
+    list.push({ key: "avg", v: s.count ? s.avgNoAction : null, suffix: " °C", label: "en moyenne chez vous" });
+    list.push({ key: "plans", v: s.validatedCount, suffix: "", label: `plan${s.validatedCount > 1 ? "s" : ""} validé${s.validatedCount > 1 ? "s" : ""}`, cool: true });
   }
-  add("prot", c.protections?.aucune || 0, tot("protections"), "n’ont aucune protection solaire extérieure");
-  add("toit", c.logement?.combles || 0, tot("logement"), "vivent sous les toits, le cas le plus exposé");
-  add("ouest", c.vitrages?.ouest || 0, tot("vitrages"), "ont surtout des fenêtres à l’ouest");
-  add("air", c.traversant?.oui || 0, tot("traversant"), "peuvent créer un courant d’air la nuit", true);
-  add("clim", (c.clim?.pac || 0) + (c.clim?.mobile || 0), tot("clim"), `ont une clim${c.clim?.mobile ? ` (dont ${c.clim.mobile} mobile${c.clim.mobile > 1 ? "s" : ""})` : ""}`, true);
+  add("prot", c.protections?.aucune || 0, tot("protections"), "sans protection extérieure");
+  add("toit", c.logement?.combles || 0, tot("logement"), "sous les toits");
+  add("ouest", c.vitrages?.ouest || 0, tot("vitrages"), "fenêtres à l’ouest");
+  add("air", c.traversant?.oui || 0, tot("traversant"), "courant d’air possible", true);
+  add("clim", (c.clim?.pac || 0) + (c.clim?.mobile || 0), tot("clim"), "ont une clim", true);
   return phase === "result" ? list.slice(0, 4) : list.slice(0, 4);
 }
 function renderFacts(box, items) {
@@ -304,7 +303,7 @@ async function pollLive() {
     document.querySelectorAll("#v-" + view + " [data-feed]").forEach(box => renderFacts(box, facts(s, view)));
     if (view === "result") {
       const top = Object.entries(s.gestureCounts).sort((a, b) => b[1] - a[1]).slice(0, 3), max = Math.max(1, ...top.map(t => t[1]));
-      document.getElementById("topActions").innerHTML = top.length ? `<div class="live-title" style="margin-top:2vh">Actions les plus choisies</div>` + top.map(([id, n]) => `<p><span class="lbl">${SOLUTIONS.find(x => x.id === id)?.label || id}</span><i style="width:${Math.round(n / max * 8)}vw"></i><b class="num">${n}</b></p>`).join("") : "";
+      document.getElementById("topActions").innerHTML = top.length ? `<div class="live-title" style="margin-top:2vh">Top choix</div>` + top.map(([id, n]) => `<p><span class="lbl">${SOLUTIONS.find(x => x.id === id)?.label || id}</span><i style="width:${Math.round(n / max * 8)}vw"></i><b class="num">${n}</b></p>`).join("") : "";
     }
   } catch (e) {}
 }

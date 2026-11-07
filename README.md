@@ -5,7 +5,7 @@ Application Node.js >=18, sans dépendance externe. Démarrer avec `npm start`.
 | Page | Rôle |
 |---|---|
 | `/` | Écran projeté : QR code, puis déroulé de la démo en direct (étape, compte à rebours, avancement par thème, chiffres de la salle, plans validés) |
-| `/jouer` | Questionnaire démo de 6 questions → profil + météo automatique → low tech → high tech → bilan financier |
+| `/jouer` | 6 questions (région d’abord) → solutions low tech et high tech sur un seul écran → bilan → validation |
 | `/stats` | Profils de la salle, investissement/bénéfices, et vision « Demain avec EDF & moi » |
 
 ## Interface
@@ -27,9 +27,9 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 
 ## Questionnaire, météo et équipements
 
-- `public/questions.js` : version démo, 5 thèmes et 6 questions clés (zone, type de logement, orientation des vitrages, protections solaires, courant d’air nocturne, climatisation). Chaque réponse modifie l’écart intérieur/extérieur d’un scénario canicule à 35 °C (ajusté selon la zone) : valeurs pédagogiques, pas une étude thermique.
+- `public/questions.js` : version démo, 6 questions (région, type de logement, orientation des fenêtres, protections extérieures, courant d’air nocturne, climatisation). La région fixe la température extérieure du scénario canicule. Chaque réponse modifie l’écart intérieur/extérieur d’un scénario canicule à 35 °C (ajusté selon la zone) : valeurs pédagogiques, pas une étude thermique.
 - Les solutions proposées dépendent des équipements déclarés (protections existantes ou non, climatiseur mobile, PAC ou aucune clim).
-- Météo automatique : prévision **fictive** de démonstration (vague de chaleur sur 7 jours, pic égal au scénario canicule de la zone), affichée automatiquement sur la fiche. Aucun appel réseau ni géolocalisation.
+- Météo automatique : prévision **fictive** de démonstration (pic de canicule de la région jeudi), affichée sur l’écran des solutions.
 - Intégration avec l’appli EDF & moi : proposition présentée dans l’onglet « Demain avec EDF & moi ». Aucune donnée client n’est utilisée.
 
 ## Estimations

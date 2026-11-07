@@ -32,7 +32,7 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 .dist { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1.2vw; align-items: end; height: 36vh; min-height: 150px; margin-top: 2vh; }
 .dist-col { display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; }
 .dist-bars { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
-.dist-bars span { position: relative; width: 28%; max-width: 26px; min-height: 2px; border-radius: 4px 4px 0 0; transform-origin: bottom; cursor: default; }
+.dist-bars span { position: relative; width: 38%; max-width: 34px; min-height: 2px; border-radius: 4px 4px 0 0; transform-origin: bottom; cursor: default; }
 .dist-bars span::after { content: attr(data-n); position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); font-size: 11px; color: var(--brume); font-variant-numeric: tabular-nums; }
 .dist-bars span[data-n="0"]::after { content: ""; }
 .s0 { background: #5d7799; } .s1 { background: #8fb7d9; } .s2 { background: var(--fraicheur); }
@@ -76,9 +76,9 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 </style></head><body>
 <div class="sky" aria-hidden="true"><div class="grain"></div></div>
 <main class="page">
-<header><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><div><p class="kicker">Projet proposé pour le défi confort d’été</p><h1 class="display">Les choix de la salle, leur coût et leur effet</h1></div></div><button class="btn btn-ghost" id="resetBtn">Nouvelle session</button></header>
+<header><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><div><p class="kicker">Démo · défi confort d’été</p><h1 class="display">Le bilan de la salle</h1></div></div><button class="btn btn-ghost" id="resetBtn">Nouvelle session</button></header>
 <div class="bar">
-  <div class="tabs" role="group" aria-label="Vue"><span class="thumb" id="thumb" aria-hidden="true"></span><button id="profilesTab" aria-pressed="true">Profils de la salle</button><button id="budgetTab" aria-pressed="false">Investissement et bénéfices</button><button id="visionTab" aria-pressed="false">Demain avec EDF & moi</button></div>
+  <div class="tabs" role="group" aria-label="Vue"><span class="thumb" id="thumb" aria-hidden="true"></span><button id="profilesTab" aria-pressed="true">Profils</button><button id="budgetTab" aria-pressed="false">Coûts et gains</button><button id="visionTab" aria-pressed="false">Demain avec EDF & moi</button></div>
   <div class="status"><span class="chip live"><b class="num" id="cConnected">0</b> participants</span><span class="chip"><b class="num" id="cProfiles">0</b> profils</span><span class="chip"><b class="num" id="cValidated">0</b> plans validés</span></div>
 </div>
 <p class="sr-only" id="count" role="status">Connexion au bilan…</p>
@@ -86,44 +86,41 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 
 <section id="profilesPanel" class="panel profiles-wrap">
   <div class="card">
-    <h2>Répartition des classes</h2>
-    <p class="muted">Initial → low tech → choix finaux. Les profils sans plan validé restent à leur note initiale.</p>
+    <h2>Classes avant / après</h2>
     <div class="dist" id="distribution" role="img" aria-label="Répartition des classes de A à G"></div>
-    <div class="legend"><span><i class="s0"></i>Au départ</span><span><i class="s1"></i>Low tech</span><span><i class="s2"></i>Choix finaux</span></div>
+    <div class="legend"><span><i class="s0"></i>Avant</span><span><i class="s2"></i>Après</span></div>
     <table class="dist-table sr-only" id="distTable"></table>
   </div>
   <div class="card">
-    <h2>Chaque case = un participant</h2>
-    <p class="muted" style="margin-bottom:14px">A : moins exposé à la chaleur, G : plus exposé</p>
+    <h2 style="margin-bottom:14px">Chaque participant</h2>
     <div class="wall-grid" id="profileGrid"></div>
   </div>
 </section>
 
 <section id="budgetPanel" class="panel" hidden>
   <div class="metrics">
-    <div class="metric"><span class="muted">Investissement initial de la salle</span><strong id="investment">—</strong><p class="muted">Fourchette, hors aides et financement</p></div>
-    <div class="metric"><span class="muted">Économie nette annuelle de la salle</span><strong id="annual">—</strong><p class="muted">Valeur négative = surcoût d’usage et d’entretien</p></div>
-    <div class="metric"><span class="muted">Bilan financier net à 10 ans</span><strong id="netTen">—</strong><p class="muted">Achats, entretien, énergie et renouvellements inclus</p></div>
+    <div class="metric"><span class="muted">Investissement</span><strong id="investment">—</strong></div>
+    <div class="metric"><span class="muted">Économie par an</span><strong id="annual">—</strong></div>
+    <div class="metric"><span class="muted">Bilan sur 10 ans</span><strong id="netTen">—</strong></div>
   </div>
   <div class="metrics">
-    <div class="metric cool"><span class="muted">Refroidissement : différence annuelle</span><strong id="energy">—</strong><p class="muted">Positif = économie ; négatif = consommation ajoutée</p></div>
-    <div class="metric cool"><span class="muted">Profils améliorés</span><strong id="improved">—</strong><p class="muted">Comparaison des classes pédagogiques</p></div>
-    <div class="metric cool"><span class="muted">Actions les plus choisies</span><div id="actions"></div></div>
+    <div class="metric cool"><span class="muted">Énergie économisée / an</span><strong id="energy">—</strong></div>
+    <div class="metric cool"><span class="muted">Profils améliorés</span><strong id="improved">—</strong></div>
+    <div class="metric cool"><span class="muted">Top choix</span><div id="actions"></div></div>
   </div>
-  <p class="muted">Les totaux financiers portent uniquement sur les plans validés et se mettent à jour après chaque modification. Un choix peut améliorer le confort sans être rentable financièrement.</p>
 </section>
 
 <section id="visionPanel" class="panel" hidden>
-  <div class="vision-head"><p class="kicker">Intégration envisagée</p><h2 class="display">Le même diagnostic, automatique, dans l’appli EDF &amp; moi.</h2><p class="muted">Ce que vous venez de faire en 2 minutes dans cette démo, l’appli pourrait le faire pour des millions de clients, avant chaque vague de chaleur.</p></div>
+  <div class="vision-head"><p class="kicker">Intégration envisagée</p><h2 class="display">Demain, automatique dans l’appli EDF &amp; moi.</h2></div>
   <div class="pillars">
-    <article class="pillar"><span class="e">🌡️</span><small>01 · Météo automatique</small><h3>Alerte canicule à J-3</h3><p>La prévision locale déclenche l’alerte et la température estimée dans <em>votre</em> logement, pas seulement dehors.</p><p class="proof">Déjà dans la démo : prévision réelle Open-Meteo sur la fiche.</p></article>
-    <article class="pillar"><span class="e">🏠</span><small>02 · Logement connu</small><h3>Questionnaire pré-rempli</h3><p>Type de logement, surface et équipements déclarés dans l’espace client ; consommation Linky pour repérer une climatisation et estimer son poids réel.</p><p class="proof">Plus de questionnaire : il ne reste qu’à confirmer.</p></article>
-    <article class="pillar"><span class="e">🧭</span><small>03 · Solutions adaptées</small><h3>Low tech d’abord, puis équipement</h3><p>Gestes gratuits selon les équipements existants (volets, ventilation, climatisation existante), puis offres et artisans seulement si nécessaire, avec bilan sur 10 ans.</p><p class="proof">Suivi de l’effet réel sur la facture via Linky.</p></article>
+    <article class="pillar"><span class="e">🌡️</span><small>01</small><h3>Météo</h3><p>Alerte canicule à J-3, chez <em>vous</em>.</p></article>
+    <article class="pillar"><span class="e">🏠</span><small>02</small><h3>Logement connu</h3><p>Questions pré-remplies, clim repérée par le Linky.</p></article>
+    <article class="pillar"><span class="e">🧭</span><small>03</small><h3>Solutions</h3><p>Gestes gratuits d’abord, équipement si besoin.</p></article>
   </div>
-  <div class="card why"><h2>Pourquoi c’est intéressant pour EDF</h2><ul><li><b>Pointe de consommation estivale</b>Moins de climatisations mal utilisées les jours de canicule.</li><li><b>Relation client</b>Un service utile au moment où le client en a besoin.</li><li><b>Conseil juste</b>La clim n’est proposée qu’après les solutions passives, avec un coût honnête.</li></ul></div>
+  <div class="card why"><h2>Pour EDF</h2><ul><li><b>Moins de pointe l’été</b></li><li><b>Un service utile au bon moment</b></li><li><b>Un conseil honnête</b></li></ul></div>
 </section>
 
-<footer class="foot"><img id="qr" class="qr" alt="QR code pour retrouver sa fiche"><p class="muted">Simulation pédagogique, pas un DPE. Scénario fictif, coûts indicatifs à confirmer par devis. Tarif et consommation sont ajustables sur chaque téléphone. Aucun gain garanti ni aide déduite. Le chauffage hivernal n’est pas évalué.</p></footer>
+<footer class="foot"><img id="qr" class="qr" alt="QR code pour retrouver sa fiche"><p class="muted">Démo pédagogique, pas un DPE. Météo et coûts indicatifs.</p></footer>
 </main>
 <div class="tip" id="tip" role="tooltip"></div>
 <script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script>
@@ -131,7 +128,7 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 const money=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
 const range=(a,b)=>Math.round(a)===Math.round(b)?money(a):`${money(a)} à ${money(b)}`;
 const badge=g=>`<span class="grade grade-${g}">${g}</span>`;
-const STAGES=['Au départ','Low tech','Choix finaux'];
+const STAGES=['Avant','Après'];
 const qr=qrcode(0,'M');qr.addData(location.origin+'/jouer');qr.make();document.getElementById('qr').src=qr.createDataURL(4,1);
 
 // Onglets avec curseur glissant
@@ -147,7 +144,7 @@ function showError(t){const e=document.getElementById('countError');e.textConten
 
 // Distribution : barres construites une fois, hauteurs animées à chaque mise à jour
 const dist=document.getElementById('distribution');
-dist.innerHTML=[...'ABCDEFG'].map(g=>`<div class="dist-col"><div class="dist-bars">${[0,1,2].map(i=>`<span class="s${i}" data-g="${g}" data-i="${i}" data-n="0" style="height:0%"></span>`).join('')}</div>${badge(g)}</div>`).join('');
+dist.innerHTML=[...'ABCDEFG'].map(g=>`<div class="dist-col"><div class="dist-bars">${[0,1].map(i=>`<span class="s${i?2:0}" data-g="${g}" data-i="${i}" data-n="0" style="height:0%"></span>`).join('')}</div>${badge(g)}</div>`).join('');
 let distCounts=null;
 function animateDist(replay){
   if(!distCounts)return;const max=Math.max(1,...distCounts.flat());
@@ -166,7 +163,7 @@ function renderWall(profiles){
   grid.querySelector('.empty')?.remove();
   const fresh=[];
   for(const p of profiles){let el=tiles.get(p.number);if(!el){el=document.createElement('article');el.className='wall-tile';tiles.set(p.number,el);grid.appendChild(el);fresh.push(el);}
-    const html=`<small>Participant ${p.number}</small>${p.grade?`<span class="grade-path">${badge(p.grade)}<span class="arrow">→</span>${badge(p.lowGrade)}<span class="arrow">→</span>${badge(p.planGrade)}</span><p>${p.validated?'✓ Plan validé':'Choix en cours'}${p.complete?'':' · incomplet'}</p>`:'<p>En attente</p>'}`;
+    const html=`<small>Participant ${p.number}</small>${p.grade?`<span class="grade-path">${badge(p.grade)}<span class="arrow">→</span>${badge(p.planGrade)}</span><p>${p.validated?'✓ Validé':'En cours'}</p>`:'<p>En attente</p>'}`;
     if(el._html!==html){const wasValidated=el.classList.contains('done');el.innerHTML=html;el._html=html;el.classList.toggle('done',p.validated);if(p.validated&&!wasValidated&&!fresh.includes(el))UI.bump(el, 1.08);}}
   UI.pop(fresh.slice(0,60),{stagger:25});
 }
@@ -175,7 +172,7 @@ async function refresh(){try{const r=await fetch('/api/stats',{cache:'no-store'}
 document.getElementById('count').textContent=`${s.connected} participants · ${s.count} profils · ${s.validatedCount} plans validés`;
 const int=([v])=>Math.round(v);
 UI.tween(document.getElementById('cConnected'),s.connected,int,600);UI.tween(document.getElementById('cProfiles'),s.count,int,600);UI.tween(document.getElementById('cValidated'),s.validatedCount,int,600);
-const first=!distCounts;distCounts=[...'ABCDEFG'].map(g=>[s.gradeCounts[g],s.lowGradeCounts[g],s.planGradeCounts[g]]);animateDist(first);
+const first=!distCounts;distCounts=[...'ABCDEFG'].map(g=>[s.gradeCounts[g],s.planGradeCounts[g]]);animateDist(first);
 document.getElementById('distTable').innerHTML=`<tr><th>Classe</th>${STAGES.map(t=>`<th>${t}</th>`).join('')}</tr>`+[...'ABCDEFG'].map((g,i)=>`<tr><th>${g}</th>${distCounts[i].map(n=>`<td>${n}</td>`).join('')}</tr>`).join('');
 renderWall(s.profiles);
 const v=s.validatedCount;

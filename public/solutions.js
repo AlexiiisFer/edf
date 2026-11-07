@@ -5,18 +5,18 @@ const hasExterior = a => ['clair', 'sombre', 'toile'].includes(a.protections);
 const hasClim = a => a.clim === 'pac' || a.clim === 'mobile';
 const SOLUTIONS = [
   // Low tech : protéger, ventiler, limiter les apports
-  { id: 'shutters', type: 'low', label: 'Fermer vos protections avant le soleil', detail: 'Vos volets ou stores existent déjà : les fermer côté soleil dès le matin. Aucun achat.', min: 0, max: 0, cooling: 1.5, saving: .12, life: 20, when: hasExterior },
-  { id: 'shade', type: 'low', label: 'Ajouter une protection solaire extérieure', detail: 'Store, volet ou brise-soleil pour une baie exposée ; vérifier copropriété et autorisations.', min: 200, max: 1000, cooling: 1.5, saving: .12, life: 15, when: a => !hasExterior(a) },
-  { id: 'night', type: 'low', label: 'Surventiler la nuit', detail: 'Ouvrir en grand quand dehors est plus frais, fermer au lever du soleil. Seulement si sécurité et qualité de l’air le permettent.', min: 0, max: 0, cooling: 1, saving: .08, life: 20 },
-  { id: 'heat', type: 'low', label: 'Limiter les apports internes', detail: 'Couper les appareils en veille (multiprise à interrupteur), décaler four et lave-linge aux heures fraîches.', min: 0, max: 20, cooling: .5, saving: .04, life: 10 },
-  { id: 'fan', type: 'low', label: 'Ajouter un ventilateur sobre', detail: 'Améliore le ressenti, sans abaisser la température de la pièce. Hypothèse : 30 W × 8 h × 40 jours.', min: 40, max: 150, cooling: 0, saving: .08, kwh: 9.6, life: 8, comfort: true },
+  { id: 'shutters', type: 'low', label: 'Fermer les volets côté soleil', detail: 'Gratuit, dès le matin.', min: 0, max: 0, cooling: 1.5, saving: .12, life: 20, when: hasExterior },
+  { id: 'shade', type: 'low', label: 'Ajouter un store extérieur', detail: 'Pour la fenêtre la plus exposée.', min: 200, max: 1000, cooling: 1.5, saving: .12, life: 15, when: a => !hasExterior(a) },
+  { id: 'night', type: 'low', label: 'Aérer la nuit', detail: 'Quand il fait plus frais dehors.', min: 0, max: 0, cooling: 1, saving: .08, life: 20 },
+  { id: 'heat', type: 'low', label: 'Limiter les appareils allumés', detail: 'Veilles coupées, four aux heures fraîches.', min: 0, max: 20, cooling: .5, saving: .04, life: 10 },
+  { id: 'fan', type: 'low', label: 'Ajouter un ventilateur', detail: 'Rafraîchit le ressenti, pas l’air.', min: 40, max: 150, cooling: 0, saving: .08, kwh: 9.6, life: 8, comfort: true },
   // High tech : mesurer, piloter, équiper
-  { id: 'app', type: 'high', label: 'Alertes canicule et suivi de la clim dans l’appli', detail: 'Intégration envisagée avec EDF & moi : alerte météo à J-3, rappels de gestes, suivi Linky de la consommation de climatisation. Aucun gain chiffré.', min: 0, max: 0, cooling: 0, saving: 0, life: 20 },
-  { id: 'sensors', type: 'high', label: 'Comparer les températures avec des capteurs', detail: 'Deux capteurs intérieur/extérieur et des alertes pour savoir quand ouvrir. La mesure seule ne garantit aucune économie.', min: 40, max: 150, cooling: 0, saving: 0, kwh: 2, life: 5 },
-  { id: 'auto', type: 'high', label: 'Automatiser les protections solaires', detail: 'Fermeture selon le soleil et la météo prévue. Nécessite des protections existantes ou sélectionnées.', min: 200, max: 600, cooling: .5, saving: .04, kwh: 2, life: 10 },
-  { id: 'control', type: 'high', label: 'Piloter la climatisation existante', detail: 'Commande connectée : consigne à 26 °C, arrêt en cas d’absence. Vérifier la compatibilité avant achat.', min: 80, max: 250, cooling: 0, saving: .15, kwh: 2, life: 5, when: hasClim },
-  { id: 'replace', type: 'high', label: 'Remplacer le climatiseur mobile par une PAC air-air', detail: 'Un monosplit posé, bien plus efficace qu’un mobile. À dimensionner par un professionnel. Hypothèse été : 240 kWh, entretien 60 €/an.', min: 1500, max: 3500, cooling: 0, saving: 0, kwh: 240, upkeep: 60, life: 12, newAc: true, when: a => a.clim === 'mobile' },
-  { id: 'ac', type: 'high', label: 'Installer une PAC air-air réversible', detail: 'Un monosplit posé, à dimensionner par un professionnel. Hypothèse été : 0,75 kW × 8 h × 40 jours, entretien 60 €/an. Chauffage non évalué.', min: 1500, max: 3500, cooling: 0, saving: 0, kwh: 240, upkeep: 60, life: 12, newAc: true, when: a => !hasClim(a) },
+  { id: 'app', type: 'high', label: 'Alertes canicule dans l’appli', detail: 'Concept EDF & moi : alerte J-3, suivi Linky.', min: 0, max: 0, cooling: 0, saving: 0, life: 20 },
+  { id: 'sensors', type: 'high', label: 'Capteurs de température', detail: 'Savoir quand ouvrir ou fermer.', min: 40, max: 150, cooling: 0, saving: 0, kwh: 2, life: 5 },
+  { id: 'auto', type: 'high', label: 'Volets automatiques', detail: 'Fermeture selon le soleil.', min: 200, max: 600, cooling: .5, saving: .04, kwh: 2, life: 10 },
+  { id: 'control', type: 'high', label: 'Piloter la clim', detail: 'Consigne 26 °C, arrêt en cas d’absence.', min: 80, max: 250, cooling: 0, saving: .15, kwh: 2, life: 5, when: hasClim },
+  { id: 'replace', type: 'high', label: 'Remplacer la clim mobile par une PAC', detail: 'Bien plus efficace.', min: 1500, max: 3500, cooling: 0, saving: 0, kwh: 240, upkeep: 60, life: 12, newAc: true, when: a => a.clim === 'mobile' },
+  { id: 'ac', type: 'high', label: 'Installer une PAC air-air', detail: 'À dimensionner par un pro.', min: 1500, max: 3500, cooling: 0, saving: 0, kwh: 240, upkeep: 60, life: 12, newAc: true, when: a => !hasClim(a) },
 ];
 
 function availableSolutions(answers) {
