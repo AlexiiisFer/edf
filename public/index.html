@@ -133,7 +133,6 @@
   <div class="qr">
     <svg class="qr-halo" viewBox="-100 -100 200 200" aria-hidden="true" id="halo"></svg>
     <div class="qr-card"><img id="qr" alt="QR code pour rejoindre la session"></div>
-    <div class="qr-url" id="url"></div>
   </div>
   <div class="lobby-bar">
     <div class="room"><b class="num" id="count">0</b>dans la salle</div>
@@ -185,7 +184,6 @@
 const joinUrl = location.origin + "/jouer";
 const qr = qrcode(0, "M"); qr.addData(joinUrl); qr.make();
 document.getElementById("qr").src = qr.createDataURL(10, 2);
-document.getElementById("url").textContent = joinUrl.replace(/^https?:\/\//, "");
 
 // Rayons de soleil autour du QR code
 document.getElementById("halo").innerHTML = Array.from({ length: 24 }, (_, i) => {
