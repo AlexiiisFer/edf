@@ -393,6 +393,10 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 #qOpts { margin-top: 18px; }
 .app { min-height: auto; }
 .choice.tile .delay { display: block; font-size: 12px; font-weight: 600; color: var(--gris); margin-top: 3px; }
+/* Défilement : la page grandit avec son contenu (pas de hauteur figée) */
+.view.active { min-height: auto; flex: 1 0 auto; }
+/* En-tête inversé : la courbe vient de la droite et descend à gauche */
+.brand-wave.phone svg { transform: scaleX(-1); }
 </style>
 </head>
 <body>
@@ -443,7 +447,7 @@ function show(v) {
   document.body.dataset.view = v;
   document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id==='v-'+v));
   if(v==='choices') updatePlan();
-  window.scrollTo(0,0);
+  if(changed) window.scrollTo(0,0);
   const sec = document.getElementById('v-'+v); fitHero(sec);
   if(!changed) return;
   UI.enter(sec.querySelectorAll('.intro > *, :scope > .block, :scope > .btn'), { y: 20, stagger: 50 });
