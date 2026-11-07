@@ -48,16 +48,16 @@
   .dot:nth-child(3n+2) { background: var(--fraicheur); box-shadow: 0 0 .8vw rgba(143,227,240,.5); } .dot:nth-child(3n) { background: var(--chaleur); box-shadow: 0 0 .8vw rgba(255,106,61,.5); }
 
   /* ---------- Questionnaire (chacun à son rythme) ---------- */
-  #v-question { grid-template-columns: 1fr auto; grid-template-rows: auto auto 1fr auto; column-gap: 4vw; row-gap: 3vh; }
+  #v-question { grid-template-columns: 1fr auto; grid-template-rows: auto auto auto 1fr auto; column-gap: 4vw; row-gap: 2.6vh; }
   #v-question .brand { grid-column: 1 / -1; }
   .q-head { grid-column: 1 / -1; display: flex; align-items: flex-end; justify-content: space-between; gap: 3vw; }
   .q-head .kicker { color: var(--soleil); font-size: 1vw; display: block; margin-bottom: 1.6vh; }
-  .q-head h1 { font-size: 4.2vw; }
+  .q-head h1 { font-size: 3.4vw; }
   .q-done { text-align: right; white-space: nowrap; }
-  .q-done b { display: block; font-size: 7vw; line-height: .9; font-weight: 760; }
+  .q-done b { display: block; font-size: 5vw; line-height: .9; font-weight: 760; }
   .q-done span { font-size: 1.3vw; color: var(--brume); }
-  .sections { grid-column: 1 / -1; align-self: center; display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.2vw; }
-  .sec-card { padding: 2.6vh 1.3vw; border-radius: 1.4vw; background: var(--verre); border: 1px solid var(--verre-bord); backdrop-filter: blur(8px); display: flex; flex-direction: column; gap: 1.4vh; min-height: 30vh; }
+  .sections { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.2vw; }
+  .sec-card { padding: 2vh 1.2vw; border-radius: 1.4vw; background: var(--verre); border: 1px solid var(--verre-bord); backdrop-filter: blur(8px); display: flex; flex-direction: column; gap: 1vh; min-height: 22vh; }
   .sec-card .e { font-size: 2.6vw; width: 4.6vw; height: 4.6vw; display: grid; place-items: center; border-radius: 1vw; background: rgba(255,255,255,.08); }
   .sec-card small { font-size: .9vw; color: var(--soleil); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
   .sec-card h2 { font-size: 1.5vw; line-height: 1.2; font-weight: 700; flex: 1; }
@@ -73,21 +73,45 @@
   .auto-pill { font-size: 1.2vw; color: var(--brume); padding: .6em 1.1em; border-radius: 999px; background: var(--verre); border: 1px solid var(--verre-bord); white-space: nowrap; }
   .auto-pill b { color: var(--soleil); font-size: 1.3em; }
 
+  /* ---------- Barre de déroulé + chiffres en direct (questionnaire et solutions) ---------- */
+  .runbar { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 2vw; }
+  .steps-run { display: flex; align-items: center; gap: .6vw; list-style: none; }
+  .steps-run li { display: flex; align-items: center; gap: .6vw; padding: .55em 1.1em; border-radius: 999px; font-size: 1.05vw; font-weight: 700; color: var(--brume); background: var(--verre); border: 1px solid var(--verre-bord); }
+  .steps-run li b { width: 1.6em; height: 1.6em; border-radius: 50%; display: grid; place-items: center; background: var(--ombre-2); color: var(--craie); font-size: .85em; }
+  .steps-run li.now { color: var(--nuit); background: var(--soleil); border-color: var(--soleil); }
+  .steps-run li.now b { background: var(--nuit); color: var(--soleil); }
+  .steps-run li.done { color: var(--fraicheur); } .steps-run li.done b { background: var(--fraicheur); color: var(--nuit); }
+  .steps-run .sep { width: 1.6vw; height: 2px; background: var(--ombre-2); padding: 0; border: 0; }
+  .live-feed { grid-column: 1 / -1; }
+  .live-title { display: flex; align-items: center; gap: .7vw; font-size: 1vw; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--brume); margin-bottom: 1.4vh; }
+  .live-title::before { content: ""; width: .7vw; height: .7vw; border-radius: 50%; background: #5fd39a; animation: livedot 2s infinite; }
+  @keyframes livedot { 0% { box-shadow: 0 0 0 0 rgba(95,211,154,.6); } 70%,100% { box-shadow: 0 0 0 .8vw rgba(95,211,154,0); } }
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2vw; }
+  .fact { padding: 2vh 1.3vw; border-radius: 1.2vw; background: var(--verre); border: 1px solid var(--verre-bord); border-left: 4px solid var(--soleil); min-height: 13vh; }
+  .fact.cool { border-left-color: var(--fraicheur); }
+  .fact b { display: block; font-size: 3.2vw; line-height: 1; font-weight: 760; letter-spacing: -.02em; }
+  .fact span { display: block; margin-top: 1vh; font-size: 1.15vw; color: var(--brume); line-height: 1.3; }
+  .fact.wait b { color: var(--ombre-2); }
+
   /* ---------- Résultat individuel ---------- */
-  #v-result { grid-template-columns: auto 1fr; grid-template-rows: auto 1fr; column-gap: 6vw; }
-  #v-result .brand { grid-column: 1 / -1; }
+  #v-result { grid-template-columns: 34vw 1fr; grid-template-rows: auto 1fr auto; column-gap: 4vw; row-gap: 3vh; }
+  #v-result .facts { grid-template-columns: repeat(2, 1fr); }
+  #v-result .live-feed { grid-column: 2; align-self: center; }
+  .top-actions { margin-top: 1.4vw; }
+  .top-actions p { display: flex; align-items: center; gap: 1vw; font-size: 1.2vw; color: var(--brume); margin: 1vh 0; }
+  .top-actions .lbl { flex: 1; } .top-actions i { height: .8vh; border-radius: 99px; background: var(--soleil); display: block; transition: width .6s var(--ease); } .top-actions b { color: var(--craie); min-width: 2ch; text-align: right; }
   .phone { align-self: center; width: 22vw; }
   .phone path, .phone rect { fill: none; stroke: var(--soleil); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
   .phone .soft { stroke: var(--fraicheur); }
-  .result-copy { align-self: center; max-width: 52vw; }
+  .result-copy { align-self: center; }
   .result-copy .kicker { color: var(--fraicheur); font-size: 1vw; display: block; margin-bottom: 2.4vh; }
-  .result-copy h1 { font-size: 5.4vw; }
-  .result-copy p { margin-top: 3vh; font-size: 1.6vw; color: var(--brume); line-height: 1.45; }
+  .result-copy h1 { font-size: 4.4vw; }
+  .result-copy p { margin-top: 3vh; font-size: 1.4vw; color: var(--brume); line-height: 1.45; }
   .flow { margin-top: 4vh; display: flex; align-items: center; gap: .8vw; flex-wrap: wrap; font-size: 1.15vw; }
   .flow span { padding: .5em 1em; border-radius: 999px; background: var(--verre); border: 1px solid var(--verre-bord); }
   .flow i { font-style: normal; color: var(--soleil); }
   .band { margin-top: 5vh; height: 1vh; border-radius: 99px; background: var(--chaleur-band); transform-origin: left; }
-  .result-foot { margin-top: 4vh; display: flex; align-items: center; gap: 2.4vw; flex-wrap: wrap; font-size: 1.45vw; color: var(--brume); }
+  .result-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: 2.4vw; flex-wrap: wrap; font-size: 1.45vw; color: var(--brume); }
   .result-foot b { color: var(--craie); font-size: 3.4vw; vertical-align: -.12em; }
 </style>
 </head>
@@ -98,12 +122,12 @@
 <section class="view active" id="v-lobby">
   <div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Météo de mon logement · défi confort d’été</span></div>
   <div class="pitch">
-    <span class="kicker">Alerte canicule · simulation en direct</span>
+    <span class="kicker">Démo · alerte canicule · 2 minutes</span>
     <h1 class="display" id="lobbyTitle">Votre logement est-il prêt pour la canicule&nbsp;?</h1>
-    <p>Environnement, bâti, fenêtres, ventilation, équipements : en 2 minutes, découvrez votre profil confort d’été de A à G et les solutions adaptées à vos équipements. Simulation pédagogique, pas un DPE réglementaire.</p>
+    <p>Version démo en 6 questions : découvrez votre profil confort d’été de A à G et les solutions adaptées à vos équipements. Simulation pédagogique, pas un DPE réglementaire.</p>
     <ol class="steps">
       <li>Scannez le QR code</li>
-      <li>Répondez à 14 questions sur votre logement, à votre rythme</li>
+      <li>Répondez à 6 questions clés sur votre logement</li>
       <li>Recevez votre fiche, vos solutions et votre bilan</li>
     </ol>
   </div>
@@ -122,40 +146,35 @@
 
 <!-- QUESTIONNAIRE -->
 <section class="view" id="v-question">
-  <div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Météo de mon logement · défi confort d’été</span></div>
+  <div class="runbar"><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Démo · Météo de mon logement</span></div><ol class="steps-run" aria-label="Déroulé de la démo"><li data-step="question"><b>1</b>Questionnaire</li><li class="sep" aria-hidden="true"></li><li data-step="result"><b>2</b>Solutions</li><li class="sep" aria-hidden="true"></li><li data-step="stats"><b>3</b>Bilan collectif</li></ol></div>
   <div class="q-head">
-    <div><span class="kicker">Questionnaire en cours · à votre rythme</span><h1 class="display">5 thèmes pour diagnostiquer votre logement.</h1></div>
+    <div><span class="kicker">Démo · questionnaire en cours</span><h1 class="display">6 questions pour diagnostiquer votre logement.</h1></div>
     <div class="q-done"><b class="num" id="qDone">0</b><span>terminés sur <span id="qTot">0</span></span></div>
   </div>
   <div class="sections" id="sections"></div>
+  <div class="live-feed"><div class="live-title">En direct de la salle</div><div class="facts" data-feed></div></div>
   <div class="q-foot">
-    <div class="chrono" id="chrono" aria-label="Temps restant"><div class="sec num" id="qSec">2:30</div><div class="track"><div id="mercury"></div></div></div>
-    <span class="auto-pill">Statistiques dans <b class="num stats-in">4:00</b></span>
+    <div class="chrono" id="chrono" aria-label="Temps restant"><div class="sec num" id="qSec">0:45</div><div class="track"><div id="mercury"></div></div></div>
+    <span class="auto-pill">Bilan collectif dans <b class="num stats-in">2:00</b></span>
     <button class="btn btn-quiet" onclick="api('next')">Passer au bilan</button>
   </div>
 </section>
 
 <!-- RÉSULTATS INDIVIDUELS -->
 <section class="view" id="v-result">
-  <div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Météo de mon logement · défi confort d’été</span></div>
-  <svg class="phone" viewBox="0 0 120 220" aria-hidden="true">
-    <rect x="10" y="6" width="100" height="208" rx="18"/>
-    <path d="M48 20 H72"/>
-    <path class="soft" d="M28 60 H92 M28 80 H78 M28 100 H86"/>
-    <path d="M28 140 h14 v20 h-14 z M52 140 h14 v20 h-14 z M76 140 h14 v20 h-14 z"/>
-    <path class="soft" d="M40 188 H80"/>
-  </svg>
+  <div class="runbar"><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Démo · Météo de mon logement</span></div><ol class="steps-run" aria-label="Déroulé de la démo"><li data-step="question"><b>1</b>Questionnaire</li><li class="sep" aria-hidden="true"></li><li data-step="result"><b>2</b>Solutions</li><li class="sep" aria-hidden="true"></li><li data-step="stats"><b>3</b>Bilan collectif</li></ol></div>
   <div class="result-copy">
     <span class="kicker">À vous de jouer</span>
     <h1 class="display">Regardez votre téléphone.</h1>
-    <p>Chacun reçoit sa fiche confort d’été, sa classe de A à G, ses choix low tech et high tech et le coût estimé de son plan. Ensuite, les profils de tous les participants apparaîtront ici.</p>
-    <div class="flow"><span>Profil</span><i>→</i><span>Low tech</span><i>→</i><span>High tech</span><i>→</i><span>Bilan financier</span></div>
-    <div class="band" id="band"></div>
-    <div class="result-foot">
-      <span><b class="num" id="rEng">0</b> plans validés sur <span id="rTot">0</span></span>
-      <span class="auto-pill">Statistiques dans <b class="num stats-in">2:00</b></span>
-      <button class="btn btn-quiet" onclick="api('next')">Afficher maintenant</button>
-    </div>
+    <p>Votre classe de A à G, puis les solutions adaptées à vos équipements : low tech d’abord, high tech si besoin, avec le coût sur 10 ans. Validez votre plan.</p>
+    <div class="flow"><span>Profil</span><i>→</i><span>Low tech</span><i>→</i><span>High tech</span><i>→</i><span>Bilan</span></div>
+  </div>
+  <div class="live-feed"><div class="live-title">En direct de la salle</div><div class="facts" data-feed></div><div class="top-actions" id="topActions"></div></div>
+  <div class="result-foot">
+    <span><b class="num" id="rEng">0</b> plans validés sur <span id="rTot">0</span></span>
+    <div class="band" id="band" style="flex:1;margin:0"></div>
+    <span class="auto-pill">Bilan collectif dans <b class="num stats-in">1:15</b></span>
+    <button class="btn btn-quiet" onclick="api('next')">Afficher maintenant</button>
   </div>
 </section>
 
@@ -163,6 +182,7 @@
 <script src="/ui.js"></script>
 <script src="/qrcode.js"></script>
 <script src="/questions.js"></script>
+<script src="/solutions.js"></script>
 <script>
 const joinUrl = location.origin + "/jouer";
 const qr = qrcode(0, "M"); qr.addData(joinUrl); qr.make();
@@ -182,8 +202,7 @@ function show(v) {
   document.querySelectorAll(".view").forEach(s => s.classList.toggle("active", s.id === "v-" + v));
   const el = document.getElementById("v-" + v);
   if (v === "result") {
-    UI.draw("#v-result .phone path, #v-result .phone rect", { duration: 1600 });
-    UI.enter("#v-result .result-copy > *", { y: 26, stagger: 90, delay: 200 });
+    UI.enter("#v-result .result-copy > *, #v-result .live-feed", { y: 26, stagger: 90, delay: 200 });
     if (UI.on) anime.animate("#band", { scaleX: [0, 1], duration: 1400, delay: 700, ease: "inOut(3)" });
   } else if (v === "lobby") {
     UI.reveal(el.querySelector(".pitch"));
@@ -195,6 +214,7 @@ async function api(action) {
 }
 
 function render(d) {
+  document.querySelectorAll(".steps-run li[data-step]").forEach(li => { const order = ["question", "result", "stats"], i = order.indexOf(li.dataset.step), cur = order.indexOf(d.phase); li.classList.toggle("now", i === cur); li.classList.toggle("done", cur > i); });
   if (d.statsIn) statsEnd = Date.now() + d.statsIn;
   if (d.sessionId !== lastSession) { lastSession = d.sessionId; dots = 0; document.getElementById("players").innerHTML = ""; }
   if (d.phase === "lobby") {
@@ -246,6 +266,49 @@ UI.words(document.getElementById("lobbyTitle"), { y: 50, delay: 150 });
 document.querySelectorAll("#lobbyTitle .w").forEach(w => { if (/canicule/.test(w.textContent)) w.classList.add("hot"); });
 UI.enter(".pitch > p, .steps li", { y: 24, stagger: 90, delay: 650 });
 UI.enter(".qr", { y: 0, x: 40, duration: 1000, delay: 300 });
+
+// Chiffres en direct : de quoi commenter pendant que la salle répond.
+const pct = (n, t) => t ? Math.round(n / t * 100) : 0;
+function facts(s, phase) {
+  const c = s.answerCounts || {}, tot = k => Object.values(c[k] || {}).reduce((a, b) => a + b, 0), list = [];
+  const add = (key, n, total, label, cool) => list.push({ key, v: total ? pct(n, total) : null, suffix: " %", label, cool });
+  if (phase === "result") {
+    list.push({ key: "avg", v: s.count ? s.avgNoAction : null, suffix: " °C", label: "simulés en moyenne chez les participants, sans action" });
+    list.push({ key: "plans", v: s.validatedCount, suffix: "", label: `plan${s.validatedCount > 1 ? "s" : ""} validé${s.validatedCount > 1 ? "s" : ""} · ${s.profiles.filter(p => p.validated && p.planGrade < p.grade).length} gagnent au moins une classe`, cool: true });
+  }
+  add("prot", c.protections?.aucune || 0, tot("protections"), "n’ont aucune protection solaire extérieure");
+  add("toit", c.logement?.combles || 0, tot("logement"), "vivent sous les toits, le cas le plus exposé");
+  add("ouest", c.vitrages?.ouest || 0, tot("vitrages"), "ont surtout des fenêtres à l’ouest");
+  add("air", c.traversant?.oui || 0, tot("traversant"), "peuvent créer un courant d’air la nuit", true);
+  add("clim", (c.clim?.pac || 0) + (c.clim?.mobile || 0), tot("clim"), `ont une clim${c.clim?.mobile ? ` (dont ${c.clim.mobile} mobile${c.clim.mobile > 1 ? "s" : ""})` : ""}`, true);
+  return phase === "result" ? list.slice(0, 4) : list.slice(0, 4);
+}
+function renderFacts(box, items) {
+  if (box.dataset.keys !== items.map(i => i.key).join()) {
+    box.dataset.keys = items.map(i => i.key).join();
+    box.innerHTML = items.map(i => `<div class="fact ${i.cool ? "cool" : ""}" data-k="${i.key}"><b class="num">—</b><span></span></div>`).join("");
+  }
+  for (const i of items) {
+    const el = box.querySelector(`[data-k="${i.key}"]`);
+    el.classList.toggle("wait", i.v === null);
+    el.querySelector("span").textContent = i.label;
+    const b = el.querySelector("b");
+    if (i.v === null) { b._twTarget = null; b._twCur = null; b.textContent = "—"; }
+    else UI.tween(b, i.v, ([v]) => Math.round(v) + i.suffix, 700);
+  }
+}
+async function pollLive() {
+  if (view !== "question" && view !== "result") return;
+  try {
+    const s = await (await fetch("/api/stats", { cache: "no-store" })).json();
+    document.querySelectorAll("#v-" + view + " [data-feed]").forEach(box => renderFacts(box, facts(s, view)));
+    if (view === "result") {
+      const top = Object.entries(s.gestureCounts).sort((a, b) => b[1] - a[1]).slice(0, 3), max = Math.max(1, ...top.map(t => t[1]));
+      document.getElementById("topActions").innerHTML = top.length ? `<div class="live-title" style="margin-top:2vh">Actions les plus choisies</div>` + top.map(([id, n]) => `<p><span class="lbl">${SOLUTIONS.find(x => x.id === id)?.label || id}</span><i style="width:${Math.round(n / max * 8)}vw"></i><b class="num">${n}</b></p>`).join("") : "";
+    }
+  } catch (e) {}
+}
+setInterval(pollLive, 1500);
 
 async function poll() { try { render(await (await fetch("/api/state", { cache: "no-store" })).json()); } catch (e) {} }
 poll(); setInterval(poll, 1000);

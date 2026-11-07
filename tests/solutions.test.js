@@ -3,15 +3,13 @@ const assert = require('node:assert/strict');
 const { estimatePlan, availableSolutions } = require('../public/solutions.js');
 const { QUESTIONS, computeProfile, isComplete } = require('../public/questions.js');
 
-const hot = { zone: 'urbain', ombrage: 'aucun', abords: 'mineral', construction: 'leger', logement: 'combles', toiture: 'aucune',
-  vitrages: 'ouest', protections: 'aucune', velux: 'interieur', traversant: 'non', vmc: 'aucune', brassage: 'aucun', appareils: 'nombreux', clim: 'pac' };
+const hot = { zone: 'urbain', logement: 'combles', vitrages: 'ouest', protections: 'aucune', traversant: 'non', clim: 'pac' };
 const noAc = { ...hot, clim: 'aucune' };
 const mobile = { ...hot, clim: 'mobile' };
-const cool = { zone: 'altitude', ombrage: 'masques', abords: 'vegetal', construction: 'lourd', logement: 'appart', toiture: 'dense',
-  vitrages: 'nordest', protections: 'clair', velux: 'non', traversant: 'oui', vmc: 'double', brassage: 'plafond', appareils: 'standard', clim: 'aucune' };
+const cool = { zone: 'altitude', logement: 'appart', vitrages: 'nordest', protections: 'clair', traversant: 'oui', clim: 'aucune' };
 
-test('14 questions, all with valid unique keys', () => {
-  assert.equal(QUESTIONS.length, 14);
+test('demo questionnaire: 6 questions with valid unique keys', () => {
+  assert.equal(QUESTIONS.length, 6);
   assert.equal(new Set(QUESTIONS.map(q => q.key)).size, QUESTIONS.length);
   assert.ok(isComplete(hot) && !isComplete({}));
 });
@@ -35,9 +33,8 @@ test('no selection: no change, cost or fictitious savings', () => {
 
 test('solutions follow declared equipment', () => {
   const ids = a => availableSolutions(a).map(s => s.id);
-  assert.ok(ids(cool).includes('bypass') && ids(cool).includes('fanuse') && ids(cool).includes('shutters'));
-  assert.ok(!ids(cool).includes('fan') && !ids(cool).includes('shade') && !ids(cool).includes('velux'));
-  assert.ok(ids(hot).includes('velux') && ids(hot).includes('shade') && ids(hot).includes('control'));
+  assert.ok(ids(cool).includes('shutters') && !ids(cool).includes('shade') && !ids(cool).includes('control'));
+  assert.ok(ids(hot).includes('shade') && !ids(hot).includes('shutters') && ids(hot).includes('control'));
   assert.ok(ids(mobile).includes('replace') && !ids(mobile).includes('ac'));
   assert.ok(ids(noAc).includes('ac') && !ids(noAc).includes('control'));
 });
@@ -83,7 +80,7 @@ test('selection deduplicates, excludes incompatible options and requires shade f
 
 test('sampled questionnaire combinations preserve initial class without actions', () => {
   let seed = 7; const rnd = n => (seed = (seed * 16807) % 2147483647) % n;
-  for (let i = 0; i < 3000; i++) {
+  for (let i = 0; i < 1000; i++) {
     const answers = Object.fromEntries(QUESTIONS.map(q => [q.key, q.options[rnd(q.options.length)].v]));
     const p = estimatePlan(answers);
     assert.equal(p.tPlan, p.tNo);

@@ -5,11 +5,11 @@ Avant de commencer : « Nouvelle session », vérifier le QR code, tester le Wi-
 
 | Temps | Écran | Ce que je dis | Action |
 |---|---|---|---|
-| **0:00 – 0:30** | Accueil, QR code | « Cet été, combien de degrés fera-t-il chez vous ? Pas dehors : *dans* votre logement. On a créé un diagnostic confort d’été express. Scannez le QR code. » | Laisser scanner, puis cliquer « Commencer » : **à partir de là, tout s’enchaîne seul en 4 minutes.** |
-| **0:30 – 2:30** | Questionnaire (5 thèmes, chrono 2:00) | « 14 questions, chacun à son rythme : environnement, bâti, fenêtres, ventilation, équipements. Ce sont les vrais leviers : un appartement sous les toits, à l’ouest et sans volets, c’est 4 à 5 °C de plus. » | Rien à faire. L’écran passe seul à l’étape suivante (plus tôt si tout le monde a fini). |
-| **2:30 – 4:30** | « Regardez votre téléphone » + compte à rebours | « Chacun a sa classe de A à G et une alerte météo, comme l’appli pourrait l’envoyer à J-3. Les solutions dépendent de *vos* équipements : VMC double flux → by-pass ; volets → les fermer. La clim arrive en dernier, avec son vrai coût sur 10 ans. Choisissez et validez. » | Rien à faire : les statistiques s’ouvrent seules à 4:00 après « Commencer ». |
-| **4:30 – 4:45** | Bilan collectif | « Voilà la salle : la répartition avant et après les gestes. La majorité des gains vient du low tech, quasi gratuit. » | Onglet « Profils » (s’ouvre seul), éventuellement « Investissement ». |
-| **4:45 – 5:00** | Onglet « Demain avec EDF & moi » | « Demain, c’est automatique dans l’appli EDF & moi : météo, logement connu, Linky. Pour EDF : moins de pointe l’été et un conseil utile au bon moment. Merci ! » | Fin. |
+| **0:00 – 0:45** | Accueil, QR code | « Cet été, combien de degrés fera-t-il chez vous ? Pas dehors : *dans* votre logement. Voici une démo de diagnostic confort d’été. Scannez le QR code. » | Laisser scanner, puis cliquer « Commencer » : **la démo s’enchaîne seule en 2 minutes.** |
+| **0:45 – 1:30** | ① Questionnaire : avancement par thème + « En direct de la salle » | « 6 questions clés : zone, logement, orientation, protections, courant d’air, clim. » Puis commenter les chiffres qui montent : « Déjà X % sans protection extérieure… Y % sous les toits, le cas le plus exposé. » | Rien à faire. L’étape ② démarre seule (plus tôt si tout le monde a fini). |
+| **1:30 – 2:45** | ② Solutions : chiffres en direct + actions les plus choisies | « Chacun voit sa classe, une alerte météo comme l’appli pourrait l’envoyer, et des solutions adaptées à ses équipements : fermer les volets existants avant d’acheter une clim. » Commenter la température moyenne, les plans validés et l’action la plus choisie. | Rien à faire : le bilan s’ouvre seul. |
+| **2:45 – 3:45** | ③ Bilan collectif | « Avant / après : la majorité des gains vient du low tech, quasi gratuit. Et voici ce que ça coûte et rapporte sur 10 ans. » | Onglets « Profils » puis « Investissement ». |
+| **3:45 – 5:00** | Onglet « Demain avec EDF & moi » | « Ce n’était qu’une démo de 2 minutes. Demain, c’est automatique dans l’appli EDF & moi : la météo déclenche l’alerte à J-3, le logement est déjà connu, le Linky montre le vrai coût de la clim. Pour EDF : moins de pointe l’été, un service utile au bon moment, un conseil honnête. Merci ! » | Fin, questions. |
 
 ## Messages clés (si une seule phrase doit rester)
 

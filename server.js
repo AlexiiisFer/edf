@@ -9,9 +9,9 @@ const { estimatePlan, availableSolutions } = require("./public/solutions.js");
 
 const PORT = process.env.PORT || 3000;
 // Durée laissée à la salle pour le questionnaire (chacun avance à son rythme).
-const QUESTION_MS = (Number(process.env.QUESTIONNAIRE_SECONDS) || 120) * 1000;
+const QUESTION_MS = (Number(process.env.QUESTIONNAIRE_SECONDS) || 45) * 1000;
 // Durée totale entre « Commencer » et l'affichage automatique des statistiques.
-const TOTAL_MS = Math.max(QUESTION_MS + 10000, (Number(process.env.TOTAL_SECONDS) || 240) * 1000);
+const TOTAL_MS = Math.max(QUESTION_MS + 10000, (Number(process.env.TOTAL_SECONDS) || 120) * 1000);
 const PUBLIC_DIR = path.join(__dirname, "public");
 const MAX_PLAYERS = 500;
 
@@ -154,6 +154,8 @@ function computeStats() {
     co2Season: engaged.reduce((s, p) => s + p.plan.kwhSaved * .06, 0),
     climAvoided: 0,
     gestureCounts,
+    // Réponses de la salle par question, pour les chiffres en direct de l'écran projeté.
+    answerCounts: Object.fromEntries(QUESTIONS.map((q) => [q.key, Object.fromEntries(q.options.map((o) => [o.v, all.filter((p) => p.answers[q.key] === o.v).length]))])),
     hottest: count ? Math.max(...list.map((p) => p.tempNo)) : null,
     coolest: count ? Math.min(...list.map((p) => p.tempNo)) : null,
   };

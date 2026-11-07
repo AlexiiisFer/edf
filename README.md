@@ -4,8 +4,8 @@ Application Node.js >=18, sans dépendance externe. Démarrer avec `npm start`.
 
 | Page | Rôle |
 |---|---|
-| `/` | Écran projeté : QR code, connexions, avancement du questionnaire par thème, puis compteur des plans validés |
-| `/jouer` | Questionnaire de 14 questions à son rythme → profil + météo automatique → low tech → high tech → bilan financier |
+| `/` | Écran projeté : QR code, puis déroulé de la démo en direct (étape, compte à rebours, avancement par thème, chiffres de la salle, plans validés) |
+| `/jouer` | Questionnaire démo de 6 questions → profil + météo automatique → low tech → high tech → bilan financier |
 | `/stats` | Profils de la salle, investissement/bénéfices, et vision « Demain avec EDF & moi » |
 
 ## Interface
@@ -19,16 +19,16 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 ## Animation
 
 1. Ouvrir `/`, laisser les participants scanner, puis « Commencer ».
-2. Chacun répond aux 14 questions (5 thèmes) à son rythme : 2 minutes au maximum (plus tôt si tout le monde a terminé, ou sur « Passer au bilan »). Un participant en retard peut finir ensuite.
-3. Les statistiques s’affichent automatiquement **4 minutes après « Commencer »**, avec un compte à rebours à l’écran. « Afficher maintenant » permet de les ouvrir plus tôt. Déroulé de 5 minutes : `PRESENTATION.md`.
+2. Chacun répond aux 6 questions de la démo : 45 secondes au maximum (plus tôt si tout le monde a terminé, ou sur « Passer au bilan »). Un participant en retard peut finir ensuite. Pendant ce temps, l’écran affiche en direct l’avancement et des chiffres de la salle à commenter.
+3. Les statistiques s’affichent automatiquement **2 minutes après « Commencer »**, avec un compte à rebours à l’écran. « Afficher maintenant » permet de les ouvrir plus tôt. Déroulé de 5 minutes : `PRESENTATION.md`.
 4. Les participants choisissent leurs actions, ajustent le tarif et leur consommation actuelle de climatisation, puis valident leur plan. Aucune action n’est cochée par défaut.
 5. Pendant l’affichage des statistiques, les participants peuvent encore continuer ou modifier leur plan.
 6. « Nouvelle session » efface toutes les données. Les données sont en mémoire et disparaissent aussi au redémarrage. Le téléphone retrouve son plan validé après rechargement tant que la session existe.
 
 ## Questionnaire, météo et équipements
 
-- `public/questions.js` : 5 thèmes (environnement, enveloppe, ouvertures, ventilation, équipements), 14 questions. Chaque réponse modifie l’écart intérieur/extérieur d’un scénario canicule à 35 °C (ajusté selon la zone) : valeurs pédagogiques, pas une étude thermique.
-- Les solutions proposées dépendent des équipements déclarés (volets existants, Velux, VMC double flux, brasseurs d’air, climatiseur mobile ou PAC…).
+- `public/questions.js` : version démo, 5 thèmes et 6 questions clés (zone, type de logement, orientation des vitrages, protections solaires, courant d’air nocturne, climatisation). Chaque réponse modifie l’écart intérieur/extérieur d’un scénario canicule à 35 °C (ajusté selon la zone) : valeurs pédagogiques, pas une étude thermique.
+- Les solutions proposées dépendent des équipements déclarés (protections existantes ou non, climatiseur mobile, PAC ou aucune clim).
 - Météo automatique : prévision **fictive** de démonstration (vague de chaleur sur 7 jours, pic égal au scénario canicule de la zone), affichée automatiquement sur la fiche. Aucun appel réseau ni géolocalisation.
 - Intégration avec l’appli EDF & moi : proposition présentée dans l’onglet « Demain avec EDF & moi ». Aucune donnée client n’est utilisée.
 
@@ -47,7 +47,7 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 
 `node --test tests/solutions.test.js`
 
-Le parcours a également été vérifié avec Playwright : téléphones simulés répondant aux 14 questions, modification des réponses, météo fictive, enchaînement automatique questionnaire → choix → statistiques, choix, validation et les trois onglets du bilan.
+Le parcours a également été vérifié avec Playwright : téléphones simulés répondant aux 6 questions, modification des réponses, météo fictive, enchaînement automatique questionnaire → choix → statistiques, choix, validation et les trois onglets du bilan.
 
 ## Logo
 
@@ -57,6 +57,6 @@ Il accompagne la mention « Projet proposé pour le défi confort d’été », 
 
 ## Réglages et déploiement
 
-`PORT` : 3000 par défaut. `QUESTIONNAIRE_SECONDS` : 120 par défaut. `TOTAL_SECONDS` : 240 par défaut (de « Commencer » à l’affichage des statistiques).
+`PORT` : 3000 par défaut. `QUESTIONNAIRE_SECONDS` : 45 par défaut. `TOTAL_SECONDS` : 120 par défaut (de « Commencer » à l’affichage des statistiques).
 
 Coolify : Dockerfile existant, port 3000. Vérification locale : `curl -fsS http://127.0.0.1:3000/health`.
