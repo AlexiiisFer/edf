@@ -88,7 +88,11 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 .wall-grid.micro .wall-tile { border-radius: 8px; padding: 2px; }
 #energyPanel { flex: 1; min-height: 0; grid-template-rows: minmax(0, 1fr) auto; }
 .energy { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.6vw; min-height: 0; }
-.energy > .card { display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+.energy > .card { display: flex; flex-direction: column; justify-content: flex-start; min-height: 0; overflow: hidden; }
+.en-compare .en-big { margin-top: auto; padding-top: 2vh; font-size: clamp(15px, 1.5vw, 28px); }
+#tariffNote { font-size: clamp(10px, .8vw, 14px); }
+.offers .cell { padding: 1.2vh 1vw; }
+.en-tips ol { margin-top: 1.4vh; gap: 1.4vh; }
 .en-compare h2 .muted { font-weight: 500; }
 .en-row { display: grid; grid-template-columns: minmax(200px, 30%) 1fr auto; align-items: center; gap: 1.4vw; margin: 3.4vh 0; }
 .en-lbl { font-size: clamp(13px, 1.1vw, 20px); color: var(--brume); } .en-lbl b { color: var(--craie); }
@@ -106,6 +110,19 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 .en-tips li em { font-style: normal; font-weight: 760; color: var(--fraicheur); font-size: clamp(14px, 1.2vw, 22px); white-space: nowrap; }
 .en-room { font-size: clamp(14px, 1.3vw, 24px); } .en-room b { color: var(--soleil); }
 @media (max-width: 900px) { .energy { grid-template-columns: 1fr; } .en-row { grid-template-columns: 1fr auto; } .en-track { grid-column: 1 / -1; grid-row: 2; } }
+.offers { display: grid; grid-template-columns: minmax(180px, 1.1fr) 1fr 1fr; gap: 1vh 1vw; margin-top: 2vh; align-items: stretch; }
+.offers .head { font-size: clamp(12px, .95vw, 17px); font-weight: 700; color: var(--craie); padding: .6vh .2vw; }
+.offers .head small { display: block; font-weight: 500; color: var(--brume); font-size: .85em; margin-top: 2px; }
+.offers .use { display: flex; flex-direction: column; justify-content: center; font-weight: 700; font-size: clamp(13px, 1.05vw, 19px); }
+.offers .use small { color: var(--brume); font-weight: 500; font-size: .8em; margin-top: 3px; }
+.offers .cell { background: #FFFFFF; border: 1px solid var(--verre-bord); border-radius: 14px; padding: 1.6vh 1vw; position: relative; }
+.offers .cell b { display: block; font-size: clamp(22px, 2.3vw, 42px); line-height: 1; }
+.offers .cell small { color: var(--brume); font-size: clamp(11px, .85vw, 15px); }
+.offers .cell .meter { height: 8px; border-radius: 99px; background: #E9EEF5; margin-top: 1.2vh; overflow: hidden; }
+.offers .cell .meter i { display: block; height: 100%; border-radius: 99px; transform-origin: left; background: linear-gradient(90deg, var(--edf-orange), #E8380D); }
+.offers .cell.best { border: 2px solid var(--edf-orange); background: #FFF6F1; }
+.offers .cell.best .meter i { background: linear-gradient(90deg, var(--fraicheur-2), var(--fraicheur)); }
+.offers .cell .badge { position: absolute; top: -10px; right: 10px; background: var(--edf-orange); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px; }
 </style></head><body class="light">
 <div class="sky" aria-hidden="true"><div class="grain"></div></div>
 <main class="page">
@@ -135,12 +152,10 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 <section id="energyPanel" class="panel" hidden>
   <div class="energy">
     <div class="card en-compare">
-      <h2>Une clim pendant l’été <span class="muted">· 40 jours chauds</span></h2>
-      <div class="en-row" data-row="h24"><div class="en-lbl">🔴 <b id="lblH24"></b></div><div class="en-track"><i class="en-bar hot"></i></div><div class="en-val"><b class="num" id="costH24">—</b><small id="dayH24"></small></div></div>
-      <div class="en-row" data-row="hc"><div class="en-lbl">🟢 <b id="lblHc"></b></div><div class="en-track"><i class="en-bar ok"></i></div><div class="en-val"><b class="num" id="costHc">—</b><small id="dayHc"></small></div></div>
-      <div class="en-row" data-row="free"><div class="en-lbl">🪟 <b>Volets + aération, sans clim</b></div><div class="en-track"><i class="en-bar free"></i></div><div class="en-val"><b class="num">0 €</b><small>gratuit</small></div></div>
-      <p class="en-big"><b class="num" id="ratio">—</b> moins cher aux heures creuses</p>
-      <p class="muted">Rafraîchir pendant les heures creuses, puis garder la fraîcheur volets fermés.</p>
+      <h2>Votre clim avec les offres EDF <span class="muted">· 40 jours chauds</span></h2>
+      <div class="offers" id="offers"></div>
+      <p class="en-big"><b class="num" id="ratio">—</b> moins cher en programmant la clim aux heures creuses</p>
+      <p class="muted" id="tariffNote"></p>
     </div>
     <div class="card en-tips">
       <h2>Au frais pour pas cher</h2>
@@ -223,18 +238,22 @@ addEventListener('resize',placeThumb);document.fonts?.ready.then(placeThumb);pla
 
 // Quand consommer : clim H24 contre clim aux heures creuses (estimations indicatives).
 const eur=(n,d=0)=>n.toLocaleString('fr-FR',{style:'currency',currency:'EUR',minimumFractionDigits:d,maximumFractionDigits:d});
-const H24=usageCost(CLIM_USAGE.h24),HC=usageCost(CLIM_USAGE.offPeak),FAN=usageCost(CLIM_USAGE.fan);
-document.getElementById('lblH24').textContent=CLIM_USAGE.h24.label;document.getElementById('lblHc').textContent=CLIM_USAGE.offPeak.label;
-document.getElementById('dayH24').textContent=`${eur(H24.perDay,2)} / jour`;document.getElementById('dayHc').textContent=`${eur(HC.perDay,2)} / jour`;
-document.getElementById('tipFan').textContent=`≈ ${eur(FAN.perDay,2)} / jour`;document.getElementById('tipHc').textContent=`≈ ${eur(HC.perDay,2)} / jour`;
-document.querySelector('.en-bar.hot').style.width='100%';document.querySelector('.en-bar.ok').style.width=(HC.cost/H24.cost*100)+'%';
+const fr=(n,d)=>n.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const USES=['h24','offPeak'],OFFS=['base','hphc'];
+const COST=Object.fromEntries(USES.map(u=>[u,Object.fromEntries(OFFS.map(o=>[o,usageCost(CLIM_USAGE[u],OFFERS[o])]))]));
+const WORST=COST.h24.base,BEST=COST.offPeak.hphc,FAN=usageCost(CLIM_USAGE.fan,OFFERS.base);
+const H24=WORST,HC=BEST;
+document.getElementById('offers').innerHTML='<div></div>'+OFFS.map(o=>`<div class="head">${OFFERS[o].label}<small>${o==='base'?`${fr(OFFERS.base.hp,4)} €/kWh à toute heure`:`HP ${fr(OFFERS.hphc.hp,4)} € · HC ${fr(OFFERS.hphc.hc,4)} €/kWh`}</small></div>`).join('')
+ +USES.map(u=>`<div class="use">${CLIM_USAGE[u].label}<small>${fr(COST[u].base.kwh,0)} kWh sur l’été</small></div>`+OFFS.map(o=>{const c=COST[u][o],best=u==='offPeak'&&o==='hphc';return `<div class="cell ${best?'best':''}">${best?'<span class="badge">Le plus malin</span>':''}<b class="num" data-cost="${c.cost}">—</b><small>${eur(c.perDay,2)} / jour</small><div class="meter"><i style="width:${(c.cost/WORST.cost*100).toFixed(1)}%"></i></div></div>`;}).join('')).join('');
+document.getElementById('tariffNote').textContent='Tarif Bleu EDF, prix du kWh TTC au 1er août 2026 (hors abonnement). Heures creuses : 8 h par jour. Estimation indicative.';
+document.getElementById('tipFan').textContent=`≈ ${eur(FAN.perDay,2)} / jour`;document.getElementById('tipHc').textContent=`≈ ${eur(BEST.perDay,2)} / jour`;
 let climUsers=0;
-function renderRoom(){const save=climUsers*(H24.cost-HC.cost);document.getElementById('enRoom').innerHTML=climUsers?`Dans la salle, <b>${climUsers}</b> participant${climUsers>1?'s ont':' a'} une clim : en passant aux heures creuses, <b>≈ ${eur(save)}</b> économisés ensemble cet été.`:'Personne dans la salle n’a de clim pour l’instant.';}
+function renderRoom(){const save=climUsers*(H24.cost-HC.cost);document.getElementById('enRoom').innerHTML=climUsers?`<b>${climUsers}</b> participant${climUsers>1?'s ont':' a'} une clim : <b>≈ ${eur(save)}</b> économisés ensemble cet été en la programmant aux heures creuses.`:'Personne dans la salle n’a de clim pour l’instant.';}
 function showEnergy(){
   const eu=([v])=>eur(v);
-  for(const [id,v] of [['costH24',H24.cost],['costHc',HC.cost]]){const el=document.getElementById(id);el._twTarget=null;el._twCur=null;UI.tween(el,v,eu,1400);}
-  const r=document.getElementById('ratio');r._twTarget=null;r._twCur=null;UI.tween(r,H24.cost/HC.cost,([v])=>'×'+(Math.round(v*10)/10).toLocaleString('fr-FR'),1400);
-  if(UI.on){anime.animate('.en-bar',{scaleX:[0,1],duration:1200,delay:anime.stagger(250),ease:'out(3)'});UI.enter('.en-tips li',{x:30,y:0,stagger:120,delay:400});UI.enter('#enRoom',{y:20,delay:900});}
+  document.querySelectorAll('#offers [data-cost]').forEach(el=>{el._twTarget=null;el._twCur=null;UI.tween(el,Number(el.dataset.cost),eu,1400);});
+  const r=document.getElementById('ratio');r._twTarget=null;r._twCur=null;UI.tween(r,WORST.cost/BEST.cost,([v])=>'×'+(Math.round(v*10)/10).toLocaleString('fr-FR'),1400);
+  if(UI.on){anime.animate('#offers .meter i',{scaleX:[0,1],duration:1200,delay:anime.stagger(180),ease:'out(3)'});UI.enter('#offers .cell',{y:16,stagger:120});UI.enter('.en-tips li',{x:30,y:0,stagger:120,delay:400});UI.enter('#enRoom',{y:20,delay:900});}
   renderRoom();
 }
 UI.enter('header, .bar, #profilesPanel > .card',{y:20,stagger:80});

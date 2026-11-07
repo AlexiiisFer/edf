@@ -53,14 +53,22 @@ function recommend(answers, budgetId = 'moyen', timeId = 'unpeu') {
   return SOLUTIONS.filter(s => picked.has(s.id)).map(s => s.id);
 }
 
-// Électricité d'une clim sur un été (40 jours chauds). Valeurs et tarifs indicatifs, à mettre à jour.
+// Offres EDF (Tarif Bleu, prix du kWh TTC au 1er août 2026, à vérifier avant usage) et usages d'une clim sur un été.
+const OFFERS = {
+  base: { label: 'Tarif Bleu · option Base', hp: .2001, hc: .2001 },
+  hphc: { label: 'Tarif Bleu · option Heures Creuses', hp: .2142, hc: .1589 },
+};
 const CLIM_USAGE = {
   days: 40,
-  h24: { label: 'En continu, H24 à 22 °C', kw: .9, hours: 24, tariff: .20 },
-  offPeak: { label: 'Aux heures creuses, 26 °C', kw: .75, hours: 8, tariff: .16 },
-  fan: { kw: .03, hours: 8, tariff: .20 },
+  h24: { label: 'Clim en continu, H24 à 22 °C', kw: .9, hpHours: 16, hcHours: 8 },
+  offPeak: { label: 'Clim programmée aux heures creuses, 26 °C', kw: .75, hpHours: 0, hcHours: 8 },
+  fan: { label: 'Ventilateur', kw: .03, hpHours: 8, hcHours: 0 },
 };
-function usageCost(u, days = CLIM_USAGE.days) { const kwh = u.kw * u.hours * days; return { kwh, cost: kwh * u.tariff, perDay: u.kw * u.hours * u.tariff }; }
+// kWh et coût d'un usage avec une offre : heures pleines et heures creuses facturées chacune à leur prix.
+function usageCost(u, offer = OFFERS.hphc, days = CLIM_USAGE.days) {
+  const hpKwh = u.kw * u.hpHours, hcKwh = u.kw * u.hcHours, perDay = hpKwh * offer.hp + hcKwh * offer.hc;
+  return { kwh: (hpKwh + hcKwh) * days, perDay, cost: perDay * days };
+}
 
 function availableSolutions(answers) {
   return SOLUTIONS.filter(s => !s.when || s.when(answers));
@@ -86,5 +94,5 @@ function estimatePlan(answers, ids = []) {
 if (typeof module !== 'undefined') {
   // Même modèle pour le serveur et les navigateurs, sans dépendance externe.
   var { computeProfile, comfortGrade } = require('./questions.js');
-  module.exports = { SOLUTIONS, BUDGETS, TIMES, recommend, CLIM_USAGE, usageCost, availableSolutions, estimatePlan, hasClim, hasExterior };
+  module.exports = { SOLUTIONS, BUDGETS, TIMES, recommend, OFFERS, CLIM_USAGE, usageCost, availableSolutions, estimatePlan, hasClim, hasExterior };
 }

@@ -36,7 +36,7 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 `public/solutions.js` décrit les solutions : effet supposé sur la température, prix d’achat indicatif et temps demandé (geste quotidien, installation unique ou domotique). Ce sont des **hypothèses pédagogiques**, pas des devis ni une étude thermique.
 
 - Budget (Petit ≤ 200 €, Moyen ≤ 1 000 €, Large) et temps (Peu, Un peu, Beaucoup) : `recommend()` coche les solutions les plus efficaces qui tiennent dans le budget et le temps choisis ; chacun peut ensuite ajuster.
-- « Quand consommer ? » (`CLIM_USAGE`) : clim en continu H24 à 22 °C (0,9 kW × 24 h) contre clim aux heures creuses à 26 °C (0,75 kW × 8 h), sur 40 jours chauds. Tarifs **indicatifs** (0,20 €/kWh en base, 0,16 €/kWh en heures creuses) à vérifier avant la présentation.
+- « Quand consommer ? » (`OFFERS`, `CLIM_USAGE`) : kWh consommés et coût d’une clim sur 40 jours chauds avec les deux options du Tarif Bleu EDF, Base et Heures Creuses. Les usages comparés sont la clim en continu H24 à 22 °C (0,9 kW, 16 h en heures pleines + 8 h en heures creuses) et la clim programmée aux heures creuses à 26 °C (0,75 kW × 8 h). Prix du kWh TTC au 1er août 2026, hors abonnement : Base 0,2001 €, HP 0,2142 €, HC 0,1589 €. **À vérifier sur la grille officielle avant la présentation.**
 
 - Note de confort A–G : scénario fictif, jamais un DPE réglementaire. Seuls les choix sélectionnés modifient les résultats ; les profils non validés restent au point de départ.
 - Gains de température plafonnés à 3,5 °C. Un ventilateur améliore le ressenti sans refroidir l’air ; les capteurs seuls ne réduisent pas la température.
