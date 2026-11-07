@@ -400,6 +400,20 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 /* Carte classe/température remontée dans l'en-tête */
 #v-choices .me-strip { margin-top: -34px; }
 @media (max-height: 700px) { #v-choices .me-strip { margin-top: -26px; } }
+/* Carte classe : grande lettre, température au-dessus, alerte en dessous (toutes tailles d'écran) */
+#v-choices .me-strip { display: flex; align-items: center; gap: 16px; padding: 14px 16px; }
+#v-choices .me-strip .big-grade { font-size: 40px !important; width: 1.6em; height: 1.6em; border-radius: 16px; margin: 0; flex-shrink: 0; }
+#v-choices .me-strip .me-info { display: flex !important; flex-direction: column; align-items: flex-start; gap: 4px; flex: 1; min-width: 0; }
+#v-choices .me-strip .t { font-size: 26px !important; white-space: nowrap; }
+#v-choices .me-strip .t small { display: inline !important; font-size: 14px; }
+#v-choices .me-strip .alert { margin: 0 !important; font-size: 14px !important; white-space: normal !important; overflow: visible !important; }
+@media (max-height: 700px) {
+  #v-choices .me-strip { padding: 10px 12px; gap: 12px; }
+  #v-choices .me-strip .big-grade { font-size: 32px !important; }
+  #v-choices .me-strip .t { font-size: 22px !important; }
+  #v-choices .me-strip .alert { font-size: 13px !important; }
+}
+.empty-group { grid-column: 1 / -1; margin: 0; padding: 12px 14px; border: 1.5px dashed var(--ligne); border-radius: 14px; color: var(--gris); font-size: 14px; }
 </style>
 </head>
 <body>
@@ -465,7 +479,7 @@ function render(d) {
  participantNumber=d.participantNumber;answers=Object.assign({}, d.answers || {}, answers);
  if(d.phase==='lobby') {document.getElementById('waitTitle').textContent='Vous êtes dans la salle.';document.getElementById('waitText').textContent=`${d.connected} connecté${d.connected>1?'s':''} · ${QUESTIONS.length} questions`;show('wait');return;}
  if(editing || !isComplete(answers)) { if(qi<0){qi=Math.max(0,QUESTIONS.findIndex(q=>answers[q.key]===undefined));buildQuestion();} if(view!=='question')show('question'); return; }
- if(!built) {built=true;let draft=[];try{draft=JSON.parse(storage.get('ml_plan_'+sessionId)||'[]');}catch{}chosen=new Set(d.plan?.ids || (draft.length?draft:recommend(answers,budget,time)));buildChoices();show('choices');}
+ if(!built) {built=true;let draft=[];try{draft=JSON.parse(storage.get('ml_plan_'+sessionId)||'[]');}catch{}chosen=new Set(d.plan?.ids || draft);buildChoices();show('choices');}
 }
 function buildQuestion() {
  const q=QUESTIONS[qi];
@@ -496,14 +510,14 @@ function nextQuestion() {
  const missing=QUESTIONS.findIndex(q=>answers[q.key]===undefined);
  if(next>=0){qi=next;buildQuestion();window.scrollTo(0,0);return;}
  if(missing>=0){qi=missing;buildQuestion();return;}
- editing=false;qi=-1;if(!built||!chosen.size)chosen=new Set(recommend(answers,budget,time));built=true;buildChoices();show('choices');
+ editing=false;qi=-1;built=true;buildChoices();show('choices');
 }
 document.getElementById('qBack').onclick=()=>{if(qi>0){qi--;buildQuestion();}};
 function editAnswers(){editing=true;qi=0;buildQuestion();show('question');}
 // Budget et temps : 3 profils chacun ; changer de profil coche les solutions recommandées.
 function buildPrefs() {
  const seg=(id,list,cur,set)=>{const box=document.getElementById(id);box.querySelectorAll('button').forEach(b=>b.remove());
-  for(const o of list){const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(o.id===cur));b.innerHTML=o.label+(o.hint?`<small>${o.hint}</small>`:'');b.onclick=()=>{set(o.id);chosen=new Set(recommend(answers,budget,time));storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));buildChoices();UI.enter(document.querySelectorAll('#v-choices .tiles .choice'),{y:8,stagger:25});};box.appendChild(b);}};
+  for(const o of list){const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(o.id===cur));b.innerHTML=o.label+(o.hint?`<small>${o.hint}</small>`:'');b.onclick=()=>{set(o.id);const ok=new Set(visibleSolutions().map(x=>x.id));chosen=new Set([...chosen].filter(id=>ok.has(id)));storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));buildChoices();UI.enter(document.querySelectorAll('#v-choices .tiles .choice'),{y:8,stagger:25});};box.appendChild(b);}};
  seg('segBudget',BUDGETS,budget,v=>budget=v);seg('segTime',TIMES,time,v=>time=v);
 }
 function priceLabel(s) {
@@ -513,13 +527,16 @@ function priceLabel(s) {
  const r=s.priceMax&&s.priceMax!==s.price?`${n(s.price)}–${n(s.priceMax)} €`:`${n(s.price)} €`;
  return s.unit?`${r}/${s.unit}`:r;
 }
+// Budget et temps filtrent les propositions affichées ; rien n'est coché d'avance.
+function fits(s) { return costMin(s)<=BUDGETS.find(b=>b.id===budget).max && TIMES.find(t=>t.id===time).efforts.includes(s.effort); }
+function visibleSolutions() { return availableSolutions(answers).filter(fits); }
 function buildChoices() {
  buildPrefs();
  // Zone profil : classe, température chez soi et alerte canicule fictive de la région.
  const prof=computeProfile(answers);
- document.getElementById('myProfile').innerHTML=`${badge(prof.grade,'big-grade')}<div style="flex:1"><div class="t num">${prof.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${prof.out} °C dehors</p></div>`;
+ document.getElementById('myProfile').innerHTML=`${badge(prof.grade,'big-grade')}<div class="me-info"><div class="t num">${prof.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${prof.out} °C dehors</p></div>`;
  for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);
- for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&costMin(s)<=BUDGETS.find(b=>b.id===budget).max).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="cost">${priceLabel(s)}</small><small class="delay">⏱ ${s.delay}</small><small class="price">${s.detail}</small></label>`).join('');box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
+ for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&fits(s)).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="cost">${priceLabel(s)}</small><small class="delay">⏱ ${s.delay}</small><small class="price">${s.detail}</small></label>`).join('');if(!box.children.length)box.innerHTML=`<p class="empty-group">${type==='low'?'Aucun geste avec ce temps disponible.':'Aucun équipement dans ce budget.'}</p>`;box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
  updatePlan();
 }
 function updatePlan() {
