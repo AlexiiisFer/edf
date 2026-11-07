@@ -8,6 +8,14 @@ Application Node.js >=18, sans dépendance externe. Démarrer avec `npm start`.
 | `/jouer` | Profil initial → sélection low tech → sélection high tech facultative → bilan financier |
 | `/stats` | Mosaïque des profils et onglet investissement/bénéfices de la salle |
 
+## Interface
+
+Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en particulier) :
+
+- `public/theme.css` : thème commun (ciel animé, panneaux translucides, échelle A–G, mur des profils).
+- `public/ui.js` : petites chorégraphies Anime.js v4 (entrées en cascade, titres mot à mot, compteurs animés, tracés SVG, rebonds). Elles sont désactivées si « réduire les animations » est actif, et l’interface fonctionne sans elles.
+- `public/vendor/anime.umd.min.js` : Anime.js 4.2.2 (MIT, licence dans `public/vendor/ANIME-LICENSE.md`), servi en local pour fonctionner sans CDN.
+
 ## Animation
 
 1. Ouvrir `/`, laisser les participants scanner, puis « Commencer ».

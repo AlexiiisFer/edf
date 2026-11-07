@@ -1,27 +1,171 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Le bilan collectif · Météo de mon logement</title><link rel="stylesheet" href="/theme.css"><style>
-body{background:var(--nuit);color:var(--craie)}.page{min-height:100vh;padding:3vh 4vw;display:flex;flex-direction:column;gap:1.4vh}header{display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{display:flex;align-items:center;gap:18px}h1{font-size:clamp(24px,2.7vw,48px)}.muted{color:var(--brume);font-size:clamp(12px,1vw,18px);line-height:1.4}.btn{color:var(--encre);background:var(--soleil);border:0;border-radius:30px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.metric{background:var(--ombre);border-radius:14px;padding:16px}.metric strong{display:block;font-size:clamp(22px,2vw,36px);margin:8px 0}.distribution{display:flex;gap:10px;flex-wrap:wrap}.wall-grid{flex:none}.wall-tile .grade{font-size:16px;padding:3px 7px}.foot{margin-top:auto}.empty{padding:30px;border:1px dashed var(--brume);border-radius:14px}.tabs{display:flex;gap:12px;flex-wrap:wrap}.tabs button[aria-pressed="true"]{background:var(--fraicheur)}[hidden]{display:none!important}.qr{width:64px;height:64px;background:white;padding:4px;border-radius:8px}@media(max-width:700px){header{flex-wrap:wrap}.metrics{grid-template-columns:1fr}.brand{flex-wrap:wrap}}.wall-grid{grid-template-columns:repeat(10,minmax(0,1fr))}@media(max-width:700px){.wall-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-</style></head><body><main class="page">
-<header><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><div><p class="muted">PROJET PROPOSÉ POUR LE DÉFI CONFORT D’ÉTÉ</p><h1>Les choix de la salle, leur coût et leur effet</h1></div></div><button class="btn" id="resetBtn">Nouvelle session</button></header>
-<p class="muted" id="count" role="status">Connexion au bilan…</p>
-<div class="tabs"><button class="btn" id="profilesTab" aria-pressed="true">Profils de la salle</button><button class="btn" id="budgetTab" aria-pressed="false">Investissement et bénéfices</button></div>
-<section id="profilesPanel"><p class="muted">Répartition : initial → low tech → choix finaux. Les profils sans plan validé restent à leur note initiale.</p><div class="distribution" id="distribution"></div><p class="muted" style="margin:14px 0">Chaque case représente un participant · A : moins exposé à la chaleur, G : plus exposé</p><div class="wall-grid" id="profileGrid"></div></section>
-<section id="budgetPanel" hidden><div class="metrics"><div class="metric"><span class="muted">Investissement initial de la salle</span><strong id="investment">—</strong><p class="muted">Fourchette, hors aides et financement</p></div><div class="metric"><span class="muted">Économie nette annuelle de la salle</span><strong id="annual">—</strong><p class="muted">Valeur négative = surcoût d’usage et d’entretien</p></div><div class="metric"><span class="muted">Bilan financier net à 10 ans</span><strong id="netTen">—</strong><p class="muted">Achats, entretien, énergie et renouvellements inclus</p></div></div><div class="metrics" style="margin-top:16px"><div class="metric"><span class="muted">Refroidissement : différence annuelle</span><strong id="energy">—</strong><p class="muted">Positif = économie ; négatif = consommation ajoutée</p></div><div class="metric"><span class="muted">Profils améliorés</span><strong id="improved">—</strong><p class="muted">Comparaison des classes pédagogiques</p></div><div class="metric"><span class="muted">Actions les plus choisies</span><div id="actions"></div></div></div><p class="muted" style="margin-top:20px">Les totaux financiers portent uniquement sur les plans validés et se mettent à jour après chaque modification. Un choix peut améliorer le confort sans être rentable financièrement.</p></section>
-<footer class="foot" style="display:flex;align-items:center;gap:20px"><img id="qr" class="qr" alt="QR code pour retrouver sa fiche"><p class="muted">Simulation pédagogique, pas un DPE. Scénario fictif, coûts indicatifs à confirmer par devis. Tarif et consommation sont ajustables sur chaque téléphone. Aucun gain garanti ni aide déduite. Le chauffage hivernal n’est pas évalué.</p></footer>
-</main><script src="/qrcode.js"></script><script src="/questions.js"></script><script src="/solutions.js"></script><script>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le bilan collectif · Météo de mon logement</title>
+<link rel="preload" href="/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/theme.css"><style>
+body { background: var(--nuit); color: var(--craie); }
+.page { min-height: 100vh; padding: 3vh 3.5vw; display: flex; flex-direction: column; gap: 2vh; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.brand { display: flex; align-items: center; gap: 18px; }
+.brand .kicker { color: var(--soleil); font-size: clamp(10px, .8vw, 14px); }
+h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
+.muted { color: var(--brume); font-size: clamp(12px, .95vw, 17px); line-height: 1.45; }
+.btn-ghost { background: var(--verre); border: 1px solid var(--verre-bord); color: var(--brume); padding: 11px 18px; font-size: 14px; }
+.btn-ghost:hover { color: var(--craie); border-color: var(--brume); }
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.status { display: flex; gap: 10px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: baseline; gap: 6px; padding: 8px 14px; border-radius: 999px; background: var(--verre); border: 1px solid var(--verre-bord); color: var(--brume); font-size: clamp(12px, .95vw, 16px); }
+.chip b { color: var(--craie); font-size: 1.25em; }
+.chip.live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #5fd39a; align-self: center; box-shadow: 0 0 0 0 rgba(95,211,154,.6); animation: live 2s infinite; }
+@keyframes live { 70%, 100% { box-shadow: 0 0 0 8px rgba(95,211,154,0); } }
+
+.tabs { display: inline-flex; padding: 5px; gap: 4px; border-radius: 999px; background: var(--verre); border: 1px solid var(--verre-bord); position: relative; }
+.tabs button { position: relative; z-index: 1; border: 0; background: none; color: var(--brume); padding: 10px 20px; border-radius: 999px; font-weight: 700; cursor: pointer; font-size: clamp(13px, 1vw, 17px); transition: color .25s; }
+.tabs button[aria-pressed="true"] { color: var(--encre); }
+.tabs .thumb { position: absolute; top: 5px; bottom: 5px; border-radius: 999px; background: var(--soleil); transition: left .4s var(--ease), width .4s var(--ease); }
+
+.panel { display: grid; gap: 2vh; }
+.card { background: var(--verre); border: 1px solid var(--verre-bord); border-radius: 20px; padding: 2.2vh 1.6vw; backdrop-filter: blur(8px); }
+.card h2 { font-size: clamp(14px, 1.15vw, 20px); font-weight: 700; margin-bottom: 4px; }
+
+/* Distribution : 7 classes × 3 étapes */
+.dist { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1.2vw; align-items: end; height: 36vh; min-height: 150px; margin-top: 2vh; }
+.dist-col { display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; }
+.dist-bars { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
+.dist-bars span { position: relative; width: 28%; max-width: 26px; min-height: 2px; border-radius: 4px 4px 0 0; transform-origin: bottom; cursor: default; }
+.dist-bars span::after { content: attr(data-n); position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); font-size: 11px; color: var(--brume); font-variant-numeric: tabular-nums; }
+.dist-bars span[data-n="0"]::after { content: ""; }
+.s0 { background: #5d7799; } .s1 { background: #8fb7d9; } .s2 { background: var(--fraicheur); }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--brume); font-size: 13px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.tip { position: fixed; z-index: 10; pointer-events: none; padding: 8px 12px; border-radius: 10px; background: #fff; color: var(--encre); font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,.3); opacity: 0; transition: opacity .15s; }
+.dist-table { display: none; }
+
+.profiles-wrap { display: grid; grid-template-columns: minmax(280px, 30%) 1fr; gap: 2vh 1.6vw; align-items: start; }
+.empty { padding: 30px; border: 1px dashed var(--brume); border-radius: 14px; grid-column: 1 / -1; color: var(--brume); }
+
+/* Chiffres clés */
+.metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4vw; }
+.metric { background: var(--verre); border: 1px solid var(--verre-bord); border-radius: 20px; padding: 2.4vh 1.6vw; position: relative; overflow: hidden; }
+.metric::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--soleil); }
+.metric.cool::before { background: var(--fraicheur); }
+.metric strong { display: block; font-size: clamp(22px, 2.3vw, 44px); margin: 1vh 0; font-weight: 760; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+#actions p { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+#actions .bar-fill { height: 6px; border-radius: 99px; background: var(--soleil); transform-origin: left; flex-shrink: 0; }
+#actions .lbl { flex: 1; }
+#actions b { color: var(--craie); font-variant-numeric: tabular-nums; }
+
+.foot { margin-top: auto; display: flex; align-items: center; gap: 20px; padding-top: 1vh; border-top: 1px solid var(--verre-bord); }
+.qr { width: 72px; height: 72px; background: white; padding: 5px; border-radius: 10px; flex-shrink: 0; }
+@media (max-width: 900px) { .profiles-wrap { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { header { flex-wrap: wrap; } .metrics { grid-template-columns: 1fr; } .brand { flex-wrap: wrap; } .page { padding: 16px; } .card, .metric { padding: 16px; } .dist { gap: 6px; } }
+</style></head><body>
+<div class="sky" aria-hidden="true"><div class="grain"></div></div>
+<main class="page">
+<header><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><div><p class="kicker">Projet proposé pour le défi confort d’été</p><h1 class="display">Les choix de la salle, leur coût et leur effet</h1></div></div><button class="btn btn-ghost" id="resetBtn">Nouvelle session</button></header>
+<div class="bar">
+  <div class="tabs" role="group" aria-label="Vue"><span class="thumb" id="thumb" aria-hidden="true"></span><button id="profilesTab" aria-pressed="true">Profils de la salle</button><button id="budgetTab" aria-pressed="false">Investissement et bénéfices</button></div>
+  <div class="status"><span class="chip live"><b class="num" id="cConnected">0</b> participants</span><span class="chip"><b class="num" id="cProfiles">0</b> profils</span><span class="chip"><b class="num" id="cValidated">0</b> plans validés</span></div>
+</div>
+<p class="sr-only" id="count" role="status">Connexion au bilan…</p>
+<p class="muted" id="countError" hidden></p>
+
+<section id="profilesPanel" class="panel profiles-wrap">
+  <div class="card">
+    <h2>Répartition des classes</h2>
+    <p class="muted">Initial → low tech → choix finaux. Les profils sans plan validé restent à leur note initiale.</p>
+    <div class="dist" id="distribution" role="img" aria-label="Répartition des classes de A à G"></div>
+    <div class="legend"><span><i class="s0"></i>Au départ</span><span><i class="s1"></i>Low tech</span><span><i class="s2"></i>Choix finaux</span></div>
+    <table class="dist-table sr-only" id="distTable"></table>
+  </div>
+  <div class="card">
+    <h2>Chaque case = un participant</h2>
+    <p class="muted" style="margin-bottom:14px">A : moins exposé à la chaleur, G : plus exposé</p>
+    <div class="wall-grid" id="profileGrid"></div>
+  </div>
+</section>
+
+<section id="budgetPanel" class="panel" hidden>
+  <div class="metrics">
+    <div class="metric"><span class="muted">Investissement initial de la salle</span><strong id="investment">—</strong><p class="muted">Fourchette, hors aides et financement</p></div>
+    <div class="metric"><span class="muted">Économie nette annuelle de la salle</span><strong id="annual">—</strong><p class="muted">Valeur négative = surcoût d’usage et d’entretien</p></div>
+    <div class="metric"><span class="muted">Bilan financier net à 10 ans</span><strong id="netTen">—</strong><p class="muted">Achats, entretien, énergie et renouvellements inclus</p></div>
+  </div>
+  <div class="metrics">
+    <div class="metric cool"><span class="muted">Refroidissement : différence annuelle</span><strong id="energy">—</strong><p class="muted">Positif = économie ; négatif = consommation ajoutée</p></div>
+    <div class="metric cool"><span class="muted">Profils améliorés</span><strong id="improved">—</strong><p class="muted">Comparaison des classes pédagogiques</p></div>
+    <div class="metric cool"><span class="muted">Actions les plus choisies</span><div id="actions"></div></div>
+  </div>
+  <p class="muted">Les totaux financiers portent uniquement sur les plans validés et se mettent à jour après chaque modification. Un choix peut améliorer le confort sans être rentable financièrement.</p>
+</section>
+
+<footer class="foot"><img id="qr" class="qr" alt="QR code pour retrouver sa fiche"><p class="muted">Simulation pédagogique, pas un DPE. Scénario fictif, coûts indicatifs à confirmer par devis. Tarif et consommation sont ajustables sur chaque téléphone. Aucun gain garanti ni aide déduite. Le chauffage hivernal n’est pas évalué.</p></footer>
+</main>
+<div class="tip" id="tip" role="tooltip"></div>
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script>
+<script src="/qrcode.js"></script><script src="/questions.js"></script><script src="/solutions.js"></script><script>
 const money=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
 const range=(a,b)=>Math.round(a)===Math.round(b)?money(a):`${money(a)} à ${money(b)}`;
 const badge=g=>`<span class="grade grade-${g}">${g}</span>`;
+const STAGES=['Au départ','Low tech','Choix finaux'];
 const qr=qrcode(0,'M');qr.addData(location.origin+'/jouer');qr.make();document.getElementById('qr').src=qr.createDataURL(4,1);
-function tab(profiles){window.scrollTo(0,0);document.getElementById('profilesPanel').hidden=!profiles;document.getElementById('budgetPanel').hidden=profiles;document.getElementById('profilesTab').setAttribute('aria-pressed',String(profiles));document.getElementById('budgetTab').setAttribute('aria-pressed',String(!profiles));}
+
+// Onglets avec curseur glissant
+function placeThumb(){const b=document.querySelector('.tabs button[aria-pressed="true"]'),t=document.getElementById('thumb');t.style.left=b.offsetLeft+'px';t.style.width=b.offsetWidth+'px';}
+function tab(profiles){window.scrollTo(0,0);document.getElementById('profilesPanel').hidden=!profiles;document.getElementById('budgetPanel').hidden=profiles;document.getElementById('profilesTab').setAttribute('aria-pressed',String(profiles));document.getElementById('budgetTab').setAttribute('aria-pressed',String(!profiles));placeThumb();
+  const panel=document.getElementById(profiles?'profilesPanel':'budgetPanel');UI.enter(panel.querySelectorAll(profiles?':scope > .card':'.metric'),{y:24,stagger:70});
+  if(!profiles){if(UI.on)anime.animate('#actions .bar-fill',{scaleX:[0,1],duration:900,delay:anime.stagger(80,{start:300}),ease:'out(3)'});}else animateDist(true);}
 document.getElementById('profilesTab').onclick=()=>tab(true);document.getElementById('budgetTab').onclick=()=>tab(false);
-document.getElementById('resetBtn').onclick=async()=>{if(!confirm('Effacer les réponses et les plans de la salle ?'))return;try{const r=await fetch('/api/reset',{method:'POST'});if(!r.ok)throw Error();location.href='/';}catch{document.getElementById('count').textContent='Réinitialisation impossible. Réessayez.';}};
-async function refresh(){try{const r=await fetch('/api/stats',{cache:'no-store'});if(!r.ok)throw Error();const s=await r.json();
+addEventListener('resize',placeThumb);document.fonts?.ready.then(placeThumb);placeThumb();
+document.getElementById('resetBtn').onclick=async()=>{if(!confirm('Effacer les réponses et les plans de la salle ?'))return;try{const r=await fetch('/api/reset',{method:'POST'});if(!r.ok)throw Error();location.href='/';}catch{showError('Réinitialisation impossible. Réessayez.');}};
+function showError(t){const e=document.getElementById('countError');e.textContent=t;e.hidden=!t;}
+
+// Distribution : barres construites une fois, hauteurs animées à chaque mise à jour
+const dist=document.getElementById('distribution');
+dist.innerHTML=[...'ABCDEFG'].map(g=>`<div class="dist-col"><div class="dist-bars">${[0,1,2].map(i=>`<span class="s${i}" data-g="${g}" data-i="${i}" data-n="0" style="height:0%"></span>`).join('')}</div>${badge(g)}</div>`).join('');
+let distCounts=null;
+function animateDist(replay){
+  if(!distCounts)return;const max=Math.max(1,...distCounts.flat());
+  dist.querySelectorAll('.dist-bars span').forEach(el=>{const n=distCounts['ABCDEFG'.indexOf(el.dataset.g)][el.dataset.i];el.dataset.n=n;const h=n/max*100+'%';
+    if(UI.on)anime.animate(el,{height:replay?['0%',h]:h,duration:replay?900:600,delay:replay?(+el.dataset.i*60+'ABCDEFG'.indexOf(el.dataset.g)*50):0,ease:'out(3)'});else el.style.height=h;});
+}
+const tip=document.getElementById('tip');
+dist.addEventListener('pointermove',e=>{const el=e.target.closest('.dist-bars span');if(!el){tip.style.opacity=0;return;}tip.textContent=`Classe ${el.dataset.g} · ${STAGES[el.dataset.i]} : ${el.dataset.n} participant${el.dataset.n>1?'s':''}`;tip.style.left=Math.min(innerWidth-220,e.clientX+14)+'px';tip.style.top=(e.clientY-40)+'px';tip.style.opacity=1;});
+dist.addEventListener('pointerleave',()=>tip.style.opacity=0);
+
+// Mur : une case par participant, seules les nouvelles cases apparaissent en animation
+const tiles=new Map();
+function renderWall(profiles){
+  const grid=document.getElementById('profileGrid');
+  if(!profiles.length){tiles.clear();grid.innerHTML='<p class="empty">Les profils apparaîtront après les premières réponses.</p>';return;}
+  grid.querySelector('.empty')?.remove();
+  const fresh=[];
+  for(const p of profiles){let el=tiles.get(p.number);if(!el){el=document.createElement('article');el.className='wall-tile';tiles.set(p.number,el);grid.appendChild(el);fresh.push(el);}
+    const html=`<small>Participant ${p.number}</small>${p.grade?`<span class="grade-path">${badge(p.grade)}<span class="arrow">→</span>${badge(p.lowGrade)}<span class="arrow">→</span>${badge(p.planGrade)}</span><p>${p.validated?'✓ Plan validé':'Choix en cours'}${p.complete?'':' · incomplet'}</p>`:'<p>En attente</p>'}`;
+    if(el._html!==html){const wasValidated=el.classList.contains('done');el.innerHTML=html;el._html=html;el.classList.toggle('done',p.validated);if(p.validated&&!wasValidated&&!fresh.includes(el))UI.bump(el, 1.08);}}
+  UI.pop(fresh.slice(0,60),{stagger:25});
+}
+
+async function refresh(){try{const r=await fetch('/api/stats',{cache:'no-store'});if(!r.ok)throw Error();const s=await r.json();showError('');
 document.getElementById('count').textContent=`${s.connected} participants · ${s.count} profils · ${s.validatedCount} plans validés`;
-document.getElementById('distribution').innerHTML=[...'ABCDEFG'].map(g=>`<span class="grade grade-${g}">${g} · ${s.gradeCounts[g]} → ${s.lowGradeCounts[g]} → ${s.planGradeCounts[g]}</span>`).join('');
-document.getElementById('profileGrid').innerHTML=s.profiles.length?s.profiles.map(p=>`<article class="wall-tile"><small>Participant ${p.number}</small>${p.grade?`${badge(p.grade)} → ${badge(p.lowGrade)} → ${badge(p.planGrade)}<p>${p.validated?'Plan validé':'Choix en cours'}${p.complete?'':' · incomplet'}</p>`:'<p>En attente</p>'}</article>`).join(''):'<p class="empty">Les profils apparaîtront après les premières réponses.</p>';
-document.getElementById('investment').textContent=s.validatedCount?range(s.investmentMin,s.investmentMax):'—';document.getElementById('annual').textContent=s.validatedCount?money(s.eurosSeason):'—';document.getElementById('netTen').textContent=s.validatedCount?range(s.netTenMin,s.netTenMax):'—';document.getElementById('energy').textContent=s.validatedCount?Math.round(s.kwhSaved).toLocaleString('fr-FR')+' kWh':'—';document.getElementById('improved').textContent=s.profiles.filter(p=>p.validated&&p.planGrade<p.grade).length+' / '+s.validatedCount;
-const box=document.getElementById('actions');box.replaceChildren();for(const [id,n] of Object.entries(s.gestureCounts).sort((a,b)=>b[1]-a[1]).slice(0,4)){const p=document.createElement('p');p.className='muted';p.textContent=`${SOLUTIONS.find(s=>s.id===id)?.label || id} : ${n}`;box.appendChild(p);}if(!box.children.length)box.textContent='En attente des choix.';
-}catch{document.getElementById('count').textContent='Connexion interrompue : les dernières valeurs peuvent être anciennes. Nouvelle tentative automatique…';}}
+const int=([v])=>Math.round(v);
+UI.tween(document.getElementById('cConnected'),s.connected,int,600);UI.tween(document.getElementById('cProfiles'),s.count,int,600);UI.tween(document.getElementById('cValidated'),s.validatedCount,int,600);
+const first=!distCounts;distCounts=[...'ABCDEFG'].map(g=>[s.gradeCounts[g],s.lowGradeCounts[g],s.planGradeCounts[g]]);animateDist(first);
+document.getElementById('distTable').innerHTML=`<tr><th>Classe</th>${STAGES.map(t=>`<th>${t}</th>`).join('')}</tr>`+[...'ABCDEFG'].map((g,i)=>`<tr><th>${g}</th>${distCounts[i].map(n=>`<td>${n}</td>`).join('')}</tr>`).join('');
+renderWall(s.profiles);
+const v=s.validatedCount;
+const setOr=(id,vals,fmt)=>{const el=document.getElementById(id);if(!v){el._twTarget=null;el._twCur=null;el.textContent='—';return;}UI.tween(el,vals,fmt,1100);};
+setOr('investment',[s.investmentMin,s.investmentMax],([a,b])=>range(a,b));
+setOr('annual',[s.eurosSeason],([a])=>money(a));
+setOr('netTen',[s.netTenMin,s.netTenMax],([a,b])=>range(a,b));
+setOr('energy',[Math.round(s.kwhSaved)],([a])=>Math.round(a).toLocaleString('fr-FR')+' kWh');
+document.getElementById('improved').textContent=s.profiles.filter(p=>p.validated&&p.planGrade<p.grade).length+' / '+s.validatedCount;
+const top=Object.entries(s.gestureCounts).sort((a,b)=>b[1]-a[1]).slice(0,4),maxN=Math.max(1,...top.map(t=>t[1]));
+const box=document.getElementById('actions');box.replaceChildren();
+for(const [id,n] of top){const p=document.createElement('p');p.className='muted';const bar=document.createElement('span');bar.className='bar-fill';bar.style.width=Math.round(n/maxN*60)+'px';const lbl=document.createElement('span');lbl.className='lbl';lbl.textContent=SOLUTIONS.find(s=>s.id===id)?.label || id;const b=document.createElement('b');b.textContent=n;p.append(lbl,bar,b);box.appendChild(p);}
+if(!box.children.length)box.textContent='En attente des choix.';
+}catch{showError('Connexion interrompue : les dernières valeurs peuvent être anciennes. Nouvelle tentative automatique…');}}
+UI.enter('header, .bar, #profilesPanel > .card',{y:20,stagger:80});
 refresh();setInterval(refresh,2000);
 </script></body></html>

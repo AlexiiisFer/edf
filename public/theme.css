@@ -1,4 +1,5 @@
-/* Météo de mon logement — bases communes */
+/* Météo de mon logement — système visuel commun
+   Ambiance « bulletin météo de canicule » : nuit bleue, soleil, gradient de chaleur. */
 @font-face {
   font-family: "Bricolage";
   src: url("/fonts/bricolage.woff2") format("woff2");
@@ -8,56 +9,88 @@
 }
 
 :root {
-  --nuit: #132a4a;      /* ombre profonde : fond de l'écran */
-  --ombre: #1d3b62;     /* surfaces sur fond nuit */
-  --ombre-2: #284b77;
+  --nuit: #0f2342;
+  --nuit-2: #142d52;
+  --ombre: #1b3a63;
+  --ombre-2: #2a4c7a;
+  --verre: rgba(255, 255, 255, .06);
+  --verre-bord: rgba(255, 255, 255, .12);
   --soleil: #ffc845;
+  --soleil-2: #ffd978;
   --chaleur: #ff6a3d;
   --fraicheur: #8fe3f0;
+  --fraicheur-2: #4fb8cc;
   --craie: #f5f8fb;
-  --brume: #a9bdd3;     /* texte secondaire sur nuit */
-  --encre: #132a4a;     /* texte sur fond clair */
-  --gris: #5b6f86;
-  --ligne: #dfe7f0;
+  --brume: #a9bdd3;
+  --encre: #132a4a;
+  --gris: #586c84;
+  --ligne: #e1e8f0;
+  --papier: #ffffff;
+  --bon: #2f8f6a;
+  --alerte: #c2481f;
   --chaleur-band: linear-gradient(90deg, var(--chaleur), var(--soleil) 48%, var(--fraicheur));
   --font: "Bricolage", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --r: 18px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
-body { font-family: var(--font); font-variation-settings: "opsz" 24; }
+body { font-family: var(--font); font-variation-settings: "opsz" 24; -webkit-font-smoothing: antialiased; }
 button { font: inherit; color: inherit; }
-:focus-visible { outline: 3px solid var(--soleil); outline-offset: 3px; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid var(--soleil); outline-offset: 3px; border-radius: 6px; }
 .num { font-variant-numeric: tabular-nums; font-variation-settings: "opsz" 96, "wdth" 92; letter-spacing: -0.01em; }
+.display { font-weight: 740; font-variation-settings: "opsz" 96, "wdth" 96; letter-spacing: -0.015em; word-spacing: .06em; line-height: 1; }
+.kicker { font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Le soleil de la marque */
 .sun { width: 1em; height: 1em; border-radius: 50%; background: var(--soleil); display: inline-block; box-shadow: 0 0 0 .14em rgba(255, 200, 69, .25); flex-shrink: 0; }
+
+/* Ciel animé des écrans projetés */
+.sky { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: radial-gradient(120% 90% at 85% -10%, #24497a 0%, var(--nuit) 55%, #0a1a33 100%); }
+.sky::before, .sky::after { content: ""; position: absolute; border-radius: 50%; filter: blur(60px); opacity: .55; }
+.sky::before { width: 46vw; height: 46vw; right: -12vw; top: -18vw; background: radial-gradient(circle, rgba(255, 200, 69, .55), rgba(255, 106, 61, .18) 55%, transparent 70%); animation: glow 9s ease-in-out infinite alternate; }
+.sky::after { width: 40vw; height: 40vw; left: -14vw; bottom: -20vw; background: radial-gradient(circle, rgba(143, 227, 240, .35), transparent 65%); animation: glow 12s ease-in-out infinite alternate-reverse; }
+.sky .grain { position: absolute; inset: 0; opacity: .05; background-image: radial-gradient(rgba(255,255,255,.9) 1px, transparent 1px); background-size: 3px 3px; }
+@keyframes glow { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-3vw, 2vw, 0) scale(1.08); } }
+
+/* Logo */
+.edf-logo { width: 76px; height: auto; flex-shrink: 0; background: #fff; padding: 8px 10px; border-radius: 10px; box-shadow: 0 6px 20px rgba(0, 0, 0, .12); }
+
+/* Boutons communs */
+.btn { border: 0; cursor: pointer; border-radius: 999px; font-weight: 700; transition: transform .2s var(--ease), background .2s, box-shadow .2s, color .2s, border-color .2s; }
+.btn:active { transform: scale(.97); }
+.btn:disabled { opacity: .55; cursor: wait; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
 
 /* Échelle de confort pédagogique, distincte d'un DPE. */
-.grade-scale { display:flex; gap:6px; margin:16px 0; }
-.grade { display:inline-flex; align-items:center; justify-content:center; border-radius:8px; padding:8px 10px; font-weight:800; color:#102a35; }
-.grade-A { background:#70c9a0; } .grade-B { background:#a6d988; }
-.grade-C { background:#d4e77f; } .grade-D { background:#ffe078; }
-.grade-E { background:#ffb875; } .grade-F { background:#ff947a; } .grade-G { background:#f77882; }
-.grade.selected { outline:3px solid currentColor; outline-offset:2px; }
-.profile-wall { position:fixed; inset:0; background:var(--nuit); z-index:5; padding:3vh 4vw; display:flex; flex-direction:column; gap:2vh; overflow:auto; }
-.profile-wall[hidden] { display:none; }
-.wall-head { display:flex; align-items:center; justify-content:space-between; gap:20px; }
-.wall-head h1 { font-size:clamp(22px,2.8vw,48px); }
-.wall-note { color:var(--brume); font-size:clamp(12px,1.1vw,20px); }
-.wall-distribution { display:flex; gap:1vw; flex-wrap:wrap; }
-.wall-grid { display:grid; grid-template-columns:repeat(10,minmax(0,1fr)); gap:8px; flex:1; align-content:start; }
-.wall-tile { padding:5px 6px; border:1px solid var(--ombre-2); border-radius:12px; text-align:center; background:var(--ombre); }
-.wall-tile small { display:block; color:var(--brume); font-size:12px; margin-bottom:5px; }
-.wall-tile .grade { padding:3px 9px; font-size:18px; }
-.wall-tile p { margin-top:4px; font-size:11px; color:var(--brume); }
-@media(max-width:700px) { .wall-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } .wall-head { flex-wrap:wrap; } }
+.grade-scale { display: flex; gap: 6px; margin: 16px 0; }
+.grade { display: inline-flex; align-items: center; justify-content: center; min-width: 2em; border-radius: 9px; padding: 7px 10px; font-weight: 800; color: #102a35; line-height: 1; font-variant-numeric: tabular-nums; }
+.grade-A { background: #70c9a0; } .grade-B { background: #a6d988; }
+.grade-C { background: #d4e77f; } .grade-D { background: #ffe078; }
+.grade-E { background: #ffb875; } .grade-F { background: #ff947a; } .grade-G { background: #f77882; }
+.grade.selected { outline: 3px solid currentColor; outline-offset: 2px; transform: scale(1.12); }
+.grade-scale .grade:not(.selected) { opacity: .5; }
+.grade-path { display: inline-flex; align-items: center; gap: 6px; }
+.grade-path .arrow { opacity: .55; font-weight: 700; }
 
-.solutions { padding-left:20px; margin:12px 0; line-height:1.5; }
-.solutions li + li { margin-top:12px; }
+/* Mur des profils (écran stats) */
+.wall-grid { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 8px; align-content: start; }
+.wall-tile { padding: 8px 6px 7px; border: 1px solid var(--verre-bord); border-radius: 14px; text-align: center; background: var(--verre); backdrop-filter: blur(6px); }
+.wall-tile small { display: block; color: var(--brume); font-size: 11px; margin-bottom: 6px; letter-spacing: .04em; }
+.wall-tile .grade { padding: 4px 6px; font-size: 15px; min-width: 1.6em; border-radius: 6px; }
+.wall-tile p { margin-top: 6px; font-size: 11px; color: var(--brume); }
+.wall-tile.done { border-color: rgba(143, 227, 240, .4); }
+.wall-tile.done p { color: var(--fraicheur); }
+@media (max-width: 700px) { .wall-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
-.edf-logo { width:76px; height:auto; flex-shrink:0; background:#fff; padding:8px; border-radius:8px; }
+.solutions { padding-left: 20px; margin: 12px 0; line-height: 1.5; }
+.solutions li + li { margin-top: 12px; }
+.wall-tile .grade-path { display: flex; justify-content: center; gap: 2px; flex-wrap: nowrap; }
+.wall-tile .grade-path .grade { font-size: 12px; padding: 3px 4px; min-width: 1.45em; }
+.wall-tile .grade-path .arrow { font-size: 10px; }

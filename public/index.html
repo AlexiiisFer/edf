@@ -8,74 +8,101 @@
 <link rel="stylesheet" href="/theme.css">
 <style>
   body { background: var(--nuit); color: var(--craie); height: 100vh; overflow: hidden; }
-  .view { display: none; height: 100vh; padding: 5vh 5vw; }
+  .view { display: none; height: 100vh; padding: 4.5vh 4.5vw; }
   .view.active { display: grid; }
-  .brand { display: flex; align-items: center; gap: .6em; font-size: 1.5vw; font-weight: 600; color: var(--brume); }
-  .btn { border: 0; cursor: pointer; border-radius: 99px; font-weight: 700; }
-  .btn-go { background: var(--soleil); color: var(--nuit); font-size: 1.7vw; padding: 1.4vh 2.6vw; }
-  .btn-go:hover { background: #ffd56e; }
-  .btn-quiet { background: none; color: var(--brume); font-size: 1.05vw; padding: 1vh 1.2vw; border: 1px solid var(--ombre-2); }
+  .brand { display: flex; align-items: center; gap: 1vw; font-size: 1.25vw; font-weight: 600; color: var(--brume); }
+  .brand .edf-logo { width: 6vw; min-width: 64px; }
+  .brand .tag { display: inline-flex; align-items: center; gap: .6em; padding: .45em .9em; border: 1px solid var(--verre-bord); border-radius: 999px; background: var(--verre); }
+  .brand .tag .sun { width: .8em; height: .8em; }
+  .btn-go { background: var(--soleil); color: var(--nuit); font-size: 1.6vw; padding: 1.5vh 2.8vw; box-shadow: 0 0 0 0 rgba(255,200,69,.5), 0 10px 30px rgba(255,200,69,.25); animation: pulse 2.6s ease-out infinite; }
+  .btn-go:hover { background: var(--soleil-2); transform: translateY(-2px); }
+  .btn-quiet { background: var(--verre); color: var(--brume); font-size: 1vw; padding: 1.1vh 1.4vw; border: 1px solid var(--verre-bord); }
   .btn-quiet:hover { color: var(--craie); border-color: var(--brume); }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,200,69,.45), 0 10px 30px rgba(255,200,69,.25); } 70%,100% { box-shadow: 0 0 0 1.4vw rgba(255,200,69,0), 0 10px 30px rgba(255,200,69,.25); } }
 
   /* ---------- Lobby ---------- */
-  #v-lobby { grid-template-columns: 1fr auto; grid-template-rows: auto 1fr auto; column-gap: 6vw; }
+  #v-lobby { grid-template-columns: 1fr auto; grid-template-rows: auto 1fr auto; column-gap: 5vw; }
   #v-lobby .brand { grid-column: 1 / -1; }
-  .pitch { align-self: center; max-width: 44vw; }
-  .pitch h1 { font-size: 5.4vw; line-height: .98; font-weight: 750; font-variation-settings: "opsz" 96, "wdth" 94; letter-spacing: -0.02em; }
-  .pitch p { margin-top: 3.5vh; font-size: 1.7vw; line-height: 1.45; color: var(--brume); max-width: 34vw; }
-  .steps { margin-top: 5vh; display: grid; gap: 1.6vh; list-style: none; counter-reset: s; }
-  .steps li { counter-increment: s; display: flex; align-items: baseline; gap: 1.2vw; font-size: 1.5vw; }
-  .steps li::before { content: counter(s); font-weight: 750; color: var(--soleil); width: 1.2em; font-variant-numeric: tabular-nums; }
-  .qr { align-self: center; justify-self: end; text-align: center; }
-  .qr-card { background: #fff; border-radius: 2.4vh; padding: 2.6vh; width: 54vh; height: 54vh; }
+  .pitch { align-self: center; max-width: 50vw; }
+  .pitch .kicker { color: var(--soleil); font-size: 1vw; margin-bottom: 2.4vh; display: block; }
+  .pitch h1 { font-size: 5.6vw; }
+  .pitch h1 .hot { font-style: normal; background: var(--chaleur-band); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .pitch p { margin-top: 3vh; font-size: 1.55vw; line-height: 1.45; color: var(--brume); max-width: 40vw; }
+  .steps { margin-top: 5vh; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1vw; list-style: none; counter-reset: s; max-width: 48vw; }
+  .steps li { counter-increment: s; padding: 2vh 1.2vw; border-radius: 1.2vw; background: var(--verre); border: 1px solid var(--verre-bord); font-size: 1.2vw; line-height: 1.3; }
+  .steps li::before { content: "0" counter(s); display: block; margin-bottom: 1vh; font-weight: 760; font-size: 1.9vw; color: var(--soleil); font-variant-numeric: tabular-nums; }
+
+  .qr { align-self: center; justify-self: end; text-align: center; position: relative; }
+  .qr-halo { position: absolute; left: 50%; top: 50%; width: 76vh; height: 76vh; margin: -38vh 0 0 -38vh; z-index: -1; pointer-events: none; animation: spin 80s linear infinite; }
+  .qr-halo line { stroke: var(--soleil); stroke-width: 3; stroke-linecap: round; opacity: .45; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .qr-card { background: #fff; border-radius: 3vh; padding: 2.4vh; width: 54vh; height: 54vh; box-shadow: 0 0 0 1vh rgba(255,200,69,.18), 0 30px 80px rgba(0,0,0,.45); }
   .qr-card img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-  .qr-url { margin-top: 2.4vh; font-size: 1.1vw; color: var(--brume); }
-  .lobby-bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 2vw; border-top: 1px solid var(--ombre-2); padding-top: 3vh; }
-  .room { font-size: 1.6vw; color: var(--brume); white-space: nowrap; }
-  .room b { font-size: 3.2vw; color: var(--craie); margin-right: .25em; vertical-align: -0.12em; }
-  .dots { flex: 1; display: flex; flex-wrap: wrap; gap: .5vw; max-height: 2.6vw; overflow: hidden; align-items: center; }
-  .dot { width: 1.1vw; height: 1.1vw; border-radius: 50%; background: var(--soleil); animation: pop .5s cubic-bezier(.2, 1.7, .4, 1); }
-  .dot:nth-child(3n+2) { background: var(--fraicheur); } .dot:nth-child(3n) { background: var(--chaleur); }
-  @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+  .qr-url { margin-top: 2.6vh; font-size: 1.15vw; color: var(--craie); font-weight: 600; letter-spacing: .02em; padding: .5em 1em; border-radius: 999px; background: var(--verre); border: 1px solid var(--verre-bord); display: inline-block; }
+
+  .lobby-bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 2vw; padding: 2vh 1.6vw; border-radius: 2vw; background: var(--verre); border: 1px solid var(--verre-bord); backdrop-filter: blur(8px); }
+  .room { font-size: 1.4vw; color: var(--brume); white-space: nowrap; display: flex; align-items: baseline; gap: .4em; }
+  .room b { font-size: 3.2vw; color: var(--craie); line-height: 1; }
+  .dots { flex: 1; display: flex; flex-wrap: wrap; gap: .45vw; max-height: 2.4vw; overflow: hidden; align-items: center; }
+  .dot { width: 1vw; height: 1vw; border-radius: 50%; background: var(--soleil); box-shadow: 0 0 .8vw rgba(255,200,69,.5); }
+  .dot:nth-child(3n+2) { background: var(--fraicheur); box-shadow: 0 0 .8vw rgba(143,227,240,.5); } .dot:nth-child(3n) { background: var(--chaleur); box-shadow: 0 0 .8vw rgba(255,106,61,.5); }
 
   /* ---------- Question ---------- */
-  #v-question { grid-template-columns: 1fr 8vw; grid-template-rows: auto 1fr auto; column-gap: 5vw; }
-  .q-count { font-size: 1.5vw; color: var(--brume); font-weight: 600; }
+  #v-question { grid-template-columns: 1fr 9vw; grid-template-rows: auto 1fr auto; column-gap: 4vw; }
+  .q-head { display: flex; align-items: center; gap: 2vw; }
+  .q-count { font-size: 1.35vw; color: var(--brume); font-weight: 600; white-space: nowrap; }
   .q-count b { color: var(--soleil); }
+  .q-steps { display: flex; gap: .5vw; }
+  .q-steps i { width: 3.4vw; height: .7vh; border-radius: 99px; background: var(--ombre-2); transition: background .4s; }
+  .q-steps i.done { background: var(--fraicheur); } .q-steps i.now { background: var(--soleil); }
   .q-main { align-self: center; }
-  .q-title { font-size: 4.6vw; line-height: 1.02; font-weight: 750; font-variation-settings: "opsz" 96, "wdth" 94; letter-spacing: -0.015em; max-width: 70vw; }
-  .q-opts { margin-top: 6vh; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.4vw; max-width: 72vw; }
-  .q-opt { display: flex; align-items: center; gap: 1.4vw; padding: 2.6vh 2vw; background: var(--ombre); border-radius: 1.2vw; font-size: 2vw; font-weight: 600; }
-  .q-opt .e { font-size: 2.6vw; }
+  .q-title { font-size: 4.6vw; max-width: 72vw; }
+  .q-opts { margin-top: 5.5vh; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.3vw; max-width: 74vw; }
+  .q-opt { display: flex; align-items: center; gap: 1.4vw; padding: 2.4vh 1.6vw; background: var(--verre); border: 1px solid var(--verre-bord); border-radius: 1.4vw; font-size: 1.9vw; font-weight: 600; backdrop-filter: blur(8px); }
+  .q-opt .e { font-size: 2.4vw; width: 4.4vw; height: 4.4vw; flex-shrink: 0; display: grid; place-items: center; border-radius: 1vw; background: rgba(255,255,255,.08); }
   .q-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: 2vw; }
-  .answers { font-size: 1.6vw; color: var(--brume); white-space: nowrap; } .answers b { color: var(--craie); font-size: 2.4vw; }
-  .track { flex: 1; height: .9vh; border-radius: 99px; background: var(--ombre); overflow: hidden; }
-  .track div { height: 100%; width: 0; background: var(--fraicheur); border-radius: 99px; transition: width .5s ease; }
+  .answers { font-size: 1.45vw; color: var(--brume); white-space: nowrap; } .answers b { color: var(--craie); font-size: 2.4vw; }
+  .track { flex: 1; height: 1vh; border-radius: 99px; background: var(--ombre); overflow: hidden; }
+  .track div { height: 100%; width: 0; background: linear-gradient(90deg, var(--fraicheur-2), var(--fraicheur)); border-radius: 99px; transition: width .6s var(--ease); }
 
   /* Le chrono-thermomètre */
-  .thermo { grid-row: 1 / 3; grid-column: 2; align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 2vh; }
-  .thermo .sec { font-size: 4vw; font-weight: 750; line-height: 1; }
-  .tube { flex: 1; width: 2.6vw; border-radius: 99px; background: var(--ombre); position: relative; overflow: hidden; }
-  .mercury { position: absolute; left: 0; right: 0; bottom: 0; height: 100%; border-radius: 99px; background: linear-gradient(0deg, var(--chaleur), var(--soleil) 55%, var(--fraicheur)); background-size: 100% 100vh; background-position: bottom; }
-  .bulb { width: 5.2vw; height: 5.2vw; border-radius: 50%; background: var(--chaleur); margin-top: -2.6vh; transition: background .3s; }
+  .thermo { grid-row: 1 / 3; grid-column: 2; align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 2vh; padding: 2vh 0; }
+  .thermo .sec { font-size: 4vw; font-weight: 760; line-height: 1; transition: color .3s; }
+  .thermo .unit { font-size: .9vw; color: var(--brume); margin-top: -1.4vh; letter-spacing: .1em; text-transform: uppercase; }
+  .tube { flex: 1; width: 2.4vw; border-radius: 99px; background: var(--ombre); position: relative; overflow: hidden; box-shadow: inset 0 0 0 2px var(--verre-bord); }
+  .mercury { position: absolute; left: 4px; right: 4px; bottom: 4px; height: 100%; max-height: calc(100% - 8px); border-radius: 99px; background: linear-gradient(0deg, var(--chaleur), var(--soleil) 55%, var(--fraicheur)); background-size: 100% 80vh; background-position: bottom; }
+  .bulb { width: 5vw; height: 5vw; border-radius: 50%; background: var(--chaleur); margin-top: -2.6vh; box-shadow: 0 0 3vw rgba(255,106,61,.55); }
   .thermo.low .sec { color: var(--chaleur); }
+  .thermo.low .bulb { animation: beat .8s ease-in-out infinite; }
+  @keyframes beat { 50% { transform: scale(1.1); } }
 
   /* ---------- Résultat individuel ---------- */
-  #v-result { place-content: center; justify-items: start; max-width: 70vw; margin: 0 auto; }
-  #v-result h1 { font-size: 5vw; line-height: 1; font-weight: 750; font-variation-settings: "opsz" 96, "wdth" 94; letter-spacing: -0.02em; }
-  #v-result p { margin-top: 3vh; font-size: 1.9vw; color: var(--brume); line-height: 1.4; max-width: 50vw; }
-  .band { margin-top: 6vh; width: 60vw; height: 1.2vh; border-radius: 99px; background: var(--chaleur-band); }
-  .result-foot { margin-top: 4vh; display: flex; align-items: center; gap: 2vw; flex-wrap: wrap; font-size: 1.5vw; color: var(--brume); }
-  .result-foot b { color: var(--craie); font-size: 2.6vw; }
+  #v-result { grid-template-columns: auto 1fr; grid-template-rows: auto 1fr; column-gap: 6vw; }
+  #v-result .brand { grid-column: 1 / -1; }
+  .phone { align-self: center; width: 22vw; }
+  .phone path, .phone rect { fill: none; stroke: var(--soleil); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .phone .soft { stroke: var(--fraicheur); }
+  .result-copy { align-self: center; max-width: 52vw; }
+  .result-copy .kicker { color: var(--fraicheur); font-size: 1vw; display: block; margin-bottom: 2.4vh; }
+  .result-copy h1 { font-size: 5.4vw; }
+  .result-copy p { margin-top: 3vh; font-size: 1.6vw; color: var(--brume); line-height: 1.45; }
+  .flow { margin-top: 4vh; display: flex; align-items: center; gap: .8vw; flex-wrap: wrap; font-size: 1.15vw; }
+  .flow span { padding: .5em 1em; border-radius: 999px; background: var(--verre); border: 1px solid var(--verre-bord); }
+  .flow i { font-style: normal; color: var(--soleil); }
+  .band { margin-top: 5vh; height: 1vh; border-radius: 99px; background: var(--chaleur-band); transform-origin: left; }
+  .result-foot { margin-top: 4vh; display: flex; align-items: center; gap: 2.4vw; flex-wrap: wrap; font-size: 1.45vw; color: var(--brume); }
+  .result-foot b { color: var(--craie); font-size: 3.4vw; vertical-align: -.12em; }
 </style>
 </head>
 <body>
+<div class="sky" aria-hidden="true"><div class="grain"></div></div>
 
 <!-- LOBBY -->
 <section class="view active" id="v-lobby">
-  <div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span>Météo de mon logement · défi confort d’été</span></div>
+  <div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Météo de mon logement · défi confort d’été</span></div>
   <div class="pitch">
-    <h1>Votre logement est-il prêt pour la canicule&nbsp;?</h1>
+    <span class="kicker">Alerte canicule · simulation en direct</span>
+    <h1 class="display" id="lobbyTitle">Votre logement est-il prêt pour la canicule&nbsp;?</h1>
     <p>Découvrez votre profil confort d’été de A à G, puis le bilan collectif de la salle. Simulation ludique, pas un DPE réglementaire.</p>
     <ol class="steps">
       <li>Scannez le QR code</li>
@@ -84,6 +111,7 @@
     </ol>
   </div>
   <div class="qr">
+    <svg class="qr-halo" viewBox="-100 -100 200 200" aria-hidden="true" id="halo"></svg>
     <div class="qr-card"><img id="qr" alt="QR code pour rejoindre la session"></div>
     <div class="qr-url" id="url"></div>
   </div>
@@ -97,13 +125,14 @@
 
 <!-- QUESTION -->
 <section class="view" id="v-question">
-  <div class="q-count" id="qNum">Question <b>1</b> sur 5</div>
+  <div class="q-head"><div class="q-count" id="qNum">Question <b>1</b> sur 5</div><div class="q-steps" id="qSteps" aria-hidden="true"></div></div>
   <div class="q-main">
-    <div class="q-title" id="qTitle"></div>
+    <div class="q-title display" id="qTitle"></div>
     <div class="q-opts" id="qOpts"></div>
   </div>
   <div class="thermo" id="thermo" aria-label="Temps restant">
     <div class="sec num" id="qSec">15</div>
+    <div class="unit">secondes</div>
     <div class="tube"><div class="mercury" id="mercury"></div></div>
     <div class="bulb"></div>
   </div>
@@ -116,16 +145,29 @@
 
 <!-- RÉSULTATS INDIVIDUELS -->
 <section class="view" id="v-result">
-  <h1>Regardez votre téléphone.</h1>
-  <p>Chacun reçoit sa fiche confort d’été, sa classe de A à G et ses choix low tech et high tech et le coût estimé de son plan. Ensuite, les profils de tous les participants apparaîtront ici.</p>
-  <div class="band"></div>
-  <div class="result-foot">
-    <span><b class="num" id="rEng">0</b> plans validés sur <span id="rTot">0</span></span>
-    <span>Profil → low tech → high tech → bilan financier</span>
-    <button class="btn btn-quiet" onclick="api('next')">Afficher maintenant</button>
+  <div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span class="tag"><span class="sun"></span>Météo de mon logement · défi confort d’été</span></div>
+  <svg class="phone" viewBox="0 0 120 220" aria-hidden="true">
+    <rect x="10" y="6" width="100" height="208" rx="18"/>
+    <path d="M48 20 H72"/>
+    <path class="soft" d="M28 60 H92 M28 80 H78 M28 100 H86"/>
+    <path d="M28 140 h14 v20 h-14 z M52 140 h14 v20 h-14 z M76 140 h14 v20 h-14 z"/>
+    <path class="soft" d="M40 188 H80"/>
+  </svg>
+  <div class="result-copy">
+    <span class="kicker">À vous de jouer</span>
+    <h1 class="display">Regardez votre téléphone.</h1>
+    <p>Chacun reçoit sa fiche confort d’été, sa classe de A à G, ses choix low tech et high tech et le coût estimé de son plan. Ensuite, les profils de tous les participants apparaîtront ici.</p>
+    <div class="flow"><span>Profil</span><i>→</i><span>Low tech</span><i>→</i><span>High tech</span><i>→</i><span>Bilan financier</span></div>
+    <div class="band" id="band"></div>
+    <div class="result-foot">
+      <span><b class="num" id="rEng">0</b> plans validés sur <span id="rTot">0</span></span>
+      <button class="btn btn-quiet" onclick="api('next')">Afficher maintenant</button>
+    </div>
   </div>
 </section>
 
+<script src="/vendor/anime.umd.min.js"></script>
+<script src="/ui.js"></script>
 <script src="/qrcode.js"></script>
 <script src="/questions.js"></script>
 <script>
@@ -134,11 +176,25 @@ const qr = qrcode(0, "M"); qr.addData(joinUrl); qr.make();
 document.getElementById("qr").src = qr.createDataURL(10, 2);
 document.getElementById("url").textContent = joinUrl.replace(/^https?:\/\//, "");
 
+// Rayons de soleil autour du QR code
+document.getElementById("halo").innerHTML = Array.from({ length: 24 }, (_, i) => {
+  const a = i / 24 * Math.PI * 2, r1 = 78, r2 = i % 2 ? 88 : 96;
+  return `<line x1="${(Math.cos(a) * r1).toFixed(1)}" y1="${(Math.sin(a) * r1).toFixed(1)}" x2="${(Math.cos(a) * r2).toFixed(1)}" y2="${(Math.sin(a) * r2).toFixed(1)}"/>`;
+}).join("");
+
 let view = "lobby", lastQ = -2, localEnd = 0, duration = 15000, dots = 0, lastSession = null;
 
 function show(v) {
   if (view === v) return; view = v;
   document.querySelectorAll(".view").forEach(s => s.classList.toggle("active", s.id === "v-" + v));
+  const el = document.getElementById("v-" + v);
+  if (v === "result") {
+    UI.draw("#v-result .phone path, #v-result .phone rect", { duration: 1600 });
+    UI.enter("#v-result .result-copy > *", { y: 26, stagger: 90, delay: 200 });
+    if (UI.on) anime.animate("#band", { scaleX: [0, 1], duration: 1400, delay: 700, ease: "inOut(3)" });
+  } else if (v === "lobby") {
+    UI.reveal(el.querySelector(".pitch"));
+  }
 }
 async function api(action) {
   if (action === "reset" && !confirm("Remettre la session à zéro ? Les participants devront rescanner.")) return;
@@ -148,10 +204,12 @@ async function api(action) {
 function render(d) {
   if (d.sessionId !== lastSession) { lastSession = d.sessionId; dots = 0; document.getElementById("players").innerHTML = ""; }
   if (d.phase === "lobby") {
-    document.getElementById("count").textContent = d.connected;
+    UI.tween(document.getElementById("count"), d.connected, ([v]) => Math.round(v), 500);
     const box = document.getElementById("players");
     if (!d.connected) { box.innerHTML = ""; dots = 0; }
-    while (dots < d.connected) { const el = document.createElement("span"); el.className = "dot"; box.prepend(el); dots++; }
+    const added = [];
+    while (dots < d.connected) { const el = document.createElement("span"); el.className = "dot"; box.prepend(el); added.push(el); dots++; }
+    UI.pop(added.slice(0, 40), { stagger: 30 });
     show("lobby");
   } else if (d.phase === "question") {
     localEnd = Date.now() + d.remaining; duration = d.duration;
@@ -159,8 +217,13 @@ function render(d) {
       lastQ = d.q;
       const q = QUESTIONS[d.q];
       document.getElementById("qNum").innerHTML = `Question <b>${d.q + 1}</b> sur ${d.total}`;
-      document.getElementById("qTitle").textContent = q.title;
+      document.getElementById("qSteps").innerHTML = Array.from({ length: d.total }, (_, i) => `<i class="${i < d.q ? "done" : i === d.q ? "now" : ""}"></i>`).join("");
+      const title = document.getElementById("qTitle");
+      title.textContent = q.title;
       document.getElementById("qOpts").innerHTML = q.options.map(o => `<div class="q-opt"><span class="e">${o.e}</span>${o.label}</div>`).join("");
+      show("question");
+      UI.words(title, { y: 50 });
+      UI.enter("#qOpts .q-opt", { y: 30, stagger: 90, delay: 350 });
     }
     document.getElementById("qAns").textContent = d.answeredQ;
     document.getElementById("qTot").textContent = d.connected;
@@ -168,7 +231,7 @@ function render(d) {
     show("question");
   } else if (d.phase === "result") {
     localEnd = Date.now() + d.remaining;
-    document.getElementById("rEng").textContent = d.submitted;
+    UI.tween(document.getElementById("rEng"), d.submitted, ([v]) => Math.round(v), 600);
     document.getElementById("rTot").textContent = d.connected;
     show("result");
   } else if (d.phase === "stats") {
@@ -185,6 +248,11 @@ setInterval(() => {
     document.getElementById("thermo").classList.toggle("low", left < 5000);
   }
 }, 100);
+
+UI.words(document.getElementById("lobbyTitle"), { y: 50, delay: 150 });
+document.querySelectorAll("#lobbyTitle .w").forEach(w => { if (/canicule/.test(w.textContent)) w.classList.add("hot"); });
+UI.enter(".pitch > p, .steps li", { y: 24, stagger: 90, delay: 650 });
+UI.enter(".qr", { y: 0, x: 40, duration: 1000, delay: 300 });
 
 async function poll() { try { render(await (await fetch("/api/state", { cache: "no-store" })).json()); } catch (e) {} }
 poll(); setInterval(poll, 1000);
