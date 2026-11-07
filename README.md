@@ -5,14 +5,14 @@ Application Node.js >=18, sans dépendance externe. Démarrer avec `npm start`.
 | Page | Rôle |
 |---|---|
 | `/` | Écran projeté : QR code, puis déroulé de la démo en direct (étape, compte à rebours, avancement par thème, chiffres de la salle, plans validés) |
-| `/jouer` | 6 questions (région d’abord) → budget et temps (3 profils chacun) + solutions low tech et high tech proposées sur un seul écran → bilan → validation |
+| `/jouer` | 6 questions (région d’abord) → budget et temps (3 profils chacun) + solutions low tech et high tech proposées sur un seul écran → « Valider mon plan » (validation directe, sans récapitulatif) |
 | `/stats` | Bilan de la salle (classes avant / après, mur des participants) et onglet « Quand consommer ? » : clim H24 contre heures creuses |
 
 ## Interface
 
 Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en particulier) :
 
-- `public/theme.css` : thème commun (ciel animé, panneaux translucides, échelle A–G, mur des profils).
+- `public/theme.css` : thème commun aux couleurs EDF sur fond blanc (bleu `#07387A` et orange `#FF5E11` du logo), échelle A–G, mur des profils.
 - `public/ui.js` : petites chorégraphies Anime.js v4 (entrées en cascade, titres mot à mot, compteurs animés, tracés SVG, rebonds). Elles sont désactivées si « réduire les animations » est actif, et l’interface fonctionne sans elles.
 - `public/vendor/anime.umd.min.js` : Anime.js 4.2.2 (MIT, licence dans `public/vendor/ANIME-LICENSE.md`), servi en local pour fonctionner sans CDN.
 
@@ -21,7 +21,7 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 1. Ouvrir `/`, laisser les participants scanner, puis « Commencer ».
 2. Chacun répond aux 6 questions de la démo : 45 secondes au maximum (plus tôt si tout le monde a terminé, ou sur « Passer au bilan »). Un participant en retard peut finir ensuite. Pendant ce temps, l’écran affiche en direct l’avancement et des chiffres de la salle à commenter.
 3. Les statistiques s’affichent automatiquement **2 minutes après « Commencer »**, avec un compte à rebours à l’écran. « Afficher maintenant » permet de les ouvrir plus tôt. Déroulé de 5 minutes : `PRESENTATION.md`.
-4. Les participants cochent leurs solutions (low tech et high tech sur le même écran), voient leur classe et leur température avant / après, puis valident leur plan. Aucune action n’est cochée par défaut.
+4. Les participants choisissent leur budget et leur temps, ajustent les solutions proposées (low tech et high tech sur le même écran), puis valident directement leur plan depuis la barre du bas.
 5. Pendant l’affichage des statistiques, les participants peuvent encore continuer ou modifier leur plan.
 6. « Nouvelle session » efface toutes les données. Les données sont en mémoire et disparaissent aussi au redémarrage. Le téléphone retrouve son plan validé après rechargement tant que la session existe.
 

@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Le bilan collectif · Météo de mon logement</title>
-<link rel="preload" href="/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/theme.css"><style>
 body { background: var(--nuit); color: var(--craie); }
 .page { min-height: 100vh; padding: 3vh 3.5vw; display: flex; flex-direction: column; gap: 2vh; }
@@ -107,7 +106,7 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 .en-tips li em { font-style: normal; font-weight: 760; color: var(--fraicheur); font-size: clamp(14px, 1.2vw, 22px); white-space: nowrap; }
 .en-room { font-size: clamp(14px, 1.3vw, 24px); } .en-room b { color: var(--soleil); }
 @media (max-width: 900px) { .energy { grid-template-columns: 1fr; } .en-row { grid-template-columns: 1fr auto; } .en-track { grid-column: 1 / -1; grid-row: 2; } }
-</style></head><body>
+</style></head><body class="light">
 <div class="sky" aria-hidden="true"><div class="grain"></div></div>
 <main class="page">
 <header><div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><div><p class="kicker">Démo · défi confort d’été</p><h1 class="display">Le bilan de la salle</h1></div></div><button class="btn btn-ghost" id="resetBtn">Nouvelle session</button></header>

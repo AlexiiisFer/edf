@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Météo de mon logement</title>
-<link rel="preload" href="/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/theme.css">
 <style>
   body { background: var(--nuit); color: var(--craie); height: 100vh; overflow: hidden; }
@@ -14,11 +13,11 @@
   .brand .edf-logo { width: 6vw; min-width: 64px; }
   .brand .tag { display: inline-flex; align-items: center; gap: .6em; padding: .45em .9em; border: 1px solid var(--verre-bord); border-radius: 999px; background: var(--verre); }
   .brand .tag .sun { width: .8em; height: .8em; }
-  .btn-go { background: var(--soleil); color: var(--nuit); font-size: 1.6vw; padding: 1.5vh 2.8vw; box-shadow: 0 0 0 0 rgba(255,200,69,.5), 0 10px 30px rgba(255,200,69,.25); animation: pulse 2.6s ease-out infinite; }
+  .btn-go { background: var(--soleil); color: var(--nuit); font-size: 1.6vw; padding: 1.5vh 2.8vw; box-shadow: 0 0 0 0 rgba(255,94,17,.5), 0 10px 30px rgba(255,94,17,.25); animation: pulse 2.6s ease-out infinite; }
   .btn-go:hover { background: var(--soleil-2); transform: translateY(-2px); }
   .btn-quiet { background: var(--verre); color: var(--brume); font-size: 1vw; padding: 1.1vh 1.4vw; border: 1px solid var(--verre-bord); }
   .btn-quiet:hover { color: var(--craie); border-color: var(--brume); }
-  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,200,69,.45), 0 10px 30px rgba(255,200,69,.25); } 70%,100% { box-shadow: 0 0 0 1.4vw rgba(255,200,69,0), 0 10px 30px rgba(255,200,69,.25); } }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,94,17,.45), 0 10px 30px rgba(255,94,17,.25); } 70%,100% { box-shadow: 0 0 0 1.4vw rgba(255,94,17,0), 0 10px 30px rgba(255,94,17,.25); } }
 
   /* ---------- Lobby ---------- */
   #v-lobby { grid-template-columns: 1fr auto; grid-template-rows: auto 1fr auto; column-gap: 5vw; }
@@ -36,7 +35,7 @@
   .qr-halo { position: absolute; left: 50%; top: 50%; width: 76vh; height: 76vh; margin: -38vh 0 0 -38vh; z-index: -1; pointer-events: none; animation: spin 80s linear infinite; }
   .qr-halo line { stroke: var(--soleil); stroke-width: 3; stroke-linecap: round; opacity: .45; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .qr-card { background: #fff; border-radius: 3vh; padding: 2.4vh; width: 54vh; height: 54vh; box-shadow: 0 0 0 1vh rgba(255,200,69,.18), 0 30px 80px rgba(0,0,0,.45); }
+  .qr-card { background: #fff; border-radius: 3vh; padding: 2.4vh; width: 54vh; height: 54vh; box-shadow: 0 0 0 1vh rgba(255,94,17,.18), 0 30px 80px rgba(0,0,0,.45); }
   .qr-card img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
   .qr-url { margin-top: 2.6vh; font-size: 1.15vw; color: var(--craie); font-weight: 600; letter-spacing: .02em; padding: .5em 1em; border-radius: 999px; background: var(--verre); border: 1px solid var(--verre-bord); display: inline-block; }
 
@@ -44,8 +43,8 @@
   .room { font-size: 1.4vw; color: var(--brume); white-space: nowrap; display: flex; align-items: baseline; gap: .4em; }
   .room b { font-size: 3.2vw; color: var(--craie); line-height: 1; }
   .dots { flex: 1; display: flex; flex-wrap: wrap; gap: .45vw; max-height: 2.4vw; overflow: hidden; align-items: center; }
-  .dot { width: 1vw; height: 1vw; border-radius: 50%; background: var(--soleil); box-shadow: 0 0 .8vw rgba(255,200,69,.5); }
-  .dot:nth-child(3n+2) { background: var(--fraicheur); box-shadow: 0 0 .8vw rgba(143,227,240,.5); } .dot:nth-child(3n) { background: var(--chaleur); box-shadow: 0 0 .8vw rgba(255,106,61,.5); }
+  .dot { width: 1vw; height: 1vw; border-radius: 50%; background: var(--soleil); box-shadow: 0 0 .8vw rgba(255,94,17,.5); }
+  .dot:nth-child(3n+2) { background: var(--fraicheur); box-shadow: 0 0 .8vw rgba(90,180,240,.5); } .dot:nth-child(3n) { background: var(--chaleur); box-shadow: 0 0 .8vw rgba(255,94,17,.5); }
 
   /* ---------- Questionnaire (chacun à son rythme) ---------- */
   #v-question { grid-template-columns: 1fr auto; grid-template-rows: auto auto auto 1fr auto; column-gap: 4vw; row-gap: 2.6vh; }
@@ -115,7 +114,7 @@
   .result-foot b { color: var(--craie); font-size: 3.4vw; vertical-align: -.12em; }
 </style>
 </head>
-<body>
+<body class="light">
 <div class="sky" aria-hidden="true"><div class="grain"></div></div>
 
 <!-- LOBBY -->

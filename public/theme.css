@@ -9,29 +9,32 @@
 }
 
 :root {
-  --nuit: #0f2342;
-  --nuit-2: #142d52;
-  --ombre: #1b3a63;
-  --ombre-2: #2a4c7a;
-  --verre: rgba(255, 255, 255, .06);
-  --verre-bord: rgba(255, 255, 255, .12);
-  --soleil: #ffc845;
-  --soleil-2: #ffd978;
-  --chaleur: #ff6a3d;
-  --fraicheur: #8fe3f0;
-  --fraicheur-2: #4fb8cc;
-  --craie: #f5f8fb;
-  --brume: #a9bdd3;
-  --encre: #132a4a;
-  --gris: #586c84;
-  --ligne: #e1e8f0;
-  --papier: #ffffff;
-  --bon: #2f8f6a;
-  --alerte: #c2481f;
-  --chaleur-band: linear-gradient(90deg, var(--chaleur), var(--soleil) 48%, var(--fraicheur));
-  --font: "Bricolage", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Palette EDF : bleu et orange du logo, bleu clair et vert en accents */
+  --edf-bleu: #07387A;
+  --edf-orange: #FF5E11;
+  --nuit: #041E45;      /* fond des écrans projetés : bleu EDF profond */
+  --nuit-2: #07387A;
+  --ombre: #0A3F86;
+  --ombre-2: #2A5A9E;
+  --verre: rgba(255, 255, 255, .07);
+  --verre-bord: rgba(255, 255, 255, .14);
+  --soleil: #FF5E11;    /* accent principal : orange EDF */
+  --soleil-2: #FF7A3D;
+  --chaleur: #E8380D;
+  --fraicheur: #5AB4F0; /* bleu clair EDF */
+  --fraicheur-2: #2D8FD8;
+  --craie: #FFFFFF;
+  --brume: #B7C8E2;
+  --encre: #0A2552;
+  --gris: #5A6B85;
+  --ligne: #E3E8F0;
+  --papier: #FFFFFF;
+  --bon: #2E8B3E;
+  --alerte: #C2410C;
+  --chaleur-band: linear-gradient(90deg, var(--edf-orange), #FFA06B 45%, var(--fraicheur));
+  --font: "Segoe UI", "Helvetica Neue", Roboto, Arial, system-ui, sans-serif;
   --ease: cubic-bezier(.2, .8, .2, 1);
-  --r: 18px;
+  --r: 14px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,23 +44,23 @@ button { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
 :focus-visible { outline: 3px solid var(--soleil); outline-offset: 3px; border-radius: 6px; }
 .num { font-variant-numeric: tabular-nums; font-variation-settings: "opsz" 96, "wdth" 92; letter-spacing: -0.01em; }
-.display { font-weight: 740; font-variation-settings: "opsz" 96, "wdth" 96; letter-spacing: -0.015em; word-spacing: .06em; line-height: 1; }
+.display { font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
 .kicker { font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Le soleil de la marque */
-.sun { width: 1em; height: 1em; border-radius: 50%; background: var(--soleil); display: inline-block; box-shadow: 0 0 0 .14em rgba(255, 200, 69, .25); flex-shrink: 0; }
+.sun { width: 1em; height: 1em; border-radius: 50%; background: var(--soleil); display: inline-block; box-shadow: 0 0 0 .14em rgba(255, 94, 17, .25); flex-shrink: 0; }
 
 /* Ciel animé des écrans projetés */
-.sky { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: radial-gradient(120% 90% at 85% -10%, #24497a 0%, var(--nuit) 55%, #0a1a33 100%); }
-.sky::before, .sky::after { content: ""; position: absolute; border-radius: 50%; filter: blur(60px); opacity: .55; }
-.sky::before { width: 46vw; height: 46vw; right: -12vw; top: -18vw; background: radial-gradient(circle, rgba(255, 200, 69, .55), rgba(255, 106, 61, .18) 55%, transparent 70%); animation: glow 9s ease-in-out infinite alternate; }
-.sky::after { width: 40vw; height: 40vw; left: -14vw; bottom: -20vw; background: radial-gradient(circle, rgba(143, 227, 240, .35), transparent 65%); animation: glow 12s ease-in-out infinite alternate-reverse; }
-.sky .grain { position: absolute; inset: 0; opacity: .05; background-image: radial-gradient(rgba(255,255,255,.9) 1px, transparent 1px); background-size: 3px 3px; }
+.sky { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: linear-gradient(160deg, #07387A 0%, #041E45 55%, #03163A 100%); }
+.sky::before, .sky::after { content: ""; position: absolute; border-radius: 50%; filter: blur(70px); }
+.sky::before { width: 50vw; height: 50vw; right: -16vw; top: -22vw; background: radial-gradient(circle, rgba(90, 180, 240, .35), transparent 65%); animation: glow 10s ease-in-out infinite alternate; }
+.sky::after { width: 36vw; height: 36vw; left: -12vw; bottom: -18vw; background: radial-gradient(circle, rgba(255, 94, 17, .22), transparent 65%); animation: glow 13s ease-in-out infinite alternate-reverse; }
+.sky .grain { display: none; }
 @keyframes glow { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-3vw, 2vw, 0) scale(1.08); } }
 
 /* Logo */
-.edf-logo { width: 76px; height: auto; flex-shrink: 0; background: #fff; padding: 8px 10px; border-radius: 10px; box-shadow: 0 6px 20px rgba(0, 0, 0, .12); }
+.edf-logo { width: 76px; height: auto; flex-shrink: 0; background: #fff; padding: 8px 10px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, .12); }
 
 /* Boutons communs */
 .btn { border: 0; cursor: pointer; border-radius: 999px; font-weight: 700; transition: transform .2s var(--ease), background .2s, box-shadow .2s, color .2s, border-color .2s; }
@@ -85,7 +88,7 @@ button { font: inherit; color: inherit; }
 .wall-tile small { display: block; color: var(--brume); font-size: 11px; margin-bottom: 6px; letter-spacing: .04em; }
 .wall-tile .grade { padding: 4px 6px; font-size: 15px; min-width: 1.6em; border-radius: 6px; }
 .wall-tile p { margin-top: 6px; font-size: 11px; color: var(--brume); }
-.wall-tile.done { border-color: rgba(143, 227, 240, .4); }
+.wall-tile.done { border-color: rgba(90, 180, 240, .5); }
 .wall-tile.done p { color: var(--fraicheur); }
 @media (max-width: 700px) { .wall-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
@@ -94,3 +97,32 @@ button { font: inherit; color: inherit; }
 .wall-tile .grade-path { display: flex; justify-content: center; gap: 2px; flex-wrap: nowrap; }
 .wall-tile .grade-path .grade { font-size: 12px; padding: 3px 4px; min-width: 1.45em; }
 .wall-tile .grade-path .arrow { font-size: 10px; }
+
+/* ---------- Thème clair EDF (fond blanc) pour l'écran projeté et le bilan ---------- */
+body.light {
+  --craie: #0A2552;           /* texte principal : bleu EDF foncé */
+  --brume: #5A6B85;           /* texte secondaire */
+  --verre: #F4F7FB;           /* cartes */
+  --verre-bord: #E1E7F0;
+  --ombre: #E9EEF5;           /* pistes de jauges */
+  --ombre-2: #D3DCE9;
+  background: #FFFFFF;
+  color: var(--craie);
+}
+body.light .sky { background: #FFFFFF; }
+body.light .sky::before { background: radial-gradient(circle, rgba(90, 180, 240, .16), transparent 65%); }
+body.light .sky::after { background: radial-gradient(circle, rgba(255, 94, 17, .10), transparent 65%); }
+body.light .edf-logo { box-shadow: none; border: 1px solid #E1E7F0; }
+body.light .wall-tile { background: #FFFFFF; backdrop-filter: none; }
+body.light .wall-tile.done { border-color: var(--edf-orange); }
+body.light .wall-tile.done p { color: var(--edf-orange); }
+body.light .card, body.light .metric, body.light .fact, body.light .sec-card, body.light .q-opt, body.light .steps li, body.light .lobby-bar { backdrop-filter: none; box-shadow: 0 1px 2px rgba(7, 56, 122, .04), 0 6px 20px rgba(7, 56, 122, .06); }
+body.light .en-track { background: #E9EEF5; }
+body.light .en-tips li { background: #FFFFFF; }
+body.light .sec-card .e, body.light .q-opt .e, body.light .pillar .e { background: #EAF4FD; }
+body.light .tip { box-shadow: 0 10px 30px rgba(7, 56, 122, .18); }
+body.light .btn-go, body.light .steps-run li.now, body.light .tabs button[aria-pressed="true"] { color: #FFFFFF; }
+body.light .steps-run li.now b { background: #FFFFFF; color: var(--edf-orange); }
+body.light .pitch h1 .hot { background: none; -webkit-background-clip: initial; background-clip: initial; color: var(--edf-orange); }
+body.light .en-big b, body.light .en-tips li em, body.light .result-copy .kicker { color: var(--edf-bleu); }
+body.light .pitch .kicker, body.light .q-head .kicker, body.light .brand .kicker { color: var(--edf-orange); }
