@@ -3,11 +3,12 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { QUESTIONS, IMPACT, impactFor, computeProfile } = require("./public/questions.js");
+const { QUESTIONS, computeProfile } = require("./public/questions.js");
+
+const { estimatePlan, availableSolutions } = require("./public/solutions.js");
 
 const PORT = process.env.PORT || 3000;
 const QUESTION_MS = (Number(process.env.QUESTION_SECONDS) || 15) * 1000;
-const RESULT_MS = (Number(process.env.RESULT_SECONDS) || 30) * 1000;
 const PUBLIC_DIR = path.join(__dirname, "public");
 const MAX_PLAYERS = 500;
 
@@ -20,7 +21,7 @@ function newSession() {
 function goTo(phase, q = -1) {
   session.phase = phase;
   session.q = q;
-  session.endsAt = phase === "question" ? Date.now() + QUESTION_MS : phase === "result" ? Date.now() + RESULT_MS : 0;
+  session.endsAt = phase === "question" ? Date.now() + QUESTION_MS : 0;
 }
 
 function advance() {
@@ -40,8 +41,6 @@ function tick() {
     const allAnswered = players.length > 0 && players.every((p) => p.answers[key] !== undefined);
     if (now >= session.endsAt) advance();
     else if (allAnswered && session.endsAt - now > 2500) session.endsAt = now + 2500; // petite pause avant la suite
-  } else if (session.phase === "result" && now >= session.endsAt) {
-    advance();
   }
 }
 setInterval(tick, 500);
@@ -93,7 +92,7 @@ function publicState(id) {
     q: session.q,
     total: QUESTIONS.length,
     remaining: session.endsAt ? Math.max(0, session.endsAt - Date.now()) : 0,
-    duration: session.phase === "question" ? QUESTION_MS : RESULT_MS,
+    duration: session.phase === "question" ? QUESTION_MS : 0,
     connected: players.length,
     answeredQ: key ? players.filter((p) => p.answers[key] !== undefined).length : 0,
     submitted: players.filter((p) => p.submitted).length,
@@ -102,6 +101,7 @@ function publicState(id) {
     participantNumber: me ? me.number : null,
     answers: me ? me.answers : undefined,
     profile: me && (session.phase === "result" || session.phase === "stats") ? computeProfile(me.answers) : null,
+    plan: me?.plan || null,
     myAnswer: me && key ? me.answers[key] ?? null : null,
   };
 }
@@ -110,11 +110,12 @@ function computeStats() {
   const all = [...session.players.values()];
   const list = all.filter(p => Object.keys(p.answers).length > 0).map(p => {
     const profile = computeProfile(p.answers);
-    return { ...p, tempNo: profile.tNo, tempPlan: profile.tPlan, profile };
+    const plan = p.plan || estimatePlan(p.answers);
+    return { ...p, tempNo: profile.tNo, tempPlan: plan.tPlan, profile: { ...profile, planGrade: plan.planGrade }, plan };
   });
   const count = list.length;
   const avg = (k) => (count ? list.reduce((s, p) => s + p[k], 0) / count : 0);
-  const engaged = list.filter((p) => p.engaged);
+  const engaged = list.filter((p) => p.submitted);
   const pct = (fn) => (count ? Math.round((list.filter(fn).length / count) * 100) : 0);
   const gestureCounts = {};
   engaged.forEach((p) => p.gestures.forEach((g) => (gestureCounts[g] = (gestureCounts[g] || 0) + 1)));
@@ -124,11 +125,18 @@ function computeStats() {
     count,
     engagedCount: engaged.length,
     pendingCount: all.length - count,
+    validatedCount: list.filter(p => p.plan && p.submitted).length,
+    lowGradeCounts: Object.fromEntries([..."ABCDEFG"].map(g => [g, list.filter(p => p.plan.lowGrade === g).length])),
+    investmentMin: list.filter(p => p.submitted).reduce((n,p) => n + p.plan.costMin, 0),
+    investmentMax: list.filter(p => p.submitted).reduce((n,p) => n + p.plan.costMax, 0),
+    netTenMin: list.filter(p => p.submitted).reduce((n,p) => n + p.plan.timeline[2].netMin, 0),
+    netTenMax: list.filter(p => p.submitted).reduce((n,p) => n + p.plan.timeline[2].netMax, 0),
     gradeCounts: Object.fromEntries([..."ABCDEFG"].map(g => [g, list.filter(p => p.profile.grade === g).length])),
     planGradeCounts: Object.fromEntries([..."ABCDEFG"].map(g => [g, list.filter(p => p.profile.planGrade === g).length])),
     profiles: all.map(p => {
       const profile = Object.keys(p.answers).length ? computeProfile(p.answers) : null;
-      return { number: p.number, grade: profile?.grade || null, planGrade: profile?.planGrade || null, complete: profile?.complete || false };
+      const plan = p.plan || (profile ? estimatePlan(p.answers) : null);
+      return { number: p.number, grade: profile?.grade || null, lowGrade: plan?.lowGrade || null, planGrade: plan?.planGrade || null, validated: !!p.plan, complete: profile?.complete || false };
     }),
     avgNoAction: Math.round(avg("tempNo") * 10) / 10,
     avgWithPlan: Math.round(avg("tempPlan") * 10) / 10,
@@ -136,11 +144,11 @@ function computeStats() {
     pctClim: pct((p) => p.answers.clim === "oui"),
     pctTopFloor: pct((p) => p.answers.floor === "dernier"),
     pctTooHot: pct((p) => p.tempNo >= 28),
-    degreesSaved: Math.round(engaged.reduce((s, p) => s + p.gain, 0)),
-    kwhSaved: Math.round(engaged.reduce((s, p) => s + (IMPACT.kwhPerDay[p.answers.clim || "non"] ?? 1), 0)),
-    eurosSeason: engaged.reduce((s, p) => s + impactFor(p.answers.clim || "non").eur, 0),
-    co2Season: engaged.reduce((s, p) => s + impactFor(p.answers.clim || "non").co2, 0),
-    climAvoided: engaged.filter((p) => p.answers.clim === "envie").length,
+    degreesSaved: Math.round(engaged.reduce((s, p) => s + p.plan.gain, 0)),
+    kwhSaved: Math.round(engaged.reduce((s, p) => s + p.plan.kwhSaved, 0)),
+    eurosSeason: engaged.reduce((s, p) => s + p.plan.annualNet, 0),
+    co2Season: engaged.reduce((s, p) => s + p.plan.kwhSaved * .06, 0),
+    climAvoided: 0,
     gestureCounts,
     hottest: count ? Math.max(...list.map((p) => p.tempNo)) : null,
     coolest: count ? Math.min(...list.map((p) => p.tempNo)) : null,
@@ -176,26 +184,19 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true });
     }
 
-    if (p === "/api/submit" && req.method === "POST") {
-      const b = await readBody(req);
-      const pl = session.players.get(String(b.id || ""));
-      if (!pl) return sendJson(res, 404, { error: "unknown" });
-      const tempNo = num(b.tempNo, 15, 45);
-      const tempPlan = num(b.tempPlan, 15, 45);
-      if (tempNo === null || tempPlan === null) return sendJson(res, 400, { error: "invalid" });
-      Object.assign(pl, { tempNo, tempPlan, submitted: true });
-      return sendJson(res, 200, { ok: true });
-    }
-
     if (p === "/api/engage" && req.method === "POST") {
       const b = await readBody(req);
       const pl = session.players.get(String(b.id || ""));
-      if (!pl) return sendJson(res, 404, { error: "unknown" });
-      pl.gestures = Array.isArray(b.gestures) ? b.gestures.slice(0, 10).map((g) => String(g).slice(0, 30)) : [];
-      pl.gain = num(b.gain, 0, 20) || 0;
-      pl.engaged = pl.gestures.length > 0;
-      const s = computeStats();
-      return sendJson(res, 200, { ok: true, degreesSaved: s.degreesSaved, kwhSaved: s.kwhSaved, eurosSeason: s.eurosSeason, co2Season: s.co2Season });
+      if (!pl) return sendJson(res, 404, { error: "Participant inconnu" });
+      if (!["result", "stats"].includes(session.phase)) return sendJson(res, 409, { error: "Attendez la fin des questions" });
+      if (!Object.keys(pl.answers).length) return sendJson(res, 400, { error: "Répondez au moins à une question avant de valider" });
+      const valid = new Set(availableSolutions(pl.answers).map(s => s.id));
+      if (!Array.isArray(b.actions) || b.actions.length > 20 || b.actions.some(id => !valid.has(id))) return sendJson(res, 400, { error: "Actions invalides" });
+      const settings = b.settings;
+      if (!settings || !Number.isFinite(settings.tariff) || settings.tariff < .05 || settings.tariff > 1 || !Number.isFinite(settings.baselineKwh) || settings.baselineKwh < 0 || settings.baselineKwh > 10000) return sendJson(res, 400, { error: "Vérifiez le tarif et la consommation" });
+      const plan = estimatePlan(pl.answers, b.actions, settings);
+      Object.assign(pl, { plan, gestures: plan.ids, gain: plan.gain, engaged: plan.ids.length > 0, submitted: true, tempNo: plan.tNo, tempPlan: plan.tPlan });
+      return sendJson(res, 200, { ok: true, plan });
     }
 
     // --- Écran ---

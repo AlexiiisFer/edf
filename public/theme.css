@@ -59,3 +59,5 @@ button { font: inherit; color: inherit; }
 
 .solutions { padding-left:20px; margin:12px 0; line-height:1.5; }
 .solutions li + li { margin-top:12px; }
+
+.edf-logo { width:76px; height:auto; flex-shrink:0; background:#fff; padding:8px; border-radius:8px; }

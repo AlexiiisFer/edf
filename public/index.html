@@ -65,7 +65,7 @@
   #v-result h1 { font-size: 5vw; line-height: 1; font-weight: 750; font-variation-settings: "opsz" 96, "wdth" 94; letter-spacing: -0.02em; }
   #v-result p { margin-top: 3vh; font-size: 1.9vw; color: var(--brume); line-height: 1.4; max-width: 50vw; }
   .band { margin-top: 6vh; width: 60vw; height: 1.2vh; border-radius: 99px; background: var(--chaleur-band); }
-  .result-foot { margin-top: 4vh; display: flex; align-items: center; gap: 3vw; font-size: 1.6vw; color: var(--brume); }
+  .result-foot { margin-top: 4vh; display: flex; align-items: center; gap: 2vw; flex-wrap: wrap; font-size: 1.5vw; color: var(--brume); }
   .result-foot b { color: var(--craie); font-size: 2.6vw; }
 </style>
 </head>
@@ -73,7 +73,7 @@
 
 <!-- LOBBY -->
 <section class="view active" id="v-lobby">
-  <div class="brand"><span class="sun"></span>Météo de mon logement</div>
+  <div class="brand"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><span>Météo de mon logement · défi confort d’été</span></div>
   <div class="pitch">
     <h1>Votre logement est-il prêt pour la canicule&nbsp;?</h1>
     <p>Découvrez votre profil confort d’été de A à G, puis le bilan collectif de la salle. Simulation ludique, pas un DPE réglementaire.</p>
@@ -117,11 +117,11 @@
 <!-- RÉSULTATS INDIVIDUELS -->
 <section class="view" id="v-result">
   <h1>Regardez votre téléphone.</h1>
-  <p>Chacun reçoit sa fiche confort d’été, sa classe de A à G et son plan personnalisé. Ensuite, les profils de tous les participants apparaîtront ici.</p>
+  <p>Chacun reçoit sa fiche confort d’été, sa classe de A à G et ses choix low tech et high tech et le coût estimé de son plan. Ensuite, les profils de tous les participants apparaîtront ici.</p>
   <div class="band"></div>
   <div class="result-foot">
-    <span><b class="num" id="rEng">0</b> engagés sur <span id="rTot">0</span></span>
-    <span>Résultats de la salle dans <b class="num" id="rSec">30</b> s</span>
+    <span><b class="num" id="rEng">0</b> plans validés sur <span id="rTot">0</span></span>
+    <span>Profil → low tech → high tech → bilan financier</span>
     <button class="btn btn-quiet" onclick="api('next')">Afficher maintenant</button>
   </div>
 </section>
@@ -168,7 +168,7 @@ function render(d) {
     show("question");
   } else if (d.phase === "result") {
     localEnd = Date.now() + d.remaining;
-    document.getElementById("rEng").textContent = d.engaged;
+    document.getElementById("rEng").textContent = d.submitted;
     document.getElementById("rTot").textContent = d.connected;
     show("result");
   } else if (d.phase === "stats") {
@@ -183,8 +183,6 @@ setInterval(() => {
     document.getElementById("qSec").textContent = Math.ceil(left / 1000);
     document.getElementById("mercury").style.height = (left / duration * 100) + "%";
     document.getElementById("thermo").classList.toggle("low", left < 5000);
-  } else if (view === "result") {
-    document.getElementById("rSec").textContent = Math.ceil(left / 1000);
   }
 }, 100);
 
