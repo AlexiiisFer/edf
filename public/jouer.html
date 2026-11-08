@@ -434,6 +434,37 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 .choice.tile .dh { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 99px; background: #E7F4EA; color: #1E6B30; font-size: 12px; font-weight: 700; }
 .refine-txt { color: var(--gris); line-height: 1.5; margin: 4px 0 18px; }
 .cerema { display: inline-block; margin: 4px 0 0 4px; padding: 2px 7px; border-radius: 99px; background: #EAF1FB; color: var(--edf-bleu); font-size: 11px; font-weight: 700; }
+/* Bouton « i » et fiche solution */
+.choice.tile { position: relative; }
+.info-btn { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid #C3CFDC; background: #fff; color: var(--edf-bleu); font: italic 700 13px/1 Georgia, serif; cursor: pointer; padding: 0; z-index: 2; }
+#v-choices .choice.tile { padding-right: 34px; }
+.info-dlg { border: 0; border-radius: 20px; padding: 22px 20px 16px; max-width: min(92vw, 440px); box-shadow: 0 24px 60px rgba(7,56,122,.3); color: var(--encre); }
+.info-dlg::backdrop { background: rgba(4,30,69,.45); }
+.info-dlg h2 { font-size: 20px; margin: 0 0 10px; }
+.info-dlg p { line-height: 1.55; font-size: 15px; color: #35506f; margin: 0 0 14px; }
+.info-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.info-meta span { background: #F2F5FA; border-radius: 99px; padding: 5px 10px; font-size: 13px; font-weight: 600; }
+.info-meta .good { background: #E7F4EA; color: #1E6B30; }
+/* Jauge DH dans la carte du haut */
+.dh-meter { position: relative; height: 8px; border-radius: 99px; background: #E9EEF5; margin-top: 8px; overflow: hidden; }
+.dh-meter .dh-base, .dh-meter .dh-plan { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; transition: width .6s var(--ease), background .6s; }
+.dh-meter .dh-base { background: #F6C7B5; }
+.dh-t { position: absolute; top: -2px; bottom: -2px; width: 2px; background: rgba(7,56,122,.35); }
+.rite-line .dh-now { color: var(--edf-bleu); font-size: 16px; }
+/* Bilan DH */
+.dh-report { background: #F7F9FC; border-radius: 14px; padding: 12px 12px 8px; margin: 4px 0 12px; }
+.dh-head { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+.dh-head em { font-style: normal; background: #E7F4EA; color: #1E6B30; padding: 3px 9px; border-radius: 99px; }
+.dh-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; margin: 8px 0; align-items: center; }
+.dh-lab { grid-column: 1 / -1; font-size: 13px; color: var(--gris); }
+.dh-track { position: relative; height: 12px; border-radius: 99px; background: #E9EEF5; overflow: hidden; }
+.dh-track i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; transform-origin: left; }
+.dh-row b { font-size: 16px; color: var(--encre); white-space: nowrap; }
+.dh-row small { grid-column: 1 / -1; font-size: 12px; color: var(--gris); }
+.dh-legend { font-size: 11px; color: var(--gris); margin: 6px 0 0; }
+.dh-meter { align-self: stretch; width: 100%; }
+.info-dlg { margin: auto; }
+.dh-track .dh-t { background: rgba(255,255,255,.75); }
 </style>
 </head>
 <body>
@@ -497,6 +528,12 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
   <div class="block report" id="myReport"></div>
   <button class="btn link" onclick="show('choices')">Modifier mes choix</button>
 </section>
+<dialog id="infoDlg" class="info-dlg" aria-labelledby="infoTitle">
+  <h2 id="infoTitle"></h2>
+  <p id="infoText"></p>
+  <div id="infoMeta" class="info-meta"></div>
+  <button class="btn primary" id="infoClose">Fermer</button>
+</dialog>
 </main>
 <script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script><script>UI.brandWave({ className: 'phone', variant: 'card' });</script>
 <script src="/questions.js"></script><script src="/solutions.js"></script><script src="/dpe.js"></script><script>
@@ -634,6 +671,12 @@ function buildPrefs() {
  seg('segBudget',BUDGETS,budget,v=>budget=v);seg('segTime',TIMES,time,v=>time=v);
 }
 // Bilan individuel après validation, et pistes pour aller plus loin.
+// Bilan : évolution des degrés-heures d'inconfort (RITE), avant et après le plan.
+function dhReport(d){
+ const M=DH_MAX(d.dh), pct=d.dh>0?Math.round((d.dh-d.plan)/d.dh*100):0;
+ const bar=(label,v,lvl)=>`<div class="dh-row"><span class="dh-lab">${label}</span><div class="dh-track"><i style="width:${(v/M*100).toFixed(1)}%;background:${dhColor(v)}"></i><span class="dh-t" style="left:${350/M*100}%"></span><span class="dh-t" style="left:${1000/M*100}%"></span></div><b class="num">${nfr(v)} DH</b><small>${lvl}</small></div>`;
+ return `<div class="dh-report"><div class="dh-head"><span>Inconfort d’été · DH RITE</span>${pct>0?`<em>−${pct} %</em>`:''}</div>${bar('Avant',d.dh,d.level)}${bar('Avec mon plan',d.plan,d.planLevel)}<p class="dh-legend">Repères Cerema : moins de 350 DH confortable · plus de 1 000 DH inconfortable</p></div>`;
+}
 function renderReport() {
  const p=currentPlan(), picked=SOLUTIONS.filter(x=>p.ids.includes(x.id)), n=v=>v.toLocaleString('fr-FR');
  const maxDays=picked.reduce((m,x)=>Math.max(m,x.days),0), longest=picked.find(x=>x.days===maxDays);
@@ -642,14 +685,15 @@ function renderReport() {
   .map(x=>({x,gain:estimatePlan(answers,[...p.ids,x.id]).tPlan}))
   .filter(t=>t.gain<p.tPlan||t.x.comfort).sort((a,b)=>(a.gain-b.gain)||(costMin(a.x)-costMin(b.x))).slice(0,3);
  document.getElementById('myReport').innerHTML=`<h2>Mon bilan</h2>
+  ${riteData&&riteData.available?dhReport(riteData):''}
   <div class="rep-row"><span>Classe</span><b>${path(p.grade,p.planGrade)}</b></div>
   <div class="rep-row"><span>Température</span><b>${p.tNo} → ${p.tPlan} °C${p.gain>0?` <em>(−${n(p.gain)} °C)</em>`:''}</b></div>
-  ${riteData&&riteData.available?`<div class="rep-row"><span>DH RITE</span><b>${nfr(riteData.dh)} → ${nfr(riteData.plan)} DH</b></div>`:''}
   <div class="rep-row"><span>Budget</span><b>${p.priceMax>p.price?'dès ':''}${n(p.price)} €</b></div>
   <div class="rep-row"><span>Délai</span><b>${picked.length?longest.delay:'—'}</b></div>
   <p class="rep-list">${picked.length?picked.map(x=>x.label).join(' · '):'Aucune solution choisie.'}</p>
   ${tips.length?`<h3>Pour aller plus loin</h3><ul class="rep-tips">${tips.map(t=>`<li><b>${t.x.label}</b><span>${t.gain<p.tPlan?`−${n(p.tPlan-t.gain)} °C`:'+ confort'} · ${priceLabel(t.x)} · ${t.x.delay}</span></li>`).join('')}</ul>`:'<p class="rep-list">Votre plan est déjà très complet.</p>'}`;
  UI.enter(document.querySelectorAll('#myReport > *'),{y:10,stagger:40,delay:300});
+ if(UI.on)anime.animate('#myReport .dh-track i',{scaleX:[0,1],duration:1100,delay:anime.stagger(350,{start:400}),ease:'out(3)'});
 }
 function priceLabel(s) {
  const n=v=>v.toLocaleString('fr-FR');
@@ -661,13 +705,25 @@ function priceLabel(s) {
 // Budget et temps filtrent les propositions affichées ; rien n'est coché d'avance.
 function fits(s) { return costMin(s)<=BUDGETS.find(b=>b.id===budget).max && fitsTime(s,TIMES.find(t=>t.id===time)); }
 function visibleSolutions() { return availableSolutions(answers).filter(fits); }
+// Fiche d'une solution (bouton « i »).
+function openInfo(id){
+ const x=SOLUTIONS.find(o=>o.id===id); if(!x) return;
+ document.getElementById('infoTitle').textContent=x.label;
+ document.getElementById('infoText').textContent=x.info||x.detail;
+ const g=riteData&&riteData.available?riteData.gains[id]:0;
+ document.getElementById('infoMeta').innerHTML=[`<span>💶 ${priceLabel(x)}</span>`,`<span>⏱ ${x.delay}</span>`,x.cerema&&x.cerema.includes('€')?`<span>Guide Cerema : ${x.cerema}</span>`:'',g>0?`<span class="good">−${nfr(g)} DH (RITE)</span>`:''].join('');
+ const d=document.getElementById('infoDlg'); d.showModal?d.showModal():d.setAttribute('open','');
+}
+document.getElementById('infoClose').onclick=()=>{const d=document.getElementById('infoDlg');d.close?d.close():d.removeAttribute('open');};
+document.getElementById('infoDlg').addEventListener('click',e=>{if(e.target.id==='infoDlg')e.target.close();});
+document.addEventListener('click',e=>{const b=e.target.closest('.info-btn');if(!b)return;e.preventDefault();e.stopPropagation();openInfo(b.dataset.id);},true);
 function buildChoices() {
  buildPrefs();
  // Zone profil : classe, température chez soi et alerte canicule fictive de la région.
  const prof=computeProfile(answers);
- document.getElementById('myProfile').innerHTML=`${badge(prof.grade,'big-grade')}<div class="me-info"><div class="t num">${prof.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${prof.out} °C dehors</p><p class="rite-line" id="riteLine"></p></div>`;
+ document.getElementById('myProfile').innerHTML=`${badge(prof.grade,'big-grade')}<div class="me-info"><div class="t num">${prof.tNo} °C <small>chez vous</small></div><p class="alert">⚠️ Canicule jeudi : ${prof.out} °C dehors</p><p class="rite-line" id="riteLine"></p><div class="dh-meter" id="dhMeter" hidden><i class="dh-base"></i><i class="dh-plan"></i><span class="dh-t" style="left:var(--t350)"></span><span class="dh-t" style="left:var(--t1000)"></span></div></div>`;
  for(const id of [...chosen])if(!availableSolutions(answers).some(x=>x.id===id))chosen.delete(id);
- for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&fits(s)).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><small class="cost">${priceLabel(s)}</small><small class="delay">⏱ ${s.delay}${s.cerema&&s.cerema.includes('€')?` <span class="cerema" title="Niveau de coût du guide Cerema 2025">Cerema ${s.cerema}</span>`:''}</small><small class="price">${s.detail}</small></label>`).join('');if(!box.children.length)box.innerHTML=`<p class="empty-group">${type==='low'?'Aucun geste avec ce délai.':'Aucun équipement pour ce budget et ce délai.'}</p>`;box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
+ for(const type of ['low','high']) {const box=document.getElementById(type+'Choices');box.innerHTML=availableSolutions(answers).filter(s=>s.type===type&&fits(s)).map(s=>`<label class="choice tile" title="${s.detail}"><input type="checkbox" value="${s.id}" ${chosen.has(s.id)?'checked':''}><strong>${s.label}</strong><button type="button" class="info-btn" data-id="${s.id}" aria-label="En savoir plus : ${s.label}">i</button><small class="cost">${priceLabel(s)}</small><small class="delay">⏱ ${s.delay}${s.cerema&&s.cerema.includes('€')?` <span class="cerema" title="Niveau de coût du guide Cerema 2025">Cerema ${s.cerema}</span>`:''}</small><small class="price">${s.detail}</small></label>`).join('');if(!box.children.length)box.innerHTML=`<p class="empty-group">${type==='low'?'Aucun geste avec ce délai.':'Aucun équipement pour ce budget et ce délai.'}</p>`;box.querySelectorAll('input').forEach(input=>input.onchange=()=>{input.checked?chosen.add(input.value):chosen.delete(input.value);storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));if(input.checked)UI.bump(input);updatePlan();});}
  updatePlan();
 }
 function updatePlan() {
@@ -685,14 +741,21 @@ let riteData=null, riteSeq=0, riteTimer=null;
 const nfr=v=>Math.round(v).toLocaleString('fr-FR');
 function refreshRite(){clearTimeout(riteTimer);riteTimer=setTimeout(async()=>{const seq=++riteSeq;
  try{const d=await api('rite',{id:me,actions:[...chosen]});if(seq!==riteSeq)return;riteData=d;paintRite();}catch{}},150);}
+const DH_MAX=v=>Math.max(1500,Math.ceil(v/500)*500);
+const dhColor=v=>v<=350?'#3aa57c':v<=1000?'#f5a524':'#e8774f';
 function paintRite(){
- const d=riteData,el=document.getElementById('riteLine');
- if(!d||!d.available){if(el)el.textContent=d&&d.reason==='maison'?'Calcul RITE : appartements uniquement.':'';document.querySelectorAll('.tile .dh').forEach(x=>x.remove());return;}
- if(el)el.innerHTML=`<b>${nfr(d.dh)} DH</b> RITE · ${d.level}`;
+ const d=riteData,el=document.getElementById('riteLine'),meter=document.getElementById('dhMeter');
+ if(!d||!d.available){if(el)el.textContent=d&&d.reason==='maison'?'Calcul RITE : appartements uniquement.':'';if(meter)meter.hidden=true;document.querySelectorAll('.tile .dh').forEach(x=>x.remove());return;}
+ // Carte du haut : DH avant → DH avec les choix, et jauge qui se réduit à chaque solution cochée.
+ if(el){if(!el.querySelector('.dh-now'))el.innerHTML=`<b class="dh-now num"></b> <span class="dh-lvl"></span>`;
+  const now=el.querySelector('.dh-now');UI.tween(now,[d.dh,d.plan],([a,b])=>Math.round(b)<Math.round(a)?`${nfr(a)} → ${nfr(b)} DH`:`${nfr(a)} DH`,600);
+  el.querySelector('.dh-lvl').textContent='RITE · '+(d.plan<d.dh?d.planLevel:d.level);}
+ if(meter){meter.hidden=false;const M=DH_MAX(d.dh);meter.style.setProperty('--t350',(350/M*100)+'%');meter.style.setProperty('--t1000',(1000/M*100)+'%');
+  const base=meter.querySelector('.dh-base'),plan=meter.querySelector('.dh-plan');base.style.width=(d.dh/M*100)+'%';plan.style.width=(d.plan/M*100)+'%';plan.style.background=dhColor(d.plan);}
  document.querySelectorAll('#v-choices .choice.tile').forEach(t=>{const id=t.querySelector('input').value,g=d.gains[id];let b=t.querySelector('.dh');
   if(g>0){if(!b){b=document.createElement('small');b.className='dh';t.appendChild(b);}b.textContent=`−${nfr(g)} DH`;}else if(b)b.remove();});
  const pv=document.querySelector('#preview .delta');
- if(pv){pv.innerHTML=`<b>${d.plan<d.dh?'−'+nfr(d.dh-d.plan):'0'} DH</b><small>${nfr(d.dh)} → ${nfr(d.plan)} DH</small>`;}
+ if(pv){pv.innerHTML=`<b class="num"></b><small>${nfr(d.dh)} → ${nfr(d.plan)} DH</small>`;const b=pv.querySelector('b');b._twTarget=null;b._twCur={v0:pv._last??d.dh-d.plan};UI.tween(b,[d.dh-d.plan],([v])=>v>=1?`−${nfr(v)} DH`:'0 DH',500);pv._last=d.dh-d.plan;}
 }
 async function savePlan() {
  try{riteData=await api('rite',{id:me,actions:[...chosen]});}catch{}
