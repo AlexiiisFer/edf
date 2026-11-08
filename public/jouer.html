@@ -476,6 +476,10 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 .dh-row b .dh-pill { font-size: 15px; }
 .info-meta .dh-pill { border-radius: 99px; padding: 5px 10px; font-size: 12px; }
 .info-meta span.dh-ok { background: #70c9a0; } .info-meta span.dh-mid { background: #ffe078; } .info-meta span.dh-high { background: #ffb875; } .info-meta span.dh-bad { background: #f77882; }
+/* Filtres à 4 choix (Sans + 3 profils) */
+.seg { grid-template-columns: 58px repeat(4, 1fr) !important; gap: 5px !important; }
+.seg button { font-size: 12.5px; padding-left: 1px; padding-right: 1px; }
+@media (max-width: 360px) { .seg { grid-template-columns: 50px repeat(4, 1fr) !important; } .seg button { font-size: 11.5px; } }
 </style>
 </head>
 <body>
@@ -549,7 +553,7 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 <script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script><script>UI.brandWave({ className: 'phone', variant: 'card' });</script>
 <script src="/questions.js"></script><script src="/solutions.js"></script><script src="/dpe.js"></script><script>
 const storage = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k,v) { try { localStorage.setItem(k,v); } catch {} } };
-let budget = 'moyen', time = 'unpeu', me, sessionId, participantNumber, answers = {}, chosen = new Set(), view = 'wait', qi = -1, editing = false, built = false, busy = false, lastGrade = null;
+let budget = 'sans', time = 'sans', me, sessionId, participantNumber, answers = {}, chosen = new Set(), view = 'wait', qi = -1, editing = false, built = false, busy = false, lastGrade = null;
 const badge = (g, cls='') => `<span class="grade grade-${g} ${cls}">${g}</span>`;
 const path = (...gs) => `<span class="grade-path">${gs.map(g=>badge(g)).join('<span class="arrow">→</span>')}</span>`;
 function currentPlan() { return estimatePlan(answers,[...chosen]); }
@@ -678,7 +682,7 @@ function editAnswers(){editing=true;startQueue([...QUESTIONS, ...EXTRA_QUESTIONS
 // Budget et temps : 3 profils chacun ; changer de profil coche les solutions recommandées.
 function buildPrefs() {
  const seg=(id,list,cur,set)=>{const box=document.getElementById(id);box.querySelectorAll('button').forEach(b=>b.remove());
-  for(const o of list){const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(o.id===cur));b.innerHTML=o.label+(o.hint?`<small>${o.hint}</small>`:'');b.onclick=()=>{set(o.id);const ok=new Set(visibleSolutions().map(x=>x.id));chosen=new Set([...chosen].filter(id=>ok.has(id)));storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));buildChoices();UI.enter(document.querySelectorAll('#v-choices .tiles .choice'),{y:8,stagger:25});};box.appendChild(b);}};
+  for(const o of list){const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(o.id===cur));b.innerHTML=o.label+(o.hint?`<small>${o.hint}</small>`:'');b.onclick=()=>{set(o.id===cur&&o.id!=='sans'?'sans':o.id);const ok=new Set(visibleSolutions().map(x=>x.id));chosen=new Set([...chosen].filter(id=>ok.has(id)));storage.set('ml_plan_'+sessionId,JSON.stringify([...chosen]));buildChoices();UI.enter(document.querySelectorAll('#v-choices .tiles .choice'),{y:8,stagger:25});};box.appendChild(b);}};
  seg('segBudget',BUDGETS,budget,v=>budget=v);seg('segTime',TIMES,time,v=>time=v);
 }
 // Bilan individuel après validation, et pistes pour aller plus loin.

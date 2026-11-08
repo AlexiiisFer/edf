@@ -52,13 +52,16 @@ const AIDES = {
 };
 
 // Profils budget et temps disponible (3 niveaux chacun).
+// « Sans » : pas de filtre, toutes les solutions sont affichées.
 const BUDGETS = [
+  { id: 'sans', label: 'Sans', max: Infinity },
   { id: 'petit', label: 'Petit', hint: '≤ 200 €', max: 200 },
   { id: 'moyen', label: 'Moyen', hint: '≤ 1 000 €', max: 1000 },
   { id: 'large', label: 'Large', hint: '+ de 1 000 €', max: Infinity },
 ];
 // Temps : selon le délai d'installation (days = délai maximal en jours).
 const TIMES = [
+  { id: 'sans', label: 'Sans', maxDays: Infinity },
   { id: 'peu', label: 'Peu', hint: '≤ 2 jours', maxDays: 2 },
   { id: 'unpeu', label: 'Un peu', hint: '≤ 1 mois', maxDays: 31 },
   { id: 'beaucoup', label: 'Beaucoup', hint: 'sans limite', maxDays: Infinity },
