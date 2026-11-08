@@ -6,7 +6,7 @@ Application Node.js >=18, sans dépendance externe. Démarrer avec `npm start`.
 |---|---|
 | `/` | Écran projeté : QR code propre à la session (« Remettre à zéro » / « Nouvelle session » en génère un nouveau), puis déroulé en direct (étape, compte à rebours, chiffres de la salle, plans validés) |
 | `/jouer` | Choix « par adresse » (DPE de l’ADEME : seules les questions manquantes sont posées) ou « répondre aux questions » ; 6 questions (région d’abord) → budget et temps (3 profils chacun) + solutions low tech et high tech proposées sur un seul écran → « Valider mon plan » (validation directe, sans récapitulatif) |
-| `/stats` | Bilan de la salle (classes avant / après, mur des participants) et onglet « Quand consommer ? » : clim H24 contre heures creuses |
+| `/stats` | Bilan de la salle (classes des logements, DH RITE moyen avant / avec les solutions, mur des participants avec leurs DH) et onglet « Quand consommer ? » : clim H24 contre heures creuses |
 
 ## Interface
 

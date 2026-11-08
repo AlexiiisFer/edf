@@ -129,6 +129,16 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 .offers .cell.best { border: 2px solid var(--edf-orange); background: #FFF6F1; }
 .offers .cell.best .meter i { background: linear-gradient(90deg, var(--fraicheur-2), var(--fraicheur)); }
 .offers .cell .badge { position: absolute; top: -10px; right: 10px; background: var(--edf-orange); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px; }
+.dh-salle { margin-top: 1.4vh; }
+.dhs-head { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: clamp(12px, .95vw, 16px); margin-bottom: .6vh; }
+.dhs-head em { font-style: normal; background: #E7F4EA; color: #1E6B30; padding: 2px 8px; border-radius: 99px; }
+.dhs-row { display: grid; grid-template-columns: minmax(70px, 30%) 1fr auto; gap: .8vw; align-items: center; margin: .5vh 0; font-size: clamp(11px, .85vw, 15px); color: var(--brume); }
+.dhs-track { height: 10px; border-radius: 99px; background: #E9EEF5; overflow: hidden; } .dhs-track i { display: block; height: 100%; border-radius: 99px; transition: width .6s; }
+.dhs-row b { color: var(--craie); white-space: nowrap; }
+.dh-empty { font-size: clamp(11px, .85vw, 15px); color: var(--brume); }
+.dist-bars span { width: 55% !important; max-width: 46px !important; }
+.tile-dh { display: block; font-size: 10px; color: var(--brume); margin-top: 3px; white-space: nowrap; } .tile-dh b { color: var(--edf-orange); }
+.wall-grid.micro .tile-dh { display: none; }
 </style></head><body class="light">
 <div class="sky" aria-hidden="true"><div class="grain"></div></div>
 <main class="page">
@@ -142,9 +152,9 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 
 <section id="profilesPanel" class="panel profiles-wrap">
   <div class="card">
-    <h2>Classes avant / après</h2>
+    <h2>Classes des logements</h2>
     <div class="dist" id="distribution" role="img" aria-label="Répartition des classes de A à G"></div>
-    <div class="legend"><span><i class="s0"></i>Avant</span><span><i class="s2"></i>Après</span></div>
+    <div class="dh-salle" id="dhSalle"></div>
     <table class="dist-table sr-only" id="distTable"></table>
   </div>
   <div class="card">
@@ -182,14 +192,14 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 <script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script>
 <script src="/questions.js"></script><script src="/solutions.js"></script><script>
 const badge=g=>`<span class="grade grade-${g}">${g}</span>`;
-const STAGES=['Avant','Après'];
+const STAGES=['Participants'];
 
 document.getElementById('resetBtn').onclick=async()=>{if(!confirm('Effacer les réponses et les plans de la salle ?'))return;try{const r=await fetch('/api/reset',{method:'POST'});if(!r.ok)throw Error();location.href='/';}catch{showError('Réinitialisation impossible. Réessayez.');}};
 function showError(t){const e=document.getElementById('countError');e.textContent=t;e.hidden=!t;}
 
 // Distribution : barres construites une fois, hauteurs animées à chaque mise à jour
 const dist=document.getElementById('distribution');
-dist.innerHTML=[...'ABCDEFG'].map(g=>`<div class="dist-col"><div class="dist-bars">${[0,1].map(i=>`<span class="s${i?2:0}" data-g="${g}" data-i="${i}" data-n="0" style="height:0%"></span>`).join('')}</div>${badge(g)}</div>`).join('');
+dist.innerHTML=[...'ABCDEFG'].map(g=>`<div class="dist-col"><div class="dist-bars"><span class="grade-${g}" data-g="${g}" data-i="0" data-n="0" style="height:0%"></span></div>${badge(g)}</div>`).join('');
 let distCounts=null;
 function animateDist(replay){
   if(!distCounts)return;const max=Math.max(1,...distCounts.flat());
@@ -197,10 +207,17 @@ function animateDist(replay){
     if(UI.on)anime.animate(el,{height:replay?['0%',h]:h,duration:replay?900:600,delay:replay?(+el.dataset.i*60+'ABCDEFG'.indexOf(el.dataset.g)*50):0,ease:'out(3)'});else el.style.height=h;});
 }
 const tip=document.getElementById('tip');
-dist.addEventListener('pointermove',e=>{const el=e.target.closest('.dist-bars span');if(!el){tip.style.opacity=0;return;}tip.textContent=`Classe ${el.dataset.g} · ${STAGES[el.dataset.i]} : ${el.dataset.n} participant${el.dataset.n>1?'s':''}`;tip.style.left=Math.min(innerWidth-220,e.clientX+14)+'px';tip.style.top=(e.clientY-40)+'px';tip.style.opacity=1;});
+dist.addEventListener('pointermove',e=>{const el=e.target.closest('.dist-bars span');if(!el){tip.style.opacity=0;return;}tip.textContent=`Classe ${el.dataset.g} : ${el.dataset.n} participant${el.dataset.n>1?'s':''}`;tip.style.left=Math.min(innerWidth-220,e.clientX+14)+'px';tip.style.top=(e.clientY-40)+'px';tip.style.opacity=1;});
 dist.addEventListener('pointerleave',()=>tip.style.opacity=0);
 
 // Mur : une case par participant, seules les nouvelles cases apparaissent en animation
+const nf=v=>Math.round(v).toLocaleString('fr-FR');
+// DH moyens de la salle (plans validés) : avant et avec les solutions choisies.
+function renderDhSalle(s){const el=document.getElementById('dhSalle');if(!el)return;
+ if(!s.dhCount){el.innerHTML='<p class="dh-empty">Les DH apparaîtront avec les premiers plans validés.</p>';return;}
+ const M=Math.max(1500,Math.ceil(s.dhAvg/500)*500),pct=Math.round((s.dhAvg-s.dhPlanAvg)/s.dhAvg*100);
+ const row=(l,v,c)=>`<div class="dhs-row"><span>${l}</span><div class="dhs-track"><i style="width:${(v/M*100).toFixed(1)}%;background:${c}"></i></div><b>${nf(v)} DH</b></div>`;
+ el.innerHTML=`<div class="dhs-head"><span>DH RITE moyen · ${s.dhCount} plan${s.dhCount>1?'s':''}</span>${pct>0?`<em>−${pct} %</em>`:''}</div>${row('Avant',s.dhAvg,'#F6C7B5')}${row('Avec les solutions',s.dhPlanAvg,'var(--edf-orange)')}`;}
 const tiles=new Map();
 // Ajuste la taille des cases pour que tout le mur tienne dans la carte, quel que soit le nombre de participants.
 function fitWall(){
@@ -218,7 +235,7 @@ function renderWall(profiles){
   grid.querySelector('.empty')?.remove();
   const fresh=[];
   for(const p of profiles){let el=tiles.get(p.number);if(!el){el=document.createElement('article');el.className='wall-tile';tiles.set(p.number,el);grid.appendChild(el);fresh.push(el);}
-    const html=`<small>n°${p.number}</small>${p.grade?`<span class="grade-path">${badge(p.grade)}<span class="arrow">→</span>${badge(p.planGrade)}</span><p>${p.validated?'✓ Validé':'En cours'}</p>`:'<p>En attente</p>'}`;
+    const html=`<small>n°${p.number}</small>${p.grade?`${badge(p.grade)}${p.dh!=null?`<span class="tile-dh">${nf(p.dh)}${p.dhPlan<p.dh?` → <b>${nf(p.dhPlan)}</b>`:''} DH</span>`:''}<p>${p.validated?'✓ Validé':'En cours'}</p>`:'<p>En attente</p>'}`;
     if(el._html!==html){const wasValidated=el.classList.contains('done');el.innerHTML=html;el._html=html;el.classList.toggle('done',p.validated);if(p.validated&&!wasValidated&&!fresh.includes(el))UI.bump(el, 1.08);}}
   fitWall();
   UI.pop(fresh.slice(0,60),{stagger:25});
@@ -228,7 +245,7 @@ async function refresh(){try{const r=await fetch('/api/stats',{cache:'no-store'}
 document.getElementById('count').textContent=`${s.connected} participants · ${s.count} profils · ${s.validatedCount} plans validés`;
 const int=([v])=>Math.round(v);
 UI.tween(document.getElementById('cConnected'),s.connected,int,600);UI.tween(document.getElementById('cProfiles'),s.count,int,600);UI.tween(document.getElementById('cValidated'),s.validatedCount,int,600);
-const first=!distCounts;distCounts=[...'ABCDEFG'].map(g=>[s.gradeCounts[g],s.planGradeCounts[g]]);animateDist(first);
+const first=!distCounts;distCounts=[...'ABCDEFG'].map(g=>[s.gradeCounts[g]]);renderDhSalle(s);animateDist(first);
 document.getElementById('distTable').innerHTML=`<tr><th>Classe</th>${STAGES.map(t=>`<th>${t}</th>`).join('')}</tr>`+[...'ABCDEFG'].map((g,i)=>`<tr><th>${g}</th>${distCounts[i].map(n=>`<td>${n}</td>`).join('')}</tr>`).join('');
 renderWall(s.profiles);
 climUsers=(s.answerCounts?.clim?.pac||0)+(s.answerCounts?.clim?.mobile||0);aideCounts=s.aideCounts||{};validated=s.validatedCount||0;renderAides();if(!document.getElementById('energyPanel').hidden)renderRoom();

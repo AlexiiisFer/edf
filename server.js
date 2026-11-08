@@ -223,8 +223,12 @@ function computeStats() {
     profiles: all.map(p => {
       const profile = Object.keys(p.answers).length ? computeProfile(p.answers) : null;
       const plan = p.plan || (profile ? estimatePlan(p.answers) : null);
-      return { number: p.number, grade: profile?.grade || null, lowGrade: plan?.lowGrade || null, planGrade: plan?.planGrade || null, validated: !!p.plan, complete: profile?.complete || false };
+      return { number: p.number, grade: profile?.grade || null, lowGrade: plan?.lowGrade || null, planGrade: plan?.planGrade || null, validated: !!p.plan, complete: profile?.complete || false,
+        dh: p.plan && p.rite ? p.rite.dh : null, dhPlan: p.plan && p.rite ? p.rite.plan : null };
     }),
+    // Moyenne des DH RITE des plans validés : avant et avec les solutions choisies.
+    ...(() => { const r = engaged.filter((p) => p.rite); const m = (k) => (r.length ? Math.round(r.reduce((s, p) => s + p.rite[k], 0) / r.length) : null);
+      return { dhCount: r.length, dhAvg: m("dh"), dhPlanAvg: m("plan") }; })(),
     avgNoAction: Math.round(avg("tempNo") * 10) / 10,
     avgWithPlan: Math.round(avg("tempPlan") * 10) / 10,
     pctNoShutters: pct((p) => p.answers.protections === "aucune"),
@@ -281,7 +285,10 @@ const server = http.createServer(async (req, res) => {
       if (!Array.isArray(b.actions) || b.actions.length > 20 || b.actions.some(id => !valid.has(id))) return sendJson(res, 400, { error: "Actions invalides" });
       const plan = estimatePlan(pl.answers, b.actions);
       Object.assign(pl, { plan, gestures: plan.ids, gain: plan.gain, engaged: plan.ids.length > 0, submitted: true, tempNo: plan.tNo, tempPlan: plan.tPlan });
-      return sendJson(res, 200, { ok: true, plan });
+      // DH RITE du plan validé, pour le bilan collectif (la note A–G reste celle du questionnaire).
+      pl.rite = null;
+      if (riteApplicable(pl.answers)) { try { const r = await riteDiagnosis(pl.answers, plan.ids); pl.rite = { dh: r.dh, plan: r.plan }; } catch {} }
+      return sendJson(res, 200, { ok: true, plan, rite: pl.rite });
     }
 
     // --- Écran ---

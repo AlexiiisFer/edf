@@ -698,16 +698,16 @@ function renderReport() {
  // Pistes : solutions non choisies qui rafraîchissent le plus, à petit prix d'abord.
  const tips=availableSolutions(answers).filter(x=>!p.ids.includes(x.id)&&(x.cooling>0||x.comfort)&&!x.quote)
   .map(x=>({x,gain:estimatePlan(answers,[...p.ids,x.id]).tPlan}))
-  .filter(t=>t.gain<p.tPlan||t.x.comfort).sort((a,b)=>(a.gain-b.gain)||(costMin(a.x)-costMin(b.x))).slice(0,3);
+  .filter(t=>t.gain<p.tPlan||t.x.comfort||(riteData&&riteData.gains&&riteData.gains[t.x.id]>0)).sort((a,b)=>{const g=x=>riteData&&riteData.gains?riteData.gains[x.x.id]||0:0;return (g(b)-g(a))||(a.gain-b.gain)||(costMin(a.x)-costMin(b.x));}).slice(0,3);
  document.getElementById('myReport').innerHTML=`<h2>Mon bilan</h2>
   ${riteData&&riteData.available?dhReport(riteData):''}
-  <div class="rep-row"><span>Classe</span><b>${path(p.grade,p.planGrade)}</b></div>
-  <div class="rep-row"><span>Température</span><b>${p.tNo} → ${p.tPlan} °C${p.gain>0?` <em>(−${n(p.gain)} °C)</em>`:''}</b></div>
+  <div class="rep-row"><span>Classe du logement</span><b>${badge(p.grade)}</b></div>
+  <div class="rep-row"><span>Température estimée</span><b>${p.tNo} °C</b></div>
   <div class="rep-row"><span>Budget</span><b>${p.priceMax>p.price?'dès ':''}${n(p.price)} €</b></div>
   <div class="rep-row"><span>Délai</span><b>${picked.length?longest.delay:'—'}</b></div>
   <p class="rep-list">${picked.length?picked.map(x=>x.label).join(' · '):'Aucune solution choisie.'}</p>
   ${aidesHtml(picked,tips.map(t=>t.x))}
-  ${tips.length?`<h3>Pour aller plus loin</h3><ul class="rep-tips">${tips.map(t=>`<li><b>${t.x.label}</b><span>${t.gain<p.tPlan?`−${n(p.tPlan-t.gain)} °C`:'+ confort'} · ${priceLabel(t.x)} · ${t.x.delay}</span></li>`).join('')}</ul>`:'<p class="rep-list">Votre plan est déjà très complet.</p>'}`;
+  ${tips.length?`<h3>Pour aller plus loin</h3><ul class="rep-tips">${tips.map(t=>`<li><b>${t.x.label}</b><span>${riteData&&riteData.available&&riteData.gains[t.x.id]>0?`−${nfr(riteData.gains[t.x.id])} DH`:'+ confort'} · ${priceLabel(t.x)} · ${t.x.delay}</span></li>`).join('')}</ul>`:'<p class="rep-list">Votre plan est déjà très complet.</p>'}`;
  UI.enter(document.querySelectorAll('#myReport > *'),{y:10,stagger:40,delay:300});
  if(UI.on)anime.animate('#myReport .dh-track i',{scaleX:[0,1],duration:1100,delay:anime.stagger(350,{start:400}),ease:'out(3)'});
 }
