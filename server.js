@@ -5,7 +5,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { QUESTIONS, SECTIONS, computeProfile, isComplete, isValidAnswer, validAnswer } = require("./public/questions.js");
 
-const { estimatePlan, availableSolutions } = require("./public/solutions.js");
+const { estimatePlan, availableSolutions, SOLUTIONS, AIDES } = require("./public/solutions.js");
 const { DPE_FIELDS, answersFromDpe, dpeLabel } = require("./public/dpe.js");
 const { RITE_SOLUTIONS, riteApplicable, riteInputs, riteLevel } = require("./public/rite.js");
 
@@ -233,6 +233,8 @@ function computeStats() {
     pctTooHot: pct((p) => p.tempNo >= 28),
     degreesSaved: Math.round(engaged.reduce((s, p) => s + p.plan.gain, 0)),
     gestureCounts,
+    // Plans validés comprenant au moins une solution éligible à chaque aide.
+    aideCounts: Object.fromEntries(Object.keys(AIDES).map((k) => [k, engaged.filter((p) => p.plan.ids.some((id) => SOLUTIONS.find((x) => x.id === id)?.aide === k)).length])),
     // Réponses de la salle par question, pour les chiffres en direct de l'écran projeté.
     answeredCounts: Object.fromEntries(QUESTIONS.map((q) => [q.key, all.filter((p) => p.answers[q.key] !== undefined).length])),
     answerCounts: Object.fromEntries(QUESTIONS.map((q) => [q.key, Object.fromEntries(q.options.map((o) => [o.v, all.filter((p) => [].concat(p.answers[q.key]).includes(o.v)).length]))])),

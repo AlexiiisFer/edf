@@ -465,6 +465,12 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 .dh-meter { align-self: stretch; width: 100%; }
 .info-dlg { margin: auto; }
 .dh-track .dh-t { background: rgba(255,255,255,.75); }
+.aides { list-style: none; padding: 0; margin: 0; }
+.aides li { display: flex; flex-direction: column; gap: 2px; margin: 0 0 8px; padding: 10px 12px; background: #EAF1FB; border-radius: 12px; font-size: 13px; color: var(--gris); }
+.aides a { color: var(--edf-bleu); text-decoration: none; font-size: 14px; }
+.aides .aide-for { color: var(--encre); font-weight: 600; }
+.aides-note { font-size: 11px; color: var(--gris); margin: 0 0 6px; }
+.info-meta .aide { background: #EAF1FB; color: var(--edf-bleu); }
 </style>
 </head>
 <body>
@@ -677,6 +683,15 @@ function dhReport(d){
  const bar=(label,v,lvl)=>`<div class="dh-row"><span class="dh-lab">${label}</span><div class="dh-track"><i style="width:${(v/M*100).toFixed(1)}%;background:${dhColor(v)}"></i><span class="dh-t" style="left:${350/M*100}%"></span><span class="dh-t" style="left:${1000/M*100}%"></span></div><b class="num">${nfr(v)} DH</b><small>${lvl}</small></div>`;
  return `<div class="dh-report"><div class="dh-head"><span>Inconfort d’été · DH RITE</span>${pct>0?`<em>−${pct} %</em>`:''}</div>${bar('Avant',d.dh,d.level)}${bar('Avec mon plan',d.plan,d.planLevel)}<p class="dh-legend">Repères Cerema : moins de 350 DH confortable · plus de 1 000 DH inconfortable</p></div>`;
 }
+// Aides possibles pour les solutions choisies (et les pistes proposées).
+function aidesHtml(picked,tips){
+ const rows=[];
+ for(const [key,a] of Object.entries(AIDES)){
+  const mine=picked.filter(x=>x.aide===key).map(x=>x.label), more=tips.filter(x=>x.aide===key).map(x=>x.label);
+  if(mine.length||more.length) rows.push(`<li><a href="${a.url}" target="_blank" rel="noopener"><b>${a.label}</b></a><span>${a.detail}</span><span class="aide-for">${mine.length?'Pour : '+mine.join(', '):'Possible pour : '+more.join(', ')}</span></li>`);
+ }
+ return rows.length?`<h3>Aides possibles</h3><ul class="aides">${rows.join('')}</ul><p class="aides-note">Sous conditions de ressources et de travaux, montants non garantis : vérifiez avant de signer un devis.</p>`:'';
+}
 function renderReport() {
  const p=currentPlan(), picked=SOLUTIONS.filter(x=>p.ids.includes(x.id)), n=v=>v.toLocaleString('fr-FR');
  const maxDays=picked.reduce((m,x)=>Math.max(m,x.days),0), longest=picked.find(x=>x.days===maxDays);
@@ -691,6 +706,7 @@ function renderReport() {
   <div class="rep-row"><span>Budget</span><b>${p.priceMax>p.price?'dès ':''}${n(p.price)} €</b></div>
   <div class="rep-row"><span>Délai</span><b>${picked.length?longest.delay:'—'}</b></div>
   <p class="rep-list">${picked.length?picked.map(x=>x.label).join(' · '):'Aucune solution choisie.'}</p>
+  ${aidesHtml(picked,tips.map(t=>t.x))}
   ${tips.length?`<h3>Pour aller plus loin</h3><ul class="rep-tips">${tips.map(t=>`<li><b>${t.x.label}</b><span>${t.gain<p.tPlan?`−${n(p.tPlan-t.gain)} °C`:'+ confort'} · ${priceLabel(t.x)} · ${t.x.delay}</span></li>`).join('')}</ul>`:'<p class="rep-list">Votre plan est déjà très complet.</p>'}`;
  UI.enter(document.querySelectorAll('#myReport > *'),{y:10,stagger:40,delay:300});
  if(UI.on)anime.animate('#myReport .dh-track i',{scaleX:[0,1],duration:1100,delay:anime.stagger(350,{start:400}),ease:'out(3)'});
@@ -711,7 +727,7 @@ function openInfo(id){
  document.getElementById('infoTitle').textContent=x.label;
  document.getElementById('infoText').textContent=x.info||x.detail;
  const g=riteData&&riteData.available?riteData.gains[id]:0;
- document.getElementById('infoMeta').innerHTML=[`<span>💶 ${priceLabel(x)}</span>`,`<span>⏱ ${x.delay}</span>`,x.cerema&&x.cerema.includes('€')?`<span>Guide Cerema : ${x.cerema}</span>`:'',g>0?`<span class="good">−${nfr(g)} DH (RITE)</span>`:''].join('');
+ document.getElementById('infoMeta').innerHTML=[`<span>💶 ${priceLabel(x)}</span>`,`<span>⏱ ${x.delay}</span>`,x.cerema&&x.cerema.includes('€')?`<span>Guide Cerema : ${x.cerema}</span>`:'',g>0?`<span class="good">−${nfr(g)} DH (RITE)</span>`:'',x.aide?`<span class="aide">Aide : ${AIDES[x.aide].label}</span>`:''].join('');
  const d=document.getElementById('infoDlg'); d.showModal?d.showModal():d.setAttribute('open','');
 }
 document.getElementById('infoClose').onclick=()=>{const d=document.getElementById('infoDlg');d.close?d.close():d.removeAttribute('open');};

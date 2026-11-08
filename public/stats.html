@@ -87,6 +87,12 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 .wall-grid.micro .wall-tile small, .wall-grid.micro .grade-path .arrow, .wall-grid.micro .grade-path .grade:first-child { display: none; }
 .wall-grid.micro .wall-tile { border-radius: 8px; padding: 2px; }
 #energyPanel { flex: 1; min-height: 0; grid-template-rows: minmax(0, 1fr) auto; }
+.en-bottom { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.6vw; }
+.en-aides h2 { font-size: clamp(13px, 1vw, 18px); margin-bottom: .8vh; }
+.en-aides p { display: flex; justify-content: space-between; gap: 1vw; margin: .5vh 0; font-size: clamp(12px, 1vw, 18px); color: var(--brume); }
+.en-aides b { color: var(--edf-orange); font-size: 1.2em; }
+.en-aides small { display: block; font-size: clamp(10px, .75vw, 13px); color: var(--brume); margin-top: .6vh; }
+@media (max-width: 900px) { .en-bottom { grid-template-columns: 1fr; } }
 .energy { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.6vw; min-height: 0; }
 .energy > .card { display: flex; flex-direction: column; justify-content: flex-start; min-height: 0; overflow: hidden; }
 .en-compare .en-big { margin-top: auto; padding-top: 2vh; font-size: clamp(15px, 1.5vw, 28px); }
@@ -167,7 +173,7 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
       </ol>
     </div>
   </div>
-  <div class="card en-room" id="enRoom"></div>
+  <div class="en-bottom"><div class="card en-room" id="enRoom"></div><div class="card en-aides" id="enAides"></div></div>
 </section>
 
 <footer class="foot"><p class="muted">Démo pédagogique, pas un DPE. Météo fictive.</p></footer>
@@ -225,7 +231,7 @@ UI.tween(document.getElementById('cConnected'),s.connected,int,600);UI.tween(doc
 const first=!distCounts;distCounts=[...'ABCDEFG'].map(g=>[s.gradeCounts[g],s.planGradeCounts[g]]);animateDist(first);
 document.getElementById('distTable').innerHTML=`<tr><th>Classe</th>${STAGES.map(t=>`<th>${t}</th>`).join('')}</tr>`+[...'ABCDEFG'].map((g,i)=>`<tr><th>${g}</th>${distCounts[i].map(n=>`<td>${n}</td>`).join('')}</tr>`).join('');
 renderWall(s.profiles);
-climUsers=(s.answerCounts?.clim?.pac||0)+(s.answerCounts?.clim?.mobile||0);if(!document.getElementById('energyPanel').hidden)renderRoom();
+climUsers=(s.answerCounts?.clim?.pac||0)+(s.answerCounts?.clim?.mobile||0);aideCounts=s.aideCounts||{};validated=s.validatedCount||0;renderAides();if(!document.getElementById('energyPanel').hidden)renderRoom();
 }catch{showError('Connexion interrompue : les dernières valeurs peuvent être anciennes. Nouvelle tentative automatique…');}}
 // Onglets : la salle / quand consommer
 function placeThumb(){const b=document.querySelector('.tabs button[aria-pressed="true"]'),t=document.getElementById('thumb');t.style.left=b.offsetLeft+'px';t.style.width=b.offsetWidth+'px';}
@@ -246,7 +252,10 @@ document.getElementById('offers').innerHTML='<div></div>'+OFFS.map(o=>`<div clas
  +USES.map(u=>`<div class="use">${CLIM_USAGE[u].label}<small>${fr(COST[u].base.kwh,0)} kWh sur l’été</small></div>`+OFFS.map(o=>{const c=COST[u][o],best=u==='offPeak'&&o==='hphc';return `<div class="cell ${best?'best':''}">${best?'<span class="badge">Le plus malin</span>':''}<b class="num" data-cost="${c.cost}">—</b><small>${eur(c.perDay,2)} / jour</small><div class="meter"><i style="width:${(c.cost/WORST.cost*100).toFixed(1)}%"></i></div></div>`;}).join('')).join('');
 document.getElementById('tariffNote').textContent='Tarif Bleu EDF, prix du kWh TTC au 1er août 2026 (hors abonnement). Heures creuses : 8 h par jour. Estimation indicative.';
 document.getElementById('tipFan').textContent=`≈ ${eur(FAN.perDay,2)} / jour`;document.getElementById('tipHc').textContent=`≈ ${eur(BEST.perDay,2)} / jour`;
-let climUsers=0;
+let climUsers=0,aideCounts={},validated=0;
+// Aides possibles dans la salle (même liste que le bilan sur le téléphone).
+function renderAides(){const el=document.getElementById('enAides');if(!el)return;
+ el.innerHTML=`<h2>Aides possibles</h2>`+Object.entries(AIDES).map(([k,a])=>`<p><span>${a.label}</span><span><b>${aideCounts[k]||0}</b> / ${validated} plan${validated>1?'s':''}</span></p>`).join('')+`<small>Plans validés comprenant une solution éligible · sous conditions</small>`;}
 function renderRoom(){const save=climUsers*(H24.cost-HC.cost);document.getElementById('enRoom').innerHTML=climUsers?`<b>${climUsers}</b> participant${climUsers>1?'s ont':' a'} une clim : <b>≈ ${eur(save)}</b> économisés ensemble cet été en la programmant aux heures creuses.`:'Personne dans la salle n’a de clim pour l’instant.';}
 function showEnergy(){
   const eu=([v])=>eur(v);

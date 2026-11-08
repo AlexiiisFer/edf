@@ -52,6 +52,12 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 - RITE ne couvre que les appartements : pour une maison, le site garde l’estimation simplifiée. Sans LibreOffice, le site fonctionne sans RITE (`/health` indique `"rite": false`).
 - Le Dockerfile installe LibreOffice Calc et `python3-uno` (image plus lourde, ≈ 400 Mo de plus).
 
+## Aides possibles
+
+- `AIDES` dans `public/solutions.js` : Prime énergie EDF (CEE : PAC air-air, remplacement d’un climatiseur mobile, isolation du toit) et MaPrimeRénov’ en rénovation globale (store extérieur, volets automatiques, brasseur d’air, isolation des murs).
+- Le bilan du téléphone liste les aides correspondant aux solutions choisies ; l’onglet « Quand consommer ? » compte les plans validés concernés.
+- Sous conditions, montants non affichés : à vérifier sur les sites officiels (EDF, France Rénov’) avant la présentation.
+
 ## Estimations
 
 `public/solutions.js` décrit les solutions, en deux groupes (gestes manuels, équipements) : effet supposé sur la température, fourchette de prix indicative (éventuellement au m²), délai de mise en place et temps demandé (geste quotidien, installation unique ou domotique). Liste : volets, aération nocturne, effet cheminée, veilles ; volets clairs, store, brasseur d’air, brumisateur, écran d’alertes, volets auto, pièce refuge (simple ou équipée), vitrage intelligent, cool roof, cheminée solaire, mur végétal, point d’eau, puits canadien, jumeau numérique, rafraîchisseur adiabatique, clim programmée, PAC. Ce sont des **hypothèses pédagogiques**, pas des devis ni une étude thermique.
