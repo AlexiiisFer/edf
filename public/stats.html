@@ -139,6 +139,9 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 .dist-bars span { width: 55% !important; max-width: 46px !important; }
 .tile-dh { display: block; font-size: 10px; color: var(--brume); margin-top: 3px; white-space: nowrap; } .tile-dh b { color: var(--edf-orange); }
 .wall-grid.micro .tile-dh { display: none; }
+.tile-dh .dh-pill { font-size: 10px; padding: 1px 5px; border-radius: 5px; }
+.dhs-row b .dh-pill { font-size: 1em; }
+.dh-legend-s { font-size: clamp(10px, .75vw, 13px); color: var(--brume); margin-top: .6vh; } .dh-legend-s .dh-pill { font-size: .9em; padding: 0 5px; }
 </style></head><body class="light">
 <div class="sky" aria-hidden="true"><div class="grain"></div></div>
 <main class="page">
@@ -212,12 +215,15 @@ dist.addEventListener('pointerleave',()=>tip.style.opacity=0);
 
 // Mur : une case par participant, seules les nouvelles cases apparaissent en animation
 const nf=v=>Math.round(v).toLocaleString('fr-FR');
+const dhColor=v=>v<=350?'#70c9a0':v<=700?'#ffe078':v<=1000?'#ffb875':'#f77882';
+const dhClass=v=>v<=350?'dh-ok':v<=700?'dh-mid':v<=1000?'dh-high':'dh-bad';
+const dhPill=v=>`<span class="dh-pill ${dhClass(v)}">${nf(v)}</span>`;
 // DH moyens de la salle (plans validés) : avant et avec les solutions choisies.
 function renderDhSalle(s){const el=document.getElementById('dhSalle');if(!el)return;
  if(!s.dhCount){el.innerHTML='<p class="dh-empty">Les DH apparaîtront avec les premiers plans validés.</p>';return;}
  const M=Math.max(1500,Math.ceil(s.dhAvg/500)*500),pct=Math.round((s.dhAvg-s.dhPlanAvg)/s.dhAvg*100);
- const row=(l,v,c)=>`<div class="dhs-row"><span>${l}</span><div class="dhs-track"><i style="width:${(v/M*100).toFixed(1)}%;background:${c}"></i></div><b>${nf(v)} DH</b></div>`;
- el.innerHTML=`<div class="dhs-head"><span>DH RITE moyen · ${s.dhCount} plan${s.dhCount>1?'s':''}</span>${pct>0?`<em>−${pct} %</em>`:''}</div>${row('Avant',s.dhAvg,'#F6C7B5')}${row('Avec les solutions',s.dhPlanAvg,'var(--edf-orange)')}`;}
+ const row=(l,v,c)=>`<div class="dhs-row"><span>${l}</span><div class="dhs-track"><i style="width:${(v/M*100).toFixed(1)}%;background:${c}"></i></div><b>${dhPill(v)} DH</b></div>`;
+ el.innerHTML=`<div class="dhs-head"><span>DH RITE moyen · ${s.dhCount} plan${s.dhCount>1?'s':''}</span>${pct>0?`<em>−${pct} %</em>`:''}</div>${row('Avant',s.dhAvg,dhColor(s.dhAvg))}${row('Avec les solutions',s.dhPlanAvg,dhColor(s.dhPlanAvg))}<p class="dh-legend-s"><span class="dh-pill dh-ok">≤ 350</span> confortable · <span class="dh-pill dh-bad">&gt; 1 000</span> inconfortable</p>`;}
 const tiles=new Map();
 // Ajuste la taille des cases pour que tout le mur tienne dans la carte, quel que soit le nombre de participants.
 function fitWall(){
@@ -235,7 +241,7 @@ function renderWall(profiles){
   grid.querySelector('.empty')?.remove();
   const fresh=[];
   for(const p of profiles){let el=tiles.get(p.number);if(!el){el=document.createElement('article');el.className='wall-tile';tiles.set(p.number,el);grid.appendChild(el);fresh.push(el);}
-    const html=`<small>n°${p.number}</small>${p.grade?`${badge(p.grade)}${p.dh!=null?`<span class="tile-dh">${nf(p.dh)}${p.dhPlan<p.dh?` → <b>${nf(p.dhPlan)}</b>`:''} DH</span>`:''}<p>${p.validated?'✓ Validé':'En cours'}</p>`:'<p>En attente</p>'}`;
+    const html=`<small>n°${p.number}</small>${p.grade?`${badge(p.grade)}${p.dh!=null?`<span class="tile-dh">${dhPill(p.dh)}${p.dhPlan<p.dh?` → ${dhPill(p.dhPlan)}`:''} DH</span>`:''}<p>${p.validated?'✓ Validé':'En cours'}</p>`:'<p>En attente</p>'}`;
     if(el._html!==html){const wasValidated=el.classList.contains('done');el.innerHTML=html;el._html=html;el.classList.toggle('done',p.validated);if(p.validated&&!wasValidated&&!fresh.includes(el))UI.bump(el, 1.08);}}
   fitWall();
   UI.pop(fresh.slice(0,60),{stagger:25});

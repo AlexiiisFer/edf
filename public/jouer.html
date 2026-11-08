@@ -471,6 +471,11 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
 .aides .aide-for { color: var(--encre); font-weight: 600; }
 .aides-note { font-size: 11px; color: var(--gris); margin: 0 0 6px; }
 .info-meta .aide { background: #EAF1FB; color: var(--edf-bleu); }
+.info-btn.inline { position: static; display: inline-grid; place-items: center; width: 20px; height: 20px; font-size: 11px; vertical-align: middle; margin-left: 4px; }
+.rite-line .dh-now .dh-pill { font-size: 14px; }
+.dh-row b .dh-pill { font-size: 15px; }
+.info-meta .dh-pill { border-radius: 99px; padding: 5px 10px; font-size: 12px; }
+.info-meta span.dh-ok { background: #70c9a0; } .info-meta span.dh-mid { background: #ffe078; } .info-meta span.dh-high { background: #ffb875; } .info-meta span.dh-bad { background: #f77882; }
 </style>
 </head>
 <body>
@@ -680,8 +685,8 @@ function buildPrefs() {
 // Bilan : évolution des degrés-heures d'inconfort (RITE), avant et après le plan.
 function dhReport(d){
  const M=DH_MAX(d.dh), pct=d.dh>0?Math.round((d.dh-d.plan)/d.dh*100):0;
- const bar=(label,v,lvl)=>`<div class="dh-row"><span class="dh-lab">${label}</span><div class="dh-track"><i style="width:${(v/M*100).toFixed(1)}%;background:${dhColor(v)}"></i><span class="dh-t" style="left:${350/M*100}%"></span><span class="dh-t" style="left:${1000/M*100}%"></span></div><b class="num">${nfr(v)} DH</b><small>${lvl}</small></div>`;
- return `<div class="dh-report"><div class="dh-head"><span>Inconfort d’été · DH RITE${d.approx?' (estimation)':''}</span>${pct>0?`<em>−${pct} %</em>`:''}</div>${bar('Avant',d.dh,d.level)}${bar('Avec mon plan',d.plan,d.planLevel)}<p class="dh-legend">Repères Cerema : moins de 350 DH confortable · plus de 1 000 DH inconfortable</p></div>`;
+ const bar=(label,v,lvl)=>`<div class="dh-row"><span class="dh-lab">${label}</span><div class="dh-track"><i style="width:${(v/M*100).toFixed(1)}%;background:${dhColor(v)}"></i><span class="dh-t" style="left:${350/M*100}%"></span><span class="dh-t" style="left:${1000/M*100}%"></span></div><b class="num">${dhPill(v)} DH</b><small>${lvl}</small></div>`;
+ return `<div class="dh-report"><div class="dh-head"><span>Inconfort d’été · DH RITE${d.approx?' (estimation)':''} <button type="button" class="info-btn inline dh-info" aria-label="Le DH, c’est quoi ?">i</button></span>${pct>0?`<em>−${pct} %</em>`:''}</div>${bar('Avant',d.dh,d.level)}${bar('Avec mon plan',d.plan,d.planLevel)}<p class="dh-legend">Repères Cerema : moins de 350 DH confortable · plus de 1 000 DH inconfortable</p></div>`;
 }
 // Aides possibles pour les solutions choisies (et les pistes proposées).
 function aidesHtml(picked,tips){
@@ -758,13 +763,25 @@ const nfr=v=>Math.round(v).toLocaleString('fr-FR');
 function refreshRite(){clearTimeout(riteTimer);riteTimer=setTimeout(async()=>{const seq=++riteSeq;
  try{const d=await api('rite',{id:me,actions:[...chosen]});if(seq!==riteSeq)return;riteData=d;paintRite();}catch{}},150);}
 const DH_MAX=v=>Math.max(1500,Math.ceil(v/500)*500);
-const dhColor=v=>v<=350?'#3aa57c':v<=1000?'#f5a524':'#e8774f';
+const dhColor=v=>v<=350?'#70c9a0':v<=700?'#ffe078':v<=1000?'#ffb875':'#f77882';
+const dhClass=v=>v<=350?'dh-ok':v<=700?'dh-mid':v<=1000?'dh-high':'dh-bad';
+const dhPill=v=>`<span class="dh-pill ${dhClass(v)}">${nfr(v)}</span>`;
+// Fiche « Le DH, c'est quoi ? »
+function openDhInfo(){
+ document.getElementById('infoTitle').textContent='Le DH, c’est quoi ?';
+ document.getElementById('infoText').textContent='Les degrés-heures d’inconfort (DH) mesurent la surchauffe d’un logement en été : chaque heure où la température intérieure dépasse le seuil de confort, on compte de combien de degrés, et on additionne sur la saison. 3 heures à 2 °C au-dessus = 6 DH. Le calcul est fait avec RITE, l’outil du Cerema, pour une canicule type.';
+ document.getElementById('infoMeta').innerHTML=`<span class="dh-pill dh-ok">0–350 confortable</span><span class="dh-pill dh-mid">350–700</span><span class="dh-pill dh-high">700–1 000</span><span class="dh-pill dh-bad">+ de 1 000 inconfortable</span>`;
+ const d=document.getElementById('infoDlg'); d.showModal?d.showModal():d.setAttribute('open','');
+}
+document.addEventListener('click',e=>{const b=e.target.closest('.dh-info');if(!b)return;e.preventDefault();e.stopPropagation();openDhInfo();},true);
 function paintRite(){
  const d=riteData,el=document.getElementById('riteLine'),meter=document.getElementById('dhMeter');
  if(!d||!d.available){if(el)el.textContent='';if(meter)meter.hidden=true;document.querySelectorAll('.tile .dh').forEach(x=>x.remove());return;}
  // Carte du haut : DH avant → DH avec les choix, et jauge qui se réduit à chaque solution cochée.
- if(el){if(!el.querySelector('.dh-now'))el.innerHTML=`<b class="dh-now num"></b> <span class="dh-lvl"></span>`;
-  const now=el.querySelector('.dh-now');UI.tween(now,[d.dh,d.plan],([a,b])=>Math.round(b)<Math.round(a)?`${nfr(a)} → ${nfr(b)} DH`:`${nfr(a)} DH`,600);
+ if(el){if(!el.querySelector('.dh-now'))el.innerHTML=`<b class="dh-now num"></b> <span class="dh-lvl"></span> <button type="button" class="info-btn inline dh-info" aria-label="Le DH, c’est quoi ?">i</button>`;
+  const now=el.querySelector('.dh-now'),changed=now.dataset.plan!==String(d.plan);
+  now.innerHTML=Math.round(d.plan)<Math.round(d.dh)?`${dhPill(d.dh)} → ${dhPill(d.plan)} DH`:`${dhPill(d.dh)} DH`;
+  if(changed&&now.dataset.plan)UI.bump(now.lastElementChild||now,1.08);now.dataset.plan=d.plan;
   el.querySelector('.dh-lvl').textContent=(d.approx?'RITE (estimation maison) · ':'RITE · ')+(d.plan<d.dh?d.planLevel:d.level);}
  if(meter){meter.hidden=false;const M=DH_MAX(d.dh);meter.style.setProperty('--t350',(350/M*100)+'%');meter.style.setProperty('--t1000',(1000/M*100)+'%');
   const base=meter.querySelector('.dh-base'),plan=meter.querySelector('.dh-plan');base.style.width=(d.dh/M*100)+'%';plan.style.width=(d.plan/M*100)+'%';plan.style.background=dhColor(d.plan);}
