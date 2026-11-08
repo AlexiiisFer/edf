@@ -123,7 +123,11 @@ test('DPE prefill: region, through-flow, sun protection and air conditioning', (
 
 test('RITE inputs: apartments only, values from the RITE lists, solutions change the right cells', () => {
   const { riteApplicable, riteInputs, riteLevel, RITE_SOLUTIONS } = require('../public/rite.js');
-  assert.ok(riteApplicable(hot) && !riteApplicable({ ...hot, logement: 'plainpied' }));
+  assert.ok(riteApplicable(hot) && riteApplicable({ ...hot, logement: 'plainpied' }) && !riteApplicable({}));
+  const house = riteInputs({ ...hot, logement: 'etages', traversant: 'oui', toiture: 'faible' });
+  assert.equal(house['Général!C18'], 'Sous toiture');
+  assert.equal(house['Général!C20'], '4a-traversant en pignon');
+  assert.equal(riteInputs({ ...hot, logement: 'plainpied' })['Général!C20'], '2a-mono orienté en angle');
   const base = riteInputs(hot);
   assert.equal(base['Général!C11'], 13);
   assert.equal(base['Général!C18'], 'Sous toiture');

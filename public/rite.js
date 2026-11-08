@@ -1,5 +1,6 @@
 // Correspondance entre le questionnaire et les entrées de l'outil RITE du Cerema (approche simplifiée, fichier V24.2).
-// RITE ne couvre que les logements en immeuble collectif : pour une maison, pas de calcul RITE.
+// RITE est prévu pour le logement collectif. Une maison est estimée comme un logement « sous toiture » à plusieurs façades
+// (le toit et les façades exposées dominent la surchauffe) : résultat signalé comme estimation.
 // Les données non demandées gardent des valeurs par défaut courantes (bâti ancien peu isolé, T3).
 const RITE_DEPT = { nord: 44, idf: 75, est: 67, rhone: 69, sud: 13 };
 // Façade la plus exposée en premier.
@@ -32,9 +33,12 @@ const RITE_SOLUTIONS = {
   ite: { 'Général!G35': '3-Mur bien isolé en ITE  (R=4-équivalent CEE)' },
 };
 
+const isHouse = a => a.logement === 'plainpied' || a.logement === 'etages';
 function riteApplicable(answers = {}) {
-  return answers.logement === 'appart' || answers.logement === 'combles';
+  return ['appart', 'combles', 'plainpied', 'etages'].includes(answers.logement);
 }
+// Résultat hors du champ officiel de RITE (maison) : à présenter comme une estimation.
+function riteApprox(answers = {}) { return isHouse(answers); }
 
 // Entrées RITE du logement avec les solutions choisies.
 function riteInputs(answers = {}, ids = []) {
@@ -45,8 +49,9 @@ function riteInputs(answers = {}, ids = []) {
   const inputs = {
     ...RITE_DEFAULTS,
     'Général!C11': a.dept && /^\d+$/.test(a.dept) ? Number(a.dept) : (RITE_DEPT[a.region] || 75),
-    'Général!C18': a.logement === 'combles' ? 'Sous toiture' : 'Etage courant',
-    'Général!C20': a.traversant === 'oui' ? '3-traversant sans pignon' : '1-mono orienté',
+    'Général!C18': a.logement === 'appart' ? 'Etage courant' : 'Sous toiture',
+    'Général!C20': isHouse(a) ? (a.traversant === 'oui' ? '4a-traversant en pignon' : '2a-mono orienté en angle')
+      : (a.traversant === 'oui' ? '3-traversant sans pignon' : '1-mono orienté'),
     'Méthode simplifiée!C25': prot, 'Méthode simplifiée!D25': prot, 'Méthode simplifiée!E25': prot,
     'Méthode simplifiée!C27': orient,
     'Méthode simplifiée!C33': a.brasseur === 'oui' ? 'Oui' : 'Non',
@@ -56,7 +61,7 @@ function riteInputs(answers = {}, ids = []) {
   };
   if (RITE_TYPO[a.typo]) inputs['Général!C16'] = RITE_TYPO[a.typo];
   if (RITE_MURS[a.murs]) inputs['Général!G35'] = RITE_MURS[a.murs];
-  if (a.logement === 'combles' && RITE_TOIT[a.toiture]) inputs['Général!F27'] = RITE_TOIT[a.toiture];
+  if (a.logement !== 'appart' && RITE_TOIT[a.toiture]) inputs['Général!F27'] = RITE_TOIT[a.toiture];
   if (RITE_MENUIS[a.menuiserie]) inputs['Méthode simplifiée!C23'] = RITE_MENUIS[a.menuiserie];
   if (a.inertie === 'lourde') inputs['Général!G62'] = 'Carreaux de plâtre/brique';
   for (const id of ids) {
@@ -73,4 +78,4 @@ function riteLevel(dh) {
   return dh <= 350 ? 'confortable' : dh <= 1000 ? 'inconfort probable' : 'inconfortable';
 }
 
-if (typeof module !== 'undefined') module.exports = { RITE_SOLUTIONS, riteApplicable, riteInputs, riteLevel };
+if (typeof module !== 'undefined') module.exports = { RITE_SOLUTIONS, riteApplicable, riteApprox, riteInputs, riteLevel };

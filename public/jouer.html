@@ -681,7 +681,7 @@ function buildPrefs() {
 function dhReport(d){
  const M=DH_MAX(d.dh), pct=d.dh>0?Math.round((d.dh-d.plan)/d.dh*100):0;
  const bar=(label,v,lvl)=>`<div class="dh-row"><span class="dh-lab">${label}</span><div class="dh-track"><i style="width:${(v/M*100).toFixed(1)}%;background:${dhColor(v)}"></i><span class="dh-t" style="left:${350/M*100}%"></span><span class="dh-t" style="left:${1000/M*100}%"></span></div><b class="num">${nfr(v)} DH</b><small>${lvl}</small></div>`;
- return `<div class="dh-report"><div class="dh-head"><span>Inconfort d’été · DH RITE</span>${pct>0?`<em>−${pct} %</em>`:''}</div>${bar('Avant',d.dh,d.level)}${bar('Avec mon plan',d.plan,d.planLevel)}<p class="dh-legend">Repères Cerema : moins de 350 DH confortable · plus de 1 000 DH inconfortable</p></div>`;
+ return `<div class="dh-report"><div class="dh-head"><span>Inconfort d’été · DH RITE${d.approx?' (estimation)':''}</span>${pct>0?`<em>−${pct} %</em>`:''}</div>${bar('Avant',d.dh,d.level)}${bar('Avec mon plan',d.plan,d.planLevel)}<p class="dh-legend">Repères Cerema : moins de 350 DH confortable · plus de 1 000 DH inconfortable</p></div>`;
 }
 // Aides possibles pour les solutions choisies (et les pistes proposées).
 function aidesHtml(picked,tips){
@@ -761,11 +761,11 @@ const DH_MAX=v=>Math.max(1500,Math.ceil(v/500)*500);
 const dhColor=v=>v<=350?'#3aa57c':v<=1000?'#f5a524':'#e8774f';
 function paintRite(){
  const d=riteData,el=document.getElementById('riteLine'),meter=document.getElementById('dhMeter');
- if(!d||!d.available){if(el)el.textContent=d&&d.reason==='maison'?'Calcul RITE : appartements uniquement.':'';if(meter)meter.hidden=true;document.querySelectorAll('.tile .dh').forEach(x=>x.remove());return;}
+ if(!d||!d.available){if(el)el.textContent='';if(meter)meter.hidden=true;document.querySelectorAll('.tile .dh').forEach(x=>x.remove());return;}
  // Carte du haut : DH avant → DH avec les choix, et jauge qui se réduit à chaque solution cochée.
  if(el){if(!el.querySelector('.dh-now'))el.innerHTML=`<b class="dh-now num"></b> <span class="dh-lvl"></span>`;
   const now=el.querySelector('.dh-now');UI.tween(now,[d.dh,d.plan],([a,b])=>Math.round(b)<Math.round(a)?`${nfr(a)} → ${nfr(b)} DH`:`${nfr(a)} DH`,600);
-  el.querySelector('.dh-lvl').textContent='RITE · '+(d.plan<d.dh?d.planLevel:d.level);}
+  el.querySelector('.dh-lvl').textContent=(d.approx?'RITE (estimation maison) · ':'RITE · ')+(d.plan<d.dh?d.planLevel:d.level);}
  if(meter){meter.hidden=false;const M=DH_MAX(d.dh);meter.style.setProperty('--t350',(350/M*100)+'%');meter.style.setProperty('--t1000',(1000/M*100)+'%');
   const base=meter.querySelector('.dh-base'),plan=meter.querySelector('.dh-plan');base.style.width=(d.dh/M*100)+'%';plan.style.width=(d.plan/M*100)+'%';plan.style.background=dhColor(d.plan);}
  document.querySelectorAll('#v-choices .choice.tile').forEach(t=>{const id=t.querySelector('input').value,g=d.gains[id];let b=t.querySelector('.dh');

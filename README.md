@@ -49,7 +49,7 @@ Refonte visuelle réalisée avec les skills du dépôt `skills-ui` (Anime.js en 
 - Les habitudes déjà prises (volets fermés le matin, aération la nuit, ventilateur) font disparaître la solution correspondante.
 - Les tuiles indiquent le niveau de coût du guide Cerema 2025 (€ à €€€) quand le guide le donne. Les prix de l’isolation du toit et des murs sont des estimations à vérifier.
 - `POST /api/rite` renvoie les DH du logement, le gain de chaque solution prise seule et les DH du plan choisi. Affichage sur le téléphone : carte du haut, badges « −… DH » sur les tuiles, barre du bas, bilan.
-- RITE ne couvre que les appartements : pour une maison, le site garde l’estimation simplifiée. Sans LibreOffice, le site fonctionne sans RITE (`/health` indique `"rite": false`).
+- RITE est prévu pour le logement collectif. Les maisons sont estimées comme un logement « sous toiture » à plusieurs façades (en angle, ou traversant en pignon) ; le résultat est affiché « estimation maison ». Sans LibreOffice, le site fonctionne sans RITE (`/health` indique `"rite": false`).
 - Le Dockerfile installe LibreOffice Calc et `python3-uno` (image plus lourde, ≈ 400 Mo de plus).
 
 ## Aides possibles

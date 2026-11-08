@@ -7,7 +7,7 @@ const { QUESTIONS, SECTIONS, computeProfile, isComplete, isValidAnswer, validAns
 
 const { estimatePlan, availableSolutions, SOLUTIONS, AIDES } = require("./public/solutions.js");
 const { DPE_FIELDS, answersFromDpe, dpeLabel } = require("./public/dpe.js");
-const { RITE_SOLUTIONS, riteApplicable, riteInputs, riteLevel } = require("./public/rite.js");
+const { RITE_SOLUTIONS, riteApplicable, riteApprox, riteInputs, riteLevel } = require("./public/rite.js");
 
 // Calcul RITE (Cerema) : un moteur Python garde LibreOffice et le fichier RITE ouverts (tools/rite_worker.py).
 // Si LibreOffice ou le fichier manquent, le site fonctionne sans RITE.
@@ -294,9 +294,9 @@ const server = http.createServer(async (req, res) => {
       const b = await readBody(req);
       const pl = session.players.get(String(b.id || ""));
       if (!pl) return sendJson(res, 404, { error: "Participant inconnu" });
-      if (!riteApplicable(pl.answers)) return sendJson(res, 200, { available: false, reason: "maison" });
+      if (!riteApplicable(pl.answers)) return sendJson(res, 200, { available: false, reason: "incomplet" });
       const ids = Array.isArray(b.actions) ? b.actions.slice(0, 30).map(String) : [];
-      try { return sendJson(res, 200, await riteDiagnosis(pl.answers, ids)); }
+      try { return sendJson(res, 200, { ...(await riteDiagnosis(pl.answers, ids)), approx: riteApprox(pl.answers) }); }
       catch (e) { return sendJson(res, 200, { available: false, reason: "indisponible" }); }
     }
 
