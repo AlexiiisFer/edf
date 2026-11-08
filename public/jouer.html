@@ -447,6 +447,11 @@ body:not([data-view="choices"]) header { margin-bottom: 36px; }
   <div class="block wait-card"><div class="radar" aria-hidden="true"><i></i><i></i><i></i><b></b></div><p id="waitText">Ça commence bientôt.</p><button class="btn secondary" id="retry" hidden>Réessayer</button></div>
 </section>
 
+<section class="view" id="v-ended">
+  <div class="intro"><h1>Session terminée</h1></div>
+  <div class="block wait-card"><p>Scannez le nouveau QR code affiché à l’écran pour rejoindre la session.</p></div>
+</section>
+
 <section class="view" id="v-mode">
   <div class="intro"><h1>Votre logement</h1></div>
   <button class="opt mode-opt" id="modeAddress"><span class="e" aria-hidden="true">📍</span><span class="txt">Par adresse<small>On retrouve votre DPE : moins de questions</small></span></button>
@@ -515,10 +520,14 @@ function show(v) {
 }
 async function api(action, body) { const r=await fetch('/api/'+action, body === undefined ? {cache:'no-store'} : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok) throw Error(d.error || 'Connexion impossible');return d; }
 function error(e) { document.getElementById('error').textContent=e.message; }
+let ended=false;
+function endSession(){ ended=true; me=null; storage.set('ml_id',''); storage.set('ml_session',''); show('ended'); }
 async function join() { try {const d=await api('join',{});me=d.id;sessionId=d.sessionId;storage.set('ml_id',me);storage.set('ml_session',sessionId);built=false;answers={};chosen=new Set();qi=-1;editing=false;render(d);document.getElementById('error').textContent='';document.getElementById('retry').hidden=true;}catch(e){error(e);document.getElementById('retry').hidden=false;} }
 document.getElementById('retry').onclick=join;
 function render(d) {
- if(!d.known || d.sessionId!==sessionId) return join();
+ if(ended) return;
+ // Nouvelle session ou remise à zéro : on ne rejoint pas tout seul, il faut scanner le nouveau QR code.
+ if(d.sessionId!==sessionId || !d.known) return endSession();
  participantNumber=d.participantNumber;answers=Object.assign({}, d.answers || {}, answers);
  if(d.phase==='lobby') {document.getElementById('waitTitle').textContent='Vous êtes dans la salle.';document.getElementById('waitText').textContent=`${d.connected} connecté${d.connected>1?'s':''} · ${QUESTIONS.length} questions`;show('wait');return;}
  if(asking || view==='refine' || view==='address') return;
@@ -690,5 +699,17 @@ async function savePlan() {
  const btn=document.getElementById('saveBtn');if(btn)btn.disabled=true;
  try {await api('engage',{id:me,actions:[...chosen]});document.getElementById('error').textContent='';renderReport();show('thanks');}catch(e){error(Error('Enregistrement impossible : '+e.message));if(btn)btn.disabled=false;}
 }
-(async()=>{me=storage.get('ml_id');sessionId=storage.get('ml_session');const qs=new URLSearchParams(location.search).get('s');if(qs&&qs!==sessionId){me=null;sessionId=null;}if(me){try{render(await api('state?id='+encodeURIComponent(me)));}catch{await join();}}else await join();setInterval(async()=>{if(me)try{render(await api('state?id='+encodeURIComponent(me)));}catch{}},1000);})();
+(async()=>{
+ me=storage.get('ml_id')||null; sessionId=storage.get('ml_session')||null;
+ const qs=new URLSearchParams(location.search).get('s');
+ try{
+  const cur=(await api('state')).sessionId;
+  // QR code d'une ancienne session : pas d'inscription.
+  if(qs&&qs!==cur){endSession();return;}
+  if(me&&sessionId===cur) render(await api('state?id='+encodeURIComponent(me)));
+  else if(me&&sessionId&&sessionId!==cur&&!qs){endSession();return;}
+  else await join();
+ }catch{await join();}
+ setInterval(async()=>{if(me&&!ended)try{render(await api('state?id='+encodeURIComponent(me)));}catch{}},1000);
+})();
 </script></body></html>
