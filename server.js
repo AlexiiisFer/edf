@@ -147,6 +147,37 @@ const MIME = {
 };
 const ROUTES = { "/": "/index.html", "/jouer": "/jouer.html", "/stats": "/stats.html" };
 
+// Accès animateur : l'écran projeté, le bilan et les commandes de session demandent le mot de passe ADMIN_PASSWORD.
+// Une fois saisi, l'appareil garde un cookie 30 jours. Les téléphones (/jouer) restent libres.
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "canicule";
+if (!process.env.ADMIN_PASSWORD) console.warn("ADMIN_PASSWORD non défini : mot de passe animateur par défaut « canicule »");
+const ADMIN_TOKEN = crypto.createHash("sha256").update("edf-admin:" + ADMIN_PASSWORD).digest("hex");
+const ADMIN_PAGES = new Set(["/index.html", "/stats.html"]);
+function sameText(a, b) {
+  const x = crypto.createHash("sha256").update(String(a)).digest(), y = crypto.createHash("sha256").update(String(b)).digest();
+  return crypto.timingSafeEqual(x, y);
+}
+function isAdmin(req) {
+  const m = /(?:^|;\s*)edf_admin=([0-9a-f]{64})/.exec(req.headers.cookie || "");
+  return !!m && sameText(m[1], ADMIN_TOKEN);
+}
+
+const LOGIN_PAGE = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Accès animateur</title><link rel="stylesheet" href="/theme.css"><style>
+body{min-height:100vh;display:grid;place-items:center;padding:16px;background:#fff;color:var(--encre)}
+form{width:min(360px,100%);display:grid;gap:14px;text-align:center}
+.edf-logo{margin:0 auto 8px}h1{font-size:24px}p{color:var(--gris);font-size:15px}
+input{font:inherit;font-size:18px;padding:14px 16px;border:1px solid var(--ligne);border-radius:12px;width:100%}
+.btn{background:var(--edf-orange);color:#fff;padding:14px 20px;font-size:17px}
+.err{color:var(--alerte);min-height:1.4em}
+</style></head><body><form id="f"><img class="edf-logo" src="/assets/logo-edf.svg" alt="EDF"><h1 class="display">Accès animateur</h1>
+<p>Cet écran pilote la session. Participants : scannez le QR code affiché.</p>
+<input id="pw" type="password" autocomplete="current-password" placeholder="Mot de passe" required autofocus>
+<button class="btn">Entrer</button><div class="err" id="err" role="alert"></div></form>
+<script>document.getElementById("f").onsubmit=async e=>{e.preventDefault();const err=document.getElementById("err");err.textContent="";
+try{const r=await fetch("/api/login",{method:"POST",body:JSON.stringify({password:document.getElementById("pw").value})});
+if(r.ok)return location.reload();err.textContent="Mot de passe incorrect";}catch{err.textContent="Connexion impossible";}};</script></body></html>`;
+
 function sendJson(res, status, data) {
   res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
   res.end(JSON.stringify(data));
@@ -291,6 +322,16 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true, plan, rite: pl.rite });
     }
 
+    // --- Accès animateur ---
+    if (p === "/api/login" && req.method === "POST") {
+      const b = await readBody(req);
+      if (!sameText(b.password || "", ADMIN_PASSWORD)) { await new Promise((r) => setTimeout(r, 800)); return sendJson(res, 401, { error: "Mot de passe incorrect" }); }
+      const secure = req.headers["x-forwarded-proto"] === "https" ? "; Secure" : "";
+      res.setHeader("Set-Cookie", `edf_admin=${ADMIN_TOKEN}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure}`);
+      return sendJson(res, 200, { ok: true });
+    }
+    if (["/api/start", "/api/next", "/api/reset"].includes(p) && !isAdmin(req)) return sendJson(res, 401, { error: "Accès animateur requis" });
+
     // --- Écran ---
     if (p === "/api/stats" && req.method === "GET") return sendJson(res, 200, computeStats());
     if (p === "/api/start" && req.method === "POST") { if (session.phase === "lobby") advance(); return sendJson(res, 200, publicState()); }
@@ -324,6 +365,10 @@ const server = http.createServer(async (req, res) => {
     const file = ROUTES[p] || p;
     const filePath = path.normalize(path.join(PUBLIC_DIR, file));
     if (!filePath.startsWith(PUBLIC_DIR)) { res.writeHead(403); return res.end(); }
+    if (ADMIN_PAGES.has(path.relative(PUBLIC_DIR, filePath).replace(/^/, "/")) && !isAdmin(req)) {
+      res.writeHead(401, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+      return res.end(LOGIN_PAGE);
+    }
     fs.readFile(filePath, (err, data) => {
       if (err) { res.writeHead(404); return res.end("Not found"); }
       res.writeHead(200, { "Content-Type": MIME[path.extname(filePath)] || "application/octet-stream", "Cache-Control": filePath.endsWith(".woff2") ? "public, max-age=604800" : "no-cache" });

@@ -217,7 +217,7 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
 const badge=g=>`<span class="grade grade-${g}">${g}</span>`;
 const STAGES=['Participants'];
 
-document.getElementById('resetBtn').onclick=async()=>{if(!confirm('Effacer les réponses et les plans de la salle ?'))return;try{const r=await fetch('/api/reset',{method:'POST'});if(!r.ok)throw Error();location.href='/';}catch{showError('Réinitialisation impossible. Réessayez.');}};
+document.getElementById('resetBtn').onclick=async()=>{if(!confirm('Effacer les réponses et les plans de la salle ?'))return;try{const r=await fetch('/api/reset',{method:'POST'});if(r.status===401)return location.reload();if(!r.ok)throw Error();location.href='/';}catch{showError('Réinitialisation impossible. Réessayez.');}};
 function showError(t){const e=document.getElementById('countError');e.textContent=t;e.hidden=!t;}
 
 // Distribution : barres construites une fois, hauteurs animées à chaque mise à jour

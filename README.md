@@ -86,4 +86,6 @@ Il accompagne la mention « Projet proposé pour le défi confort d’été », 
 
 `PORT` : 3000 par défaut. `QUESTIONNAIRE_SECONDS` : 45 par défaut. `TOTAL_SECONDS` : 120 par défaut (de « Commencer » à l’affichage des statistiques).
 
+`ADMIN_PASSWORD` : mot de passe animateur (« canicule » par défaut, à changer dans Coolify). L’écran projeté (`/`), le bilan (`/stats`) et les commandes Commencer, Passer au bilan et Remettre à zéro le demandent ; l’appareil reste connecté 30 jours. Les téléphones (`/jouer`) n’en ont pas besoin.
+
 Coolify : Dockerfile existant, port 3000. Vérification locale : `curl -fsS http://127.0.0.1:3000/health`.
