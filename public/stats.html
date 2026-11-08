@@ -170,14 +170,13 @@ h1 { font-size: clamp(24px, 2.7vw, 50px); margin-top: 4px; }
   <div class="card en-room" id="enRoom"></div>
 </section>
 
-<footer class="foot"><img id="qr" class="qr" alt="QR code pour retrouver sa fiche"><p class="muted">Démo pédagogique, pas un DPE. Météo fictive.</p></footer>
+<footer class="foot"><p class="muted">Démo pédagogique, pas un DPE. Météo fictive.</p></footer>
 </main>
 <div class="tip" id="tip" role="tooltip"></div>
 <script src="/vendor/anime.umd.min.js"></script><script src="/ui.js"></script>
-<script src="/qrcode.js"></script><script src="/questions.js"></script><script src="/solutions.js"></script><script>
+<script src="/questions.js"></script><script src="/solutions.js"></script><script>
 const badge=g=>`<span class="grade grade-${g}">${g}</span>`;
 const STAGES=['Avant','Après'];
-let qrSession=null;function makeQr(id){if(id===qrSession)return;qrSession=id;const q=qrcode(0,'M');q.addData(location.origin+'/jouer?s='+encodeURIComponent(id));q.make();document.getElementById('qr').src=q.createDataURL(4,1);}
 
 document.getElementById('resetBtn').onclick=async()=>{if(!confirm('Effacer les réponses et les plans de la salle ?'))return;try{const r=await fetch('/api/reset',{method:'POST'});if(!r.ok)throw Error();location.href='/';}catch{showError('Réinitialisation impossible. Réessayez.');}};
 function showError(t){const e=document.getElementById('countError');e.textContent=t;e.hidden=!t;}
@@ -219,7 +218,7 @@ function renderWall(profiles){
   UI.pop(fresh.slice(0,60),{stagger:25});
 }
 
-async function refresh(){try{const r=await fetch('/api/stats',{cache:'no-store'});if(!r.ok)throw Error();const s=await r.json();showError('');makeQr(s.sessionId);
+async function refresh(){try{const r=await fetch('/api/stats',{cache:'no-store'});if(!r.ok)throw Error();const s=await r.json();showError('');
 document.getElementById('count').textContent=`${s.connected} participants · ${s.count} profils · ${s.validatedCount} plans validés`;
 const int=([v])=>Math.round(v);
 UI.tween(document.getElementById('cConnected'),s.connected,int,600);UI.tween(document.getElementById('cProfiles'),s.count,int,600);UI.tween(document.getElementById('cValidated'),s.validatedCount,int,600);
